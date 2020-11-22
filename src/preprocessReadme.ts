@@ -125,7 +125,7 @@ export function preprocessReadme(opts: { name: string; svelte: string }) {
 
               ${style_content}
             </style>
-            <main>${result}</main>`,
+            <main class="markdown-body">${result}</main>`,
       };
     },
   };
