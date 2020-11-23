@@ -1,6 +1,8 @@
 # my-svelte-component
 
-[Readme](./)
+[Readme](./) 
+
+[svelte-readme](https://github.com/metonym/svelte-readme)
 
 Check out my cool component library.
 

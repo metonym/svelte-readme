@@ -45,6 +45,7 @@ export default function createConfig(opts) {
         preprocess: [preprocessReadme({ ...getPackageJSON(), prefixUrl: opts.prefixUrl })],
       }),
       resolve(),
+      ...(opts.plugins || []),
       opts.minify === true && terser(),
     ].filter(Boolean),
   };
