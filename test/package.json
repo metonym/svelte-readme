@@ -1,0 +1,18 @@
+{
+  "name": "my-svelte-component",
+  "svelte": "./src/index.js",
+  "main": "./lib/index.js",
+  "module": "./lib/index.mjs",
+  "license": "MIT",
+  "scripts": {
+    "dev": "rollup -cw",
+    "build": "rollup -c",
+    "prepack": "BUNDLE=true rollup -c"
+  },
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^10.0.0",
+    "rollup": "^2.33.3",
+    "rollup-plugin-svelte": "^6.1.1",
+    "svelte": "^3.29.7"
+  }
+}

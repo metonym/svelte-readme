@@ -2,12 +2,13 @@ import { walk, parse } from "svelte/compiler";
 import Markdown from "markdown-it";
 import prettier from "prettier";
 import Prism from "prismjs";
+import fs from "fs";
 import "prismjs/components/prism-bash";
 import "prism-svelte";
 
-let md: Markdown;
+let md;
 
-export function preprocessReadme(opts: { name: string; svelte: string }) {
+export function preprocessReadme(opts) {
   if (!md) {
     md = new Markdown({
       html: true,
@@ -41,7 +42,7 @@ export function preprocessReadme(opts: { name: string; svelte: string }) {
   }
 
   return {
-    markup: ({ content, filename }: { content: string; filename: string }) => {
+    markup: ({ content, filename }) => {
       if (/node_modules/.test(filename) || !filename.endsWith(".md")) return null;
       let script_content = "";
       let style_content = "";
@@ -51,17 +52,7 @@ export function preprocessReadme(opts: { name: string; svelte: string }) {
       const ast = parse(result);
 
       walk(ast, {
-        enter(
-          node: {
-            type: string;
-            content: { start: number | undefined; end: number | undefined };
-            start: number;
-            end: number;
-            name: string;
-            value: { raw: any }[];
-          },
-          parent: { start: number; end: number }
-        ) {
+        enter(node, parent) {
           if (node.type === "Style") {
             style_content += result.slice(node.content.start, node.content.end);
             const replace_style = result.slice(node.start + cursor, node.end + cursor);
@@ -80,7 +71,7 @@ export function preprocessReadme(opts: { name: string; svelte: string }) {
             cursor += markup.length - raw_value.length;
 
             walk(value_ast, {
-              enter(node: { type: string; content: { start: number | undefined; end: number | undefined } }) {
+              enter(node) {
                 if (node.type === "Script") {
                   script_content += value.slice(node.content.start, node.content.end);
                 }
