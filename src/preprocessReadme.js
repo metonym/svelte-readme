@@ -3,8 +3,10 @@ import Markdown from "markdown-it";
 import prettier from "prettier";
 import Prism from "prismjs";
 import path from "path";
+import relativeUrl from "is-relative-url";
 import "prismjs/components/prism-bash";
 import "prism-svelte";
+import isRelativeUrl from "is-relative-url";
 
 let md;
 
@@ -56,7 +58,7 @@ export function preprocessReadme(opts) {
           if (opts.prefixUrl && node.type === "Attribute" && node.name === "href") {
             const value = node.value[0];
 
-            if (value && !value.raw.startsWith("/")) {
+            if (value && isRelativeUrl(value.raw)) {
               const relative_path = path.join(opts.prefixUrl, value.raw);
               result = result.replace(value.raw, relative_path);
               cursor += relative_path.length - value.raw.length;

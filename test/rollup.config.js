@@ -1,6 +1,7 @@
 import resolve from "@rollup/plugin-node-resolve";
 import svelte from "rollup-plugin-svelte";
 import svelteReadme from "svelte-readme";
+import serve from "rollup-plugin-serve";
 import pkg from "./package.json";
 
 const DEV = process.env.ROLLUP_WATCH;
@@ -8,7 +9,17 @@ const BUNDLE = process.env.BUNDLE === "true";
 
 export default () => {
   if (!BUNDLE)
-    return svelteReadme({ minify: !DEV, prefixUrl: "https://github.com/metonym/svelte-readme/tree/master/test/" });
+    return svelteReadme({
+      minify: !DEV,
+      plugins: [
+        DEV &&
+          serve({
+            contentBase: "public",
+            port: 5000,
+          }),
+      ],
+      prefixUrl: "https://github.com/metonym/svelte-readme/tree/master/test/",
+    });
 
   return ["es", "umd"].map((format) => {
     const UMD = format === "umd";

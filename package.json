@@ -15,6 +15,7 @@
   "dependencies": {
     "@rollup/plugin-node-resolve": "^10.0.0",
     "@rollup/plugin-virtual": "^2.0.3",
+    "is-relative-url": "^3.0.0",
     "markdown-it": "^12.0.2",
     "prettier": "^2.2.0",
     "prettier-plugin-svelte": "^1.4.1",
