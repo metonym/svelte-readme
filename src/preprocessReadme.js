@@ -2,7 +2,7 @@ import { walk, parse } from "svelte/compiler";
 import Markdown from "markdown-it";
 import prettier from "prettier";
 import Prism from "prismjs";
-import fs from "fs";
+import path from "path";
 import "prismjs/components/prism-bash";
 import "prism-svelte";
 
@@ -53,6 +53,16 @@ export function preprocessReadme(opts) {
 
       walk(ast, {
         enter(node, parent) {
+          if (opts.prefixUrl && node.type === "Attribute" && node.name === "href") {
+            const value = node.value[0];
+
+            if (value && !value.raw.startsWith("/")) {
+              const relative_path = path.join(opts.prefixUrl, value.raw);
+              result = result.replace(value.raw, relative_path);
+              cursor += (relative_path - value.raw).length;
+            }
+          }
+
           if (node.type === "Style") {
             style_content += result.slice(node.content.start, node.content.end);
             const replace_style = result.slice(node.start + cursor, node.end + cursor);

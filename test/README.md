@@ -17,3 +17,7 @@ Check out my cool component library.
 
 <h1>{count}</h1>
 ```
+
+[package.json](package.json)
+
+[MIT](../LICENSE)

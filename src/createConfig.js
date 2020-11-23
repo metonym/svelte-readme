@@ -42,7 +42,7 @@ export default function createConfig(opts) {
       rollupPluginSvelte({
         ...(opts.svelte || {}),
         extensions: [".svelte", ".md"],
-        preprocess: [preprocessReadme(getPackageJSON())],
+        preprocess: [preprocessReadme({ ...getPackageJSON(), prefixUrl: opts.prefixUrl })],
       }),
       resolve(),
       opts.minify === true && terser(),

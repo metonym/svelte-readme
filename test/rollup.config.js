@@ -7,7 +7,8 @@ const DEV = process.env.ROLLUP_WATCH;
 const BUNDLE = process.env.BUNDLE === "true";
 
 export default () => {
-  if (!BUNDLE) return svelteReadme({ minify: !DEV });
+  if (!BUNDLE)
+    return svelteReadme({ minify: !DEV, prefixUrl: "https://github.com/metonym/svelte-readme/tree/master/test/" });
 
   return ["es", "umd"].map((format) => {
     const UMD = format === "umd";
