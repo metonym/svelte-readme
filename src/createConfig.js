@@ -98,6 +98,7 @@ export default function createConfig(opts) {
   </html>
 `;
 
+  if (minify) fs.removeSync("public/bundle.js");
   fs.ensureFileSync("public/index.html");
   fs.writeFileSync(
     "public/index.html",

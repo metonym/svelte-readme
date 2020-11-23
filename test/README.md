@@ -1,8 +1,8 @@
 # my-svelte-component
 
-[Readme](./) 
+Relative URL: [Readme](./) 
 
-[svelte-readme](https://github.com/metonym/svelte-readme)
+Absolute URL: [svelte-readme](https://github.com/metonym/svelte-readme)
 
 Check out my cool component library.
 
