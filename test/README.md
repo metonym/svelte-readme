@@ -1,5 +1,7 @@
 # my-svelte-component
 
+[Readme](./)
+
 Check out my cool component library.
 
 ## Usage

@@ -59,7 +59,7 @@ export function preprocessReadme(opts) {
             if (value && !value.raw.startsWith("/")) {
               const relative_path = path.join(opts.prefixUrl, value.raw);
               result = result.replace(value.raw, relative_path);
-              cursor += (relative_path - value.raw).length;
+              cursor += relative_path.length - value.raw.length;
             }
           }
 
