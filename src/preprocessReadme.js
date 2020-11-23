@@ -59,7 +59,7 @@ export function preprocessReadme(opts) {
             const value = node.value[0];
 
             if (value && isRelativeUrl(value.raw)) {
-              const relative_path = path.join(opts.prefixUrl, value.raw);
+              const relative_path = new URL(value.raw, opts.prefixUrl).href;
               result = result.replace(value.raw, relative_path);
               cursor += relative_path.length - value.raw.length;
             }
