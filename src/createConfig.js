@@ -6,6 +6,7 @@ import { preprocessReadme } from "./preprocessReadme";
 import fs from "fs-extra";
 import path from "path";
 import { createHash } from "crypto";
+import htmlminifier from "html-minifier";
 
 function hashREADME() {
   try {
@@ -36,15 +37,47 @@ function getPackageJSON() {
   }
 }
 
+const github_css = fs.readFileSync(
+  path.join(process.cwd(), "./node_modules/github-markdown-css/github-markdown.css"),
+  "utf-8"
+);
+
+const custom_css = `
+  .token.language-javascript { color: #24292e; }
+  .token.language-javascript .function { color: #005cc5; }
+  .token.language-javascript .string { color: #032f62; }
+  .token.language-javascript .number { color: #005cc5; }
+  .token.language-javascript .keyword { color: #d73a49; }
+  .token.each { color: #d73a49; }
+  .token.punctuation { color: #24292e }
+  .token.tag { color: #22863a; }
+  .token.attr-name { color: #6f42c1; }
+  .token.operator { color: #d73a49; }
+  .token.comment { color: #6a737d; }
+
+  .language-css { color: #032f62; }
+  .language-css .selector { color: #22863a; }
+  .language-css .property { color: #005cc5; }
+
+  .code-fence { padding: 30px 15px; border: 1px solid #eaecef; border-bottom: 0; }
+
+  main {
+    box-sizing: border-box;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 45px;
+  }
+
+  @media (max-width: 767px) {
+    main { padding: 15px; }
+  }
+`;
+
 export default function createConfig(opts) {
   const minify = opts.minify === true;
   const pkg = getPackageJSON();
   const hash = minify ? hashREADME() : "";
-
-  fs.ensureFileSync("public/index.html");
-  fs.writeFileSync(
-    "public/index.html",
-    `
+  const template = `
   <!DOCTYPE html>
   <html lang="en">
     <head>
@@ -52,17 +85,30 @@ export default function createConfig(opts) {
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <meta name="description" content="${pkg.description || `${pkg.name} demo`}" />
       <title>${pkg.name}</title>
-      <link
-        href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/4.0.0/github-markdown.min.css"
-        rel="stylesheet"
-      />
+      <style>
+        ${github_css}
+        ${custom_css}
+        ${opts.style || ""}
+      </style>
     </head>
     <body>
       <noscript>You need to enable JavaScript to run this app.</noscript>
       <script src="bundle${hash}.js"></script>
     </body>
   </html>
-`.trim()
+`;
+
+  fs.ensureFileSync("public/index.html");
+  fs.writeFileSync(
+    "public/index.html",
+    minify
+      ? htmlminifier.minify(template, {
+          collapseWhitespace: true,
+          conservativeCollapse: true,
+          minifyCSS: true,
+          removeEmptyAttributes: true,
+        })
+      : template
   );
 
   return {
