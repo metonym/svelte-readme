@@ -19,7 +19,12 @@ This library is tightly coupled with Rollup. You must provide the package name a
   "name": "my-svelte-component",
   "svelte": "./src/index.js",
   "main": "./lib/index.js",
-  "module": "./lib/index.mjs"
+  "module": "./lib/index.mjs",
+  "scripts": {
+    "dev": "rollup -cw",
+    "build": "rollup -c",
+    "prepack": "BUNDLE=true rollup -c"
+  }
 }
 ```
 
