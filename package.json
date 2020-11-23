@@ -15,6 +15,8 @@
   "dependencies": {
     "@rollup/plugin-node-resolve": "^10.0.0",
     "@rollup/plugin-virtual": "^2.0.3",
+    "fs-extra": "^9.0.1",
+    "github-markdown-css": "^4.0.0",
     "is-relative-url": "^3.0.0",
     "markdown-it": "^12.0.2",
     "prettier": "^2.2.0",
