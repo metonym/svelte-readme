@@ -73,6 +73,7 @@ export default function createConfig(opts) {
   const minify = opts.minify === true;
   const pkg = getPackageJSON();
   const hash = minify ? hashREADME() : "";
+  const output_dir = opts.outDir || "dist";
   const template = `
   <!DOCTYPE html>
   <html lang="en">
@@ -89,15 +90,15 @@ export default function createConfig(opts) {
     </head>
     <body>
       <noscript>You need to enable JavaScript to run this app.</noscript>
-      <script src="bundle${hash}.js"></script>
+      <script src="s${hash}.js"></script>
     </body>
   </html>
 `;
 
-  if (minify) fs.removeSync("public/bundle.js");
-  fs.ensureFileSync("public/index.html");
+  if (minify) fs.removeSync(output_dir);
+  fs.ensureFileSync(`${output_dir}/index.html`);
   fs.writeFileSync(
-    "public/index.html",
+    `${output_dir}/index.html`,
     minify
       ? htmlminifier.minify(template, {
           collapseWhitespace: true,
@@ -114,7 +115,7 @@ export default function createConfig(opts) {
     output: {
       format: "iife",
       name: "app",
-      file: `public/bundle${hash}.js`,
+      file: `${output_dir}/s${hash}.js`,
       ...(opts.output || {}),
     },
     plugins: [
