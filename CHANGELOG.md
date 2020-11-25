@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0](https://github.com/metonym/svelte-readme/releases/tag/v1.0.0) - 2020-11-24
+
+**Features**
+
+- Preprocess `github-markdown-css` to reduce number of unused selectors, decrease CSS specificity, move to development dependencies
+- Make output directory configurable through `outDir`
+
+**Breaking Changes**
+
+- The default output directory is changed from "public" to "dist"
+- The output directory will first be deleted when building for production
+
 ## [0.4.1](https://github.com/metonym/svelte-readme/releases/tag/v0.4.1) - 2020-11-23
 
 **Fixes**
