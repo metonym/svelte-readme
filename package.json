@@ -6,7 +6,7 @@
   "author": "Eric Liu (https://github.com/metonym)",
   "main": "./dist/index.js",
   "scripts": {
-    "dev": "rollup -cw",
+    "dev": "node scripts/preprocessStyles && rollup -cw",
     "prepack": "rollup -c"
   },
   "peerDependencies": {
@@ -16,7 +16,6 @@
     "@rollup/plugin-node-resolve": "^10.0.0",
     "@rollup/plugin-virtual": "^2.0.3",
     "fs-extra": "^9.0.1",
-    "github-markdown-css": "^4.0.0",
     "html-minifier": "^4.0.0",
     "is-relative-url": "^3.0.0",
     "markdown-it": "^12.0.2",
@@ -29,6 +28,8 @@
     "rollup-plugin-terser": "^7.0.2"
   },
   "devDependencies": {
+    "github-markdown-css": "^4.0.0",
+    "postcss": "^8.1.10",
     "svelte": "^3.29.7"
   },
   "repository": {

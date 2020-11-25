@@ -7,6 +7,7 @@ import fs from "fs-extra";
 import path from "path";
 import { createHash } from "crypto";
 import htmlminifier from "html-minifier";
+import { css } from "./style";
 
 function hashREADME() {
   try {
@@ -37,11 +38,6 @@ function getPackageJSON() {
   }
 }
 
-const github_css = fs.readFileSync(
-  path.join(process.cwd(), "./node_modules/github-markdown-css/github-markdown.css"),
-  "utf-8"
-);
-
 const custom_css = `
   .token.language-javascript { color: #24292e; }
   .token.language-javascript .function { color: #005cc5; }
@@ -59,7 +55,7 @@ const custom_css = `
   .language-css .selector { color: #22863a; }
   .language-css .property { color: #005cc5; }
 
-  .code-fence { padding: 30px 15px; border: 1px solid #eaecef; border-bottom: 0; }
+  .code-fence { padding: 24px 15px; border: 1px solid #eaecef; border-bottom: 0; }
 
   main {
     box-sizing: border-box;
@@ -86,7 +82,7 @@ export default function createConfig(opts) {
       <meta name="description" content="${pkg.description || `${pkg.name} demo`}" />
       <title>${pkg.name}</title>
       <style>
-        ${github_css}
+        ${css}
         ${custom_css}
         ${opts.style || ""}
       </style>
