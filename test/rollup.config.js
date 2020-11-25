@@ -14,7 +14,7 @@ export default () => {
       plugins: [
         DEV &&
           serve({
-            contentBase: "public",
+            contentBase: "dist",
             port: 5000,
           }),
       ],
