@@ -16,7 +16,7 @@ h4:hover .anchor,
 h5:hover .anchor,
 h6:hover .anchor {
   text-decoration: none;
-}.markdown-body {
+}main {
   -ms-text-size-adjust: 100%;
   -webkit-text-size-adjust: 100%;
   line-height: 1.5;
@@ -276,21 +276,21 @@ kbd {
   box-shadow: inset 0 -1px 0 #d1d5da;
 }
 
-.markdown-body:after,
+main:after,
 .markdown-body:before {
   display: table;
   content: "";
 }
 
-.markdown-body:after {
+main:after {
   clear: both;
 }
 
-.markdown-body>:first-child {
+main>:first-child {
   margin-top: 0!important;
 }
 
-.markdown-body>:last-child {
+main>:last-child {
   margin-bottom: 0!important;
 }
 

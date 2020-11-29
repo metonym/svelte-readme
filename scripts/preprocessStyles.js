@@ -10,7 +10,7 @@ const github_css = fs.readFileSync(
 const plugin = postcss.plugin("postcss-plugin", () => {
   return (root) => {
     root.walkRules((node) => {
-      node.selector = node.selector.replace(/\.markdown-body /g, "");
+      node.selector = node.selector.replace(/\.markdown-body /g, "").replace(/^\.markdown-body/g, "main");
       if (
         /(^\.f6|\.bg-|\.text-|\.lh-|\.tab-size|\.task-list|\.mb|\.py|\.my|\.px|\.py|\.pl|commit|blob-|octicon|border|rounded)/.test(
           node.selector
