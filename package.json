@@ -19,7 +19,7 @@
     "html-minifier": "^4.0.0",
     "is-relative-url": "^3.0.0",
     "markdown-it": "^12.0.2",
-    "prettier": "^2.2.0",
+    "prettier": "^2.2.1",
     "prettier-plugin-svelte": "^1.4.1",
     "prism-svelte": "^0.4.7",
     "prismjs": "^1.22.0",
@@ -28,9 +28,9 @@
     "rollup-plugin-terser": "^7.0.2"
   },
   "devDependencies": {
-    "github-markdown-css": "^4.0.0",
+    "github-markdown-css": "4.0.0",
     "postcss": "^8.1.10",
-    "svelte": "^3.29.7"
+    "svelte": "^3.30.0"
   },
   "repository": {
     "type": "git",
