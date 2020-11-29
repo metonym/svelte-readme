@@ -48,8 +48,13 @@ const custom_css = `
   .token.punctuation { color: #24292e }
   .token.tag { color: #22863a; }
   .token.attr-name { color: #6f42c1; }
+  .token.attr-value { color: #032f62; }
   .token.operator { color: #d73a49; }
   .token.comment { color: #6a737d; }
+  .token.function { color: #6f42c1; }
+  .token.string { color: #032f62; }
+
+  .token.each .language-javascript:last-child { color: #e36209; }
 
   .language-css { color: #032f62; }
   .language-css .selector { color: #22863a; }
