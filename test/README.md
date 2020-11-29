@@ -13,13 +13,24 @@ Check out my cool component library.
   import Button from "my-svelte-component";
 
   let count = 0;
+  let items = [];
+
+  $: document.body.className = count + "";
 </script>
 
-<Button on:click={() => { count++; }}>
+<Button attribute="value" on:click={() => { count++; }}>
   Increment the count
 </Button>
 
 <h1>{count}</h1>
+
+{#each items as item}
+{item}
+{/each}
+```
+
+```js
+localStorage.getItem("custom-theme-key");
 ```
 
 [package.json](package.json)

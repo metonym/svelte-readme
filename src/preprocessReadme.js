@@ -6,6 +6,11 @@ import "prismjs/components/prism-bash";
 import "prism-svelte";
 import isRelativeUrl from "is-relative-url";
 
+const aliases = {
+  sh: "bash",
+  js: "javascript",
+};
+
 let md;
 
 export function preprocessReadme(opts) {
@@ -28,10 +33,11 @@ export function preprocessReadme(opts) {
         }
 
         try {
-          return `<pre class="language-${lang}">{@html \`${Prism.highlight(
+          const alias_lang = aliases[lang] || lang;
+          return `<pre class="language-${alias_lang}">{@html \`${Prism.highlight(
             source,
-            Prism.languages[lang],
-            lang
+            Prism.languages[alias_lang],
+            alias_lang
           )}\`}</pre>`;
         } catch (e) {
           console.error(`Could not highlight language "${lang}".`);
