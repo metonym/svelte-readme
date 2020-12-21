@@ -76,13 +76,16 @@ const custom_css = `
 `;
 
 /**
- *
+ * createConfig
  * @param {Object} opts
  * @param {boolean} opts.minify - set to `true` to minify the HTML/JS
  * @param {string} opts.outDir - set the folder to emit the files
  * @param {string} opts.style - custom CSS appended to the <style> block
  * @param {boolean} opts.disableDefaultCSS - set to `true` to omit the default GitHub styles
- *
+ * @param {string} opts.prefixUrl - Value to prepend to relative URLs (i.e. GitHub repo URL)
+ * @param {object} opts.svelte - `rollup-plugin-svelte` options
+ * @param {Array} opts.plugins - Rollup plugins
+ * @param {object} opts.output - Rollup output options
  */
 export default function createConfig(opts) {
   const minify = opts.minify === true;

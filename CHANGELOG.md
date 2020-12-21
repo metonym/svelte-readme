@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0](https://github.com/metonym/svelte-readme/releases/tag/v1.2.0) - 2020-12-21
+
+**Features**
+
+- Infer `prefixUrl` from `package.json#homepage`
+- Slugify headings
+- Add `disableDefaultCSS` option to omit default GitHub styles
+
+**Fixes**
+
+- Do not prefix anchor links that start with `#`
+
 ## [1.1.0](https://github.com/metonym/svelte-readme/releases/tag/v1.1.0) - 2020-11-28
 
 **Features**

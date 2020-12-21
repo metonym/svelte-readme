@@ -1,6 +1,6 @@
 {
   "name": "svelte-readme",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "license": "MIT",
   "description": "Use your README.md file for Svelte component documentation",
   "author": "Eric Liu (https://github.com/metonym)",
