@@ -31,6 +31,7 @@ function getPackageJSON() {
       name: pkg.name,
       svelte: pkg.svelte,
       description: pkg.description,
+      homepage: pkg.homepage,
     };
   } catch (error) {
     console.log(error);
@@ -74,11 +75,21 @@ const custom_css = `
   }
 `;
 
+/**
+ *
+ * @param {Object} opts
+ * @param {boolean} opts.minify - set to `true` to minify the HTML/JS
+ * @param {string} opts.outDir - set the folder to emit the files
+ * @param {string} opts.style - custom CSS appended to the <style> block
+ * @param {boolean} opts.disableDefaultCSS - set to `true` to omit the default GitHub styles
+ *
+ */
 export default function createConfig(opts) {
   const minify = opts.minify === true;
   const pkg = getPackageJSON();
   const hash = minify ? hashREADME() : "";
   const output_dir = opts.outDir || "dist";
+
   const template = `
   <!DOCTYPE html>
   <html lang="en">
@@ -88,7 +99,7 @@ export default function createConfig(opts) {
       <meta name="description" content="${pkg.description || `${pkg.name} demo`}" />
       <title>${pkg.name}</title>
       <style>
-        ${css}
+        ${!opts.disableDefaultCSS ? css : ""}
         ${custom_css}
         ${opts.style || ""}
       </style>
