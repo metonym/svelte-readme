@@ -1,5 +1,6 @@
 import { walk, parse } from "svelte/compiler";
 import Markdown from "markdown-it";
+import markdownItAnchor from "markdown-it-anchor";
 import prettier from "prettier";
 import Prism from "prismjs";
 import "prismjs/components/prism-bash";
@@ -14,6 +15,8 @@ const aliases = {
 let md;
 
 export function preprocessReadme(opts) {
+  const prefixUrl = opts.prefixUrl || `${opts.homepage}/tree/master/`;
+
   if (!md) {
     md = new Markdown({
       html: true,
@@ -45,6 +48,8 @@ export function preprocessReadme(opts) {
         }
       },
     });
+
+    md.use(markdownItAnchor);
   }
 
   return {
@@ -59,11 +64,11 @@ export function preprocessReadme(opts) {
 
       walk(ast, {
         enter(node, parent) {
-          if (opts.prefixUrl && node.type === "Attribute" && node.name === "href") {
+          if (node.type === "Attribute" && node.name === "href") {
             const value = node.value[0];
 
             if (value && !value.raw.startsWith("#") && isRelativeUrl(value.raw)) {
-              const relative_path = new URL(value.raw, opts.prefixUrl).href;
+              const relative_path = new URL(value.raw, prefixUrl).href;
               result = result.replace(value.raw, relative_path);
               cursor += relative_path.length - value.raw.length;
             }

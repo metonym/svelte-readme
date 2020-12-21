@@ -19,7 +19,5 @@
     "serve": "^11.3.2",
     "svelte": "^3.29.7"
   },
-  "dependencies": {
-    "github-markdown-css": "^4.0.0"
-  }
+  "homepage": "https://github.com/metonym/svelte-readme"
 }

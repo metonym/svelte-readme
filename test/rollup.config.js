@@ -18,7 +18,6 @@ export default () => {
             port: 5000,
           }),
       ],
-      prefixUrl: "https://github.com/metonym/svelte-readme/tree/master/test/",
     });
 
   return ["es", "umd"].map((format) => {
