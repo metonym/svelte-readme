@@ -2,6 +2,8 @@
 
 Relative URL: [Readme](./) 
 
+Relative URL (anchor): [Usage](#usage)
+
 Absolute URL: [svelte-readme](https://github.com/metonym/svelte-readme)
 
 Check out my cool component library.
