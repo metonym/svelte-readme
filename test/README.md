@@ -1,5 +1,7 @@
 # my-svelte-component
 
+<!-- TOC -->
+
 Relative URL: [Readme](./) 
 
 Relative URL (anchor): [Usage](#usage)
@@ -8,7 +10,12 @@ Absolute URL: [svelte-readme](https://github.com/metonym/svelte-readme)
 
 Check out my cool component library.
 
+- level 1
+  - level 2
+
 ## Usage
+
+### Basic
 
 ```svelte
 <script>
@@ -31,10 +38,19 @@ Check out my cool component library.
 {/each}
 ```
 
+### Usage with X
+
+## Local storage
+
+**Note**
+
 ```js
 localStorage.getItem("custom-theme-key");
 ```
 
+
 [package.json](package.json)
+
+## License
 
 [MIT](../LICENSE)

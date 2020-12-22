@@ -55,12 +55,23 @@ export function preprocessReadme(opts) {
   return {
     markup: ({ content, filename }) => {
       if (/node_modules/.test(filename) || !filename.endsWith(".md")) return null;
+
+      content = content.replace(
+        "<!-- TOC -->",
+        `
+## Table of Contents
+      `
+      );
+
       let script_content = "";
       let style_content = "";
       let result = md.render(content);
       let cursor = 0;
 
       const ast = parse(result);
+
+      let headings = [];
+      let prev;
 
       walk(ast, {
         enter(node, parent) {
@@ -79,6 +90,34 @@ export function preprocessReadme(opts) {
             const replace_style = result.slice(node.start + cursor, node.end + cursor);
             result = result.replace(replace_style, "");
             cursor -= replace_style.length;
+          }
+
+          if (node.type === "Element" && node.name === "h2") {
+            const id = node.attributes.find((attr) => attr.name === "id").value[0].raw;
+
+            if (id === "table-of-contents") return;
+
+            const text = node.children[0].raw;
+            if (prev === "h3") {
+              headings.push(`</ul><li><a href="#${id}">${text}</a></li>`);
+            } else {
+              headings.push(`<li><a href="#${id}">${text}</a></li>`);
+            }
+
+            prev = "h2";
+          }
+
+          if (node.type === "Element" && node.name === "h3") {
+            const id = node.attributes.find((attr) => attr.name === "id").value[0].raw;
+            const text = node.children[0].raw;
+
+            if (prev === "h2") {
+              headings.push(`<ul><li><a href="#${id}">${text}</a></li>`);
+            } else {
+              headings.push(`<li><a href="#${id}">${text}</a></li>`);
+            }
+
+            prev = "h3";
           }
 
           if (node.type === "Attribute" && node.name === "data-svelte") {
@@ -101,6 +140,15 @@ export function preprocessReadme(opts) {
           }
         },
       });
+
+      if (prev === "h3") {
+        headings.push("</ul>");
+      }
+
+      result = result.replace(
+        `<h2 id="table-of-contents">Table of Contents</h2>`,
+        `<p><strong>Table of Contents</strong></p><ul>${headings.join("\n")}</ul>`
+      );
 
       return {
         code: `
