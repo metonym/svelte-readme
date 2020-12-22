@@ -98,26 +98,31 @@ export function preprocessReadme(opts) {
             if (id === "table-of-contents") return;
 
             const text = node.children[0].raw;
-            if (prev === "h3") {
-              headings.push(`</ul><li><a href="#${id}">${text}</a></li>`);
-            } else {
-              headings.push(`<li><a href="#${id}">${text}</a></li>`);
-            }
 
-            prev = "h2";
+            if (text !== undefined) {
+              if (prev === "h3") {
+                headings.push(`</ul><li><a href="#${id}">${text}</a></li>`);
+              } else {
+                headings.push(`<li><a href="#${id}">${text}</a></li>`);
+              }
+
+              prev = "h2";
+            }
           }
 
           if (node.type === "Element" && node.name === "h3") {
             const id = node.attributes.find((attr) => attr.name === "id").value[0].raw;
             const text = node.children[0].raw;
 
-            if (prev === "h2") {
-              headings.push(`<ul><li><a href="#${id}">${text}</a></li>`);
-            } else {
-              headings.push(`<li><a href="#${id}">${text}</a></li>`);
-            }
+            if (text !== undefined) {
+              if (prev === "h2") {
+                headings.push(`<ul><li><a href="#${id}">${text}</a></li>`);
+              } else {
+                headings.push(`<li><a href="#${id}">${text}</a></li>`);
+              }
 
-            prev = "h3";
+              prev = "h3";
+            }
           }
 
           if (node.type === "Attribute" && node.name === "data-svelte") {

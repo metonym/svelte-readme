@@ -48,6 +48,7 @@ Check out my cool component library.
 localStorage.getItem("custom-theme-key");
 ```
 
+## [rollup.config.js](rollup.config.js)
 
 [package.json](package.json)
 
