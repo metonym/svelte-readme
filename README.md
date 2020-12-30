@@ -1,6 +1,6 @@
 # svelte-readme
 
-> Use the README.md file to document and demo your Svelte components.
+> Develop and demo your Svelte components in your README.md.
 
 The purpose of this project is to minimize additional set-up by using the README.md for component documentation and development.
 

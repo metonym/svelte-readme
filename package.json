@@ -1,8 +1,8 @@
 {
   "name": "svelte-readme",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "license": "MIT",
-  "description": "Use your README.md file for Svelte component documentation",
+  "description": "Develop and demo your Svelte components in your README.md",
   "author": "Eric Liu (https://github.com/metonym)",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
