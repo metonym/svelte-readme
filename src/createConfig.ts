@@ -133,6 +133,25 @@ export default function createConfig(opts: Partial<CreateConfigOptions>): InputO
   const pkg = getPackageJSON();
   const hash = minify ? hashREADME() : "";
   const output_dir = opts.outDir || "dist";
+  const svelte: Partial<RollupPluginSvelteOptions> = {
+    compilerOptions: {
+      dev: DEV,
+      immutable: true,
+    },
+    extensions: [".svelte", ".md"],
+    preprocess: [preprocessReadme({ ...pkg, prefixUrl: opts.prefixUrl })],
+  };
+
+  if (opts.svelte?.compilerOptions) {
+    svelte.compilerOptions = {
+      ...svelte.compilerOptions,
+      ...opts.svelte.compilerOptions,
+    };
+  }
+
+  if (opts.svelte?.extensions) {
+    svelte.extensions = [...svelte.extensions!, ...opts.svelte.extensions];
+  }
 
   console.log(`[createConfig] Running in ${DEV ? "development" : "production"}`);
   console.log("[createConfig] options:");
@@ -193,11 +212,7 @@ export default function createConfig(opts: Partial<CreateConfigOptions>): InputO
                 const app = new App({ target: document.body });
                 export default app;`,
       }),
-      rollupPluginSvelte({
-        ...(opts.svelte || {}),
-        extensions: [".svelte", ".md"],
-        preprocess: [preprocessReadme({ ...pkg, prefixUrl: opts.prefixUrl })],
-      }),
+      rollupPluginSvelte(svelte),
       resolve(),
       ...(opts.plugins || []),
       minify && terser(),

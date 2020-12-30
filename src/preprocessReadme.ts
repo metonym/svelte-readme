@@ -8,6 +8,7 @@ import "prism-svelte";
 import isRelativeUrl from "is-relative-url";
 import { PreprocessorGroup } from "svelte/types/compiler/preprocess";
 import { Node } from "estree-walker";
+import { URL } from "url";
 
 const aliases: Record<string, string> = {
   sh: "bash",
