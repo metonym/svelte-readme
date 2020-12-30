@@ -10,8 +10,6 @@ const BUNDLE = process.env.BUNDLE === "true";
 export default () => {
   if (!BUNDLE)
     return svelteReadme({
-      minify: !DEV,
-      svelte: { compilerOptions: { immutable: true } },
       plugins: [
         DEV &&
         serve({

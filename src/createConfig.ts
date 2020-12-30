@@ -128,10 +128,18 @@ interface CreateConfigOptions {
 }
 
 export default function createConfig(opts: Partial<CreateConfigOptions>): InputOptions {
-  const minify = opts.minify === true;
+  const DEV = process.env.ROLLUP_WATCH === "true";
+  const minify = opts.minify === true || !DEV;
   const pkg = getPackageJSON();
   const hash = minify ? hashREADME() : "";
   const output_dir = opts.outDir || "dist";
+
+  console.log(`[createConfig] Running in ${DEV ? "development" : "production"}`);
+  console.log("[createConfig] options:");
+  console.group();
+  console.log("minify:", minify);
+  console.log("outDir:", output_dir);
+  console.groupEnd();
 
   const template = `
   <!DOCTYPE html>
@@ -155,6 +163,7 @@ export default function createConfig(opts: Partial<CreateConfigOptions>): InputO
 `;
 
   if (minify) fs.removeSync(output_dir);
+
   fs.ensureFileSync(`${output_dir}/index.html`);
   fs.writeFileSync(
     `${output_dir}/index.html`,
