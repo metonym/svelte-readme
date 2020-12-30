@@ -2,7 +2,7 @@
 
 <!-- TOC -->
 
-Relative URL: [Readme](./) 
+Relative URL: [Readme](./)
 
 Relative URL (anchor): [Usage](#usage)
 
@@ -11,12 +11,14 @@ Absolute URL: [svelte-readme](https://github.com/metonym/svelte-readme)
 Check out my cool component library.
 
 - level 1
-  - level 2
+  - level 1a
+  - level 1b
 
 ## Usage
 
 ### Basic
 
+<!-- prettier-ignore-start -->
 ```svelte
 <script>
   import Button from "my-svelte-component";
@@ -34,9 +36,10 @@ Check out my cool component library.
 <h1>{count}</h1>
 
 {#each items as item}
-{item}
+  {item}
 {/each}
 ```
+<!-- prettier-ignore-end -->
 
 ### Usage with X
 

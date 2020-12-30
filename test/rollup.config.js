@@ -11,12 +11,13 @@ export default () => {
   if (!BUNDLE)
     return svelteReadme({
       minify: !DEV,
+      svelte: { compilerOptions: { immutable: true } },
       plugins: [
         DEV &&
-          serve({
-            contentBase: "dist",
-            port: 5000,
-          }),
+        serve({
+          contentBase: "dist",
+          port: 5000,
+        }),
       ],
     });
 

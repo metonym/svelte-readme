@@ -5,33 +5,41 @@
   "description": "Use your README.md file for Svelte component documentation",
   "author": "Eric Liu (https://github.com/metonym)",
   "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
-    "dev": "node scripts/preprocessStyles && rollup -cw",
-    "prepack": "rollup -c"
-  },
-  "peerDependencies": {
-    "svelte": "^3.20.x"
+    "preprocess": "node scripts/preprocessStyles",
+    "dev": "yarn preprocess && tsc -w",
+    "prepack": "yarn preprocess && tsc"
   },
   "dependencies": {
-    "@rollup/plugin-node-resolve": "^10.0.0",
+    "@rollup/plugin-node-resolve": "^11.0.1",
     "@rollup/plugin-virtual": "^2.0.3",
     "fs-extra": "^9.0.1",
     "html-minifier": "^4.0.0",
     "is-relative-url": "^3.0.0",
-    "markdown-it": "^12.0.2",
+    "markdown-it": "^12.0.4",
     "markdown-it-anchor": "^6.0.1",
     "prettier": "^2.2.1",
-    "prettier-plugin-svelte": "^1.4.1",
+    "prettier-plugin-svelte": "^1.4.2",
     "prism-svelte": "^0.4.7",
     "prismjs": "^1.22.0",
-    "rollup": "^2.33.3",
-    "rollup-plugin-svelte": "^6.1.1",
+    "rollup": "^2.35.1",
+    "rollup-plugin-svelte": "^7.0.0",
     "rollup-plugin-terser": "^7.0.2"
   },
   "devDependencies": {
+    "@types/fs-extra": "^9.0.6",
+    "@types/html-minifier": "^4.0.0",
+    "@types/markdown-it": "^12.0.0",
+    "@types/markdown-it-anchor": "^4.0.4",
+    "@types/prettier": "^2.1.6",
+    "@types/prismjs": "^1.16.2",
+    "@types/rollup__plugin-virtual": "^2.0.1",
     "github-markdown-css": "4.0.0",
-    "postcss": "^8.1.10",
-    "svelte": "^3.30.0"
+    "postcss": "^8.2.2",
+    "svelte": "^3.31.0",
+    "ts-node-dev": "^1.1.1",
+    "typescript": "^4.1.3"
   },
   "repository": {
     "type": "git",
@@ -39,7 +47,7 @@
   },
   "homepage": "https://github.com/metonym/svelte-readme",
   "bugs": "https://github.com/metonym/svelte-readme/issues",
-  "keywords": [],
+  "keywords": ["svelte", "svelte-component", "documentation"],
   "files": [
     "dist"
   ],

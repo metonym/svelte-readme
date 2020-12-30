@@ -6,15 +6,24 @@ import Prism from "prismjs";
 import "prismjs/components/prism-bash";
 import "prism-svelte";
 import isRelativeUrl from "is-relative-url";
+import { PreprocessorGroup } from "svelte/types/compiler/preprocess";
+import { Node } from "estree-walker";
 
-const aliases = {
+const aliases: Record<string, string> = {
   sh: "bash",
   js: "javascript",
 };
 
-let md;
+let md: Markdown;
 
-export function preprocessReadme(opts) {
+interface PreprocessReadmeOptions {
+  name: string;
+  svelte: string;
+  prefixUrl: string;
+  homepage: string;
+}
+
+export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<PreprocessorGroup, "markup"> {
   const prefixUrl = opts.prefixUrl || `${opts.homepage}/tree/master/`;
 
   if (!md) {
@@ -53,6 +62,7 @@ export function preprocessReadme(opts) {
   }
 
   return {
+    // @ts-ignore
     markup: ({ content, filename }) => {
       if (/node_modules/.test(filename) || !filename.endsWith(".md")) return null;
 
@@ -68,10 +78,10 @@ export function preprocessReadme(opts) {
       let result = md.render(content);
       let cursor = 0;
 
-      const ast = parse(result);
+      const ast = (parse(result) as unknown) as Node;
 
       let headings = [];
-      let prev;
+      let prev: undefined | "h2" | "h3" = undefined;
 
       walk(ast, {
         enter(node, parent) {
@@ -93,6 +103,7 @@ export function preprocessReadme(opts) {
           }
 
           if (node.type === "Element" && node.name === "h2") {
+            // @ts-ignore
             const id = node.attributes.find((attr) => attr.name === "id").value[0].raw;
 
             if (id === "table-of-contents") return;
@@ -111,6 +122,7 @@ export function preprocessReadme(opts) {
           }
 
           if (node.type === "Element" && node.name === "h3") {
+            // @ts-ignore
             const id = node.attributes.find((attr) => attr.name === "id").value[0].raw;
             const text = node.children[0].raw;
 
@@ -128,10 +140,10 @@ export function preprocessReadme(opts) {
           if (node.type === "Attribute" && node.name === "data-svelte") {
             const raw_value = node.value[0].raw;
             const value = decodeURI(raw_value);
-            const value_ast = parse(value);
+            const value_ast = (parse(value) as unknown) as Node;
             const markup =
               `<div class="code-fence">` + value.slice(value_ast.html.start, value_ast.html.end) + "</div>";
-            const replace = result.slice(parent.start + cursor, parent.end + cursor);
+            const replace = result.slice(parent!.start + cursor, parent!.end + cursor);
             result = result.replace(replace, markup + replace.replace(raw_value, ""));
             cursor += markup.length - raw_value.length;
 
@@ -156,10 +168,9 @@ export function preprocessReadme(opts) {
       );
 
       return {
-        code: `
-            <script>${script_content}</script>
-            <style>${style_content}</style>
-            <main class="markdown-body">${result}</main>`,
+        code: `<script>${script_content}</script>
+              <style>${style_content}</style>
+              <main class="markdown-body">${result}</main>`,
       };
     },
   };

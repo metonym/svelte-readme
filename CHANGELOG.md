@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 **Fixes**
 
-- only add heading to TOC if text is defined
+- Add heading to TOC if text is defined
 
 ## [1.3.0](https://github.com/metonym/svelte-readme/releases/tag/v1.3.0) - 2020-12-21
 

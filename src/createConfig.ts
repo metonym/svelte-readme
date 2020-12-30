@@ -1,5 +1,5 @@
 import resolve from "@rollup/plugin-node-resolve";
-import rollupPluginSvelte from "rollup-plugin-svelte";
+import rollupPluginSvelte, { Options as RollupPluginSvelteOptions } from "rollup-plugin-svelte";
 import virtual from "@rollup/plugin-virtual";
 import { terser } from "rollup-plugin-terser";
 import { preprocessReadme } from "./preprocessReadme";
@@ -8,6 +8,7 @@ import path from "path";
 import { createHash } from "crypto";
 import htmlminifier from "html-minifier";
 import { css } from "./style";
+import { Plugin, OutputOptions, InputOptions } from "rollup";
 
 function hashREADME() {
   try {
@@ -24,6 +25,7 @@ function getPackageJSON() {
   try {
     const path_pkg = path.join(process.cwd(), "package.json");
     const pkg = JSON.parse(fs.readFileSync(path_pkg, "utf-8"));
+
     if (!pkg.name) throw Error(`Package name is required as "name".`);
     if (!pkg.svelte) throw Error(`Svelte code entry is required as "svelte".`);
 
@@ -75,19 +77,57 @@ const custom_css = `
   }
 `;
 
-/**
- * createConfig
- * @param {Object} opts
- * @param {boolean} opts.minify - set to `true` to minify the HTML/JS
- * @param {string} opts.outDir - set the folder to emit the files
- * @param {string} opts.style - custom CSS appended to the <style> block
- * @param {boolean} opts.disableDefaultCSS - set to `true` to omit the default GitHub styles
- * @param {string} opts.prefixUrl - Value to prepend to relative URLs (i.e. GitHub repo URL)
- * @param {object} opts.svelte - `rollup-plugin-svelte` options
- * @param {Array} opts.plugins - Rollup plugins
- * @param {object} opts.output - Rollup output options
- */
-export default function createConfig(opts) {
+interface CreateConfigOptions {
+  /**
+   * set to `true` to minify the HTML/JS
+   * @default false
+   */
+  minify: boolean;
+
+  /**
+   * set the folder to emit the files
+   * @default "dist"
+   */
+  outDir: string;
+
+  /**
+   * custom CSS appended to the <style> block
+   * @default ""
+   */
+  style: string;
+
+  /**
+   * set to `true` to omit the default GitHub styles
+   * @default false
+   */
+  disableDefaultCSS: boolean;
+
+  /**
+   * value to prepend to relative URLs (i.e. GitHub repo URL)
+   * @default undefined
+   */
+  prefixUrl: string;
+
+  /**
+   * `rollup-plugin-svelte` options
+   * @default {}
+   */
+  svelte: RollupPluginSvelteOptions;
+
+  /**
+   * Rollup plugins
+   * @default {[]}
+   */
+  plugins: Plugin[];
+
+  /**
+   * Rollup output options
+   * @default {{}}
+   */
+  output: OutputOptions;
+}
+
+export default function createConfig(opts: Partial<CreateConfigOptions>): InputOptions {
   const minify = opts.minify === true;
   const pkg = getPackageJSON();
   const hash = minify ? hashREADME() : "";
@@ -131,6 +171,7 @@ export default function createConfig(opts) {
   return {
     watch: { clearScreen: false },
     input: "entry",
+    // @ts-ignore
     output: {
       format: "iife",
       name: "app",
@@ -151,6 +192,6 @@ export default function createConfig(opts) {
       resolve(),
       ...(opts.plugins || []),
       minify && terser(),
-    ].filter(Boolean),
+    ].filter(Boolean) as Plugin[],
   };
 }

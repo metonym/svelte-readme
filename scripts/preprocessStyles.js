@@ -25,5 +25,5 @@ const plugin = postcss.plugin("postcss-plugin", () => {
 postcss(plugin)
   .process(github_css, { from: undefined })
   .then((result) => {
-    fs.writeFileSync("src/style.js", `export const css = \`${result.css}\`;`);
+    fs.writeFileSync("src/style.ts", `export const css = \`${result.css}\`;`);
   });
