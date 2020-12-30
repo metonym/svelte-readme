@@ -9,6 +9,7 @@ import { createHash } from "crypto";
 import htmlminifier from "html-minifier";
 import { css } from "./style";
 import { Plugin, OutputOptions, InputOptions } from "rollup";
+import { PreprocessorGroup } from "svelte/types/compiler/preprocess";
 
 function hashREADME() {
   try {
@@ -134,30 +135,25 @@ export default function createConfig(opts: Partial<CreateConfigOptions>): InputO
   const hash = minify ? hashREADME() : "";
   const output_dir = opts.outDir || "dist";
   const svelte: Partial<RollupPluginSvelteOptions> = {
+    emitCss: opts.svelte?.emitCss ?? false,
     compilerOptions: {
       dev: DEV,
       immutable: true,
+      ...opts.svelte?.compilerOptions,
     },
-    extensions: [".svelte", ".md"],
-    preprocess: [preprocessReadme({ ...pkg, prefixUrl: opts.prefixUrl })],
+    extensions: [".svelte", ".md", ...(opts.svelte?.extensions ?? [])],
+    preprocess: [
+      ...((opts.svelte?.preprocess as PreprocessorGroup[]) ?? []),
+      preprocessReadme({ ...pkg, prefixUrl: opts.prefixUrl }),
+    ],
   };
-
-  if (opts.svelte?.compilerOptions) {
-    svelte.compilerOptions = {
-      ...svelte.compilerOptions,
-      ...opts.svelte.compilerOptions,
-    };
-  }
-
-  if (opts.svelte?.extensions) {
-    svelte.extensions = [...svelte.extensions!, ...opts.svelte.extensions];
-  }
 
   console.log(`[createConfig] Running in ${DEV ? "development" : "production"}`);
   console.log("[createConfig] options:");
   console.group();
   console.log("minify:", minify);
   console.log("outDir:", output_dir);
+  console.log("svelte:", svelte);
   console.groupEnd();
 
   const template = `
