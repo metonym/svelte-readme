@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.1.2](https://github.com/metonym/svelte-readme/releases/tag/v2.1.2) - 2020-12-31
 
-- Initializ default parameter value in `createConfig`
+- Initialize default parameter value in `createConfig`
 
 ## [2.1.1](https://github.com/metonym/svelte-readme/releases/tag/v2.1.1) - 2020-12-30
 
