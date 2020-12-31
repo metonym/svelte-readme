@@ -128,7 +128,7 @@ interface CreateConfigOptions {
   output: OutputOptions;
 }
 
-export default function createConfig(opts: Partial<CreateConfigOptions>): InputOptions {
+export default function createConfig(opts: Partial<CreateConfigOptions> = {}): InputOptions {
   const DEV = process.env.ROLLUP_WATCH === "true";
   const minify = opts.minify === true || !DEV;
   const pkg = getPackageJSON();
