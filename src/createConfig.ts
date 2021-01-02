@@ -35,6 +35,7 @@ function getPackageJSON() {
       svelte: pkg.svelte,
       description: pkg.description,
       homepage: pkg.homepage,
+      repoUrl: pkg.repository?.url,
     };
   } catch (error) {
     console.log(error);

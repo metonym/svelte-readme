@@ -1,5 +1,7 @@
 # my-svelte-component
 
+<!-- REPO_URL -->
+
 <!-- TOC -->
 
 Relative URL: [Readme](./)

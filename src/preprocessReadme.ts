@@ -22,6 +22,7 @@ interface PreprocessReadmeOptions {
   svelte: string;
   prefixUrl: string;
   homepage: string;
+  repoUrl: string;
 }
 
 export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<PreprocessorGroup, "markup"> {
@@ -66,6 +67,10 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
     // @ts-ignore
     markup: ({ content, filename }) => {
       if (/node_modules/.test(filename) || !filename.endsWith(".md")) return null;
+
+      if (opts.repoUrl) {
+        content = content.replace("<!-- REPO_URL -->", `[GitHub repo](${opts.repoUrl})`);
+      }
 
       content = content.replace(
         "<!-- TOC -->",

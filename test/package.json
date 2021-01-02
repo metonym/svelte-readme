@@ -19,5 +19,9 @@
     "serve": "^11.3.2",
     "svelte": "^3.29.7"
   },
-  "homepage": "https://github.com/metonym/svelte-readme"
+  "homepage": "https://github.com/metonym/svelte-readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/metonym/svelte-readme"
+  }
 }
