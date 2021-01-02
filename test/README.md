@@ -33,6 +33,8 @@ Check out my cool component library.
   Increment the count
 </Button>
 
+<button type="button">Button</button>
+
 <h1>{count}</h1>
 
 {#each items as item}

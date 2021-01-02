@@ -170,8 +170,8 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
 
       return {
         code: `<script>${script_content}</script>
-              <style>${style_content}</style>
-              <main class="markdown-body">${result}</main>`,
+               <style>${style_content}</style>
+               <main class="markdown-body">${result}</main>`,
       };
     },
   };
