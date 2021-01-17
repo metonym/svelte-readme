@@ -154,6 +154,11 @@ interface CreateConfigOptions {
    * @default {{}}
    */
   output: OutputOptions;
+
+  /**
+   * Append content to the `head` element in `index.html`
+   */
+  head: string;
 }
 
 export default function createConfig(opts: Partial<CreateConfigOptions> = {}): InputOptions {
@@ -197,6 +202,7 @@ export default function createConfig(opts: Partial<CreateConfigOptions> = {}): I
         ${custom_css}
         ${opts.style || ""}
       </style>
+      ${opts?.head ?? ""}
     </head>
     <body>
       <noscript>You need to enable JavaScript to run this app.</noscript>
