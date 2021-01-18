@@ -7,7 +7,7 @@ import fs from "fs-extra";
 import path from "path";
 import { createHash } from "crypto";
 import htmlminifier from "html-minifier";
-import { css } from "./style";
+import { css as github_styles } from "./style";
 import { Plugin, OutputOptions, InputOptions } from "rollup";
 import { PreprocessorGroup } from "svelte/types/compiler/preprocess";
 
@@ -78,32 +78,7 @@ const custom_css = `
     main { padding: 15px; }
   }
 
-  /**
-    * GitHub Primer button CSS
-    * https://primer.style/css/components/buttons
-    **/
-  .code-fence button {
-    font-family: inherit;
-    text-transform: none;
-    position: relative;
-    display: inline-block;
-    padding: 5px 16px;
-    font-size: 14px;
-    font-weight: 500;
-    line-height: 20px;
-    white-space: nowrap;
-    vertical-align: middle;
-    cursor: pointer;
-    user-select: none;
-    border: 1px solid;
-    border-radius: 6px;
-    appearance: none;
-    color: #24292e;
-    background-color: #fafbfc;
-    border-color: rgba(27,31,35,0.15);
-    box-shadow: 0 1px 0 rgba(27,31,35,0.04), inset 0 1px 0 rgba(255,255,255,0.25);
-    transition: background-color 0.2s cubic-bezier(0.3, 0, 0.5, 1);
-  }
+  
 `;
 
 interface CreateConfigOptions {
@@ -188,6 +163,37 @@ export default function createConfig(opts: Partial<CreateConfigOptions> = {}): I
   console.log("outDir:", output_dir);
   console.log("svelte:", svelte);
   console.groupEnd();
+
+  let css = github_styles;
+
+  if (!opts.disableDefaultCSS) {
+    css += `/**
+    * GitHub Primer button CSS
+    * https://primer.style/css/components/buttons
+    **/
+  .code-fence button {
+    font-family: inherit;
+    text-transform: none;
+    position: relative;
+    display: inline-block;
+    padding: 5px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+    white-space: nowrap;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+    border: 1px solid;
+    border-radius: 6px;
+    appearance: none;
+    color: #24292e;
+    background-color: #fafbfc;
+    border-color: rgba(27,31,35,0.15);
+    box-shadow: 0 1px 0 rgba(27,31,35,0.04), inset 0 1px 0 rgba(255,255,255,0.25);
+    transition: background-color 0.2s cubic-bezier(0.3, 0, 0.5, 1);
+  }`;
+  }
 
   const template = `
   <!DOCTYPE html>
