@@ -5,19 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.0.0](https://github.com/metonym/svelte-readme/releases/tag/v3.0.0) - 2020-01-18
+## [3.1.0](https://github.com/metonym/svelte-readme/releases/tag/v3.1.0) - 2021-03-20
+
+- add `28px` minimum height to `p` tags
+- add `48px` margin bottom to `pre` tags
+
+## [3.0.0](https://github.com/metonym/svelte-readme/releases/tag/v3.0.0) - 2021-01-18
 
 - Upgrade `prettier-plugin-svelte` version from ^1.4.2 to ^2.1.0
 
-## [2.3.1](https://github.com/metonym/svelte-readme/releases/tag/v2.3.1) - 2020-01-17
+## [2.3.1](https://github.com/metonym/svelte-readme/releases/tag/v2.3.1) - 2021-01-17
 
 - Append code-fence button only if `disableDefaultCSS` is false
 
-## [2.3.0](https://github.com/metonym/svelte-readme/releases/tag/v2.3.0) - 2020-01-17
+## [2.3.0](https://github.com/metonym/svelte-readme/releases/tag/v2.3.0) - 2021-01-17
 
 - Support head option in `createConfig`
 
-## [2.2.0](https://github.com/metonym/svelte-readme/releases/tag/v2.2.0) - 2020-01-02
+## [2.2.0](https://github.com/metonym/svelte-readme/releases/tag/v2.2.0) - 2021-01-02
 
 - Add ability to link to git repo url if `package.json#repository.url` is specified
 - Style button by default
