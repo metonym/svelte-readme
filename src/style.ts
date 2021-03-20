@@ -509,4 +509,7 @@ pre code {
   background-color: initial;
   border: 0;
 }
+
+  p { min-height: 28px; }
+  pre { margin-bottom: 48px; }
 `;

@@ -22,8 +22,13 @@ const plugin = postcss.plugin("postcss-plugin", () => {
   };
 });
 
+const custom_css = `
+  p { min-height: 28px; }
+  pre { margin-bottom: 48px; }
+`;
+
 postcss(plugin)
   .process(github_css, { from: undefined })
   .then((result) => {
-    fs.writeFileSync("src/style.ts", `export const css = \`${result.css}\`;`);
+    fs.writeFileSync("src/style.ts", `export const css = \`${result.css}${custom_css}\`;`);
   });

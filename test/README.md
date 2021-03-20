@@ -1,6 +1,12 @@
 # my-svelte-component
 
+[![NPM][npm]][npm-url]
+
+> Block quote
+
 <!-- REPO_URL -->
+
+Description text.
 
 <!-- TOC -->
 
@@ -15,6 +21,14 @@ Check out my cool component library.
 - level 1
   - level 1a
   - level 1b
+
+## Install
+
+```bash
+yarn add -D svelte-readme
+# OR
+npm i -D svelte-readme
+```
 
 ## Usage
 
@@ -62,3 +76,6 @@ localStorage.getItem("custom-theme-key");
 ## License
 
 [MIT](../LICENSE)
+
+[npm]: https://img.shields.io/npm/v/svelte-readme.svg?color=%23ff3e00&style=for-the-badge
+[npm-url]: https://npmjs.com/package/svelte-readme
