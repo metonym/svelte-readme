@@ -69,6 +69,12 @@ npm i -D svelte-readme
 localStorage.getItem("custom-theme-key");
 ```
 
+```ts
+interface Interface {
+  key: "value";
+}
+```
+
 ## [rollup.config.js](rollup.config.js)
 
 [package.json](package.json)

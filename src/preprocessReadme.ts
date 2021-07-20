@@ -14,7 +14,8 @@ import { URL } from "url";
 const aliases: Record<string, string> = {
   sh: "bash",
   js: "javascript",
-  ts: "typescript"
+  ts: "typescript",
+  tsx: "typescript"
 };
 
 let md: Markdown;
