@@ -5,6 +5,7 @@ import prettier from "prettier";
 import Prism from "prismjs";
 import "prismjs/components/prism-bash";
 import "prismjs/components/prism-typescript";
+import "prismjs/components/prism-jsx";
 import "prism-svelte";
 import isRelativeUrl from "is-relative-url";
 import { PreprocessorGroup } from "svelte/types/compiler/preprocess";
