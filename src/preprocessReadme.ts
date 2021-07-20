@@ -4,6 +4,8 @@ import markdownItAnchor from "markdown-it-anchor";
 import prettier from "prettier";
 import Prism from "prismjs";
 import "prismjs/components/prism-bash";
+import "prismjs/components/prism-typescript";
+import "prismjs/components/prism-jsx";
 import "prism-svelte";
 import isRelativeUrl from "is-relative-url";
 import { PreprocessorGroup } from "svelte/types/compiler/preprocess";
@@ -13,6 +15,8 @@ import { URL } from "url";
 const aliases: Record<string, string> = {
   sh: "bash",
   js: "javascript",
+  ts: "typescript",
+  tsx: "typescript"
 };
 
 let md: Markdown;
@@ -55,7 +59,7 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
           )}\`}</pre>`;
         } catch (e) {
           console.error(`Could not highlight language "${lang}".`);
-          return "";
+          return `<pre class="language-${lang}">{@html \`${source}\`}</pre>`;
         }
       },
     });

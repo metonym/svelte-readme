@@ -44,6 +44,12 @@ function getPackageJSON() {
 }
 
 const custom_css = `
+  .language-typescript { color: #0550ae; }
+  .language-typescript .string { color: #0a3069; }
+  .language-typescript .number { color: #005cc5; }
+  .language-typescript .class-name { color: #24292f; }
+  .token.keyword { color: #d73a49; }
+
   .token.language-javascript { color: #24292e; }
   .token.language-javascript .function { color: #005cc5; }
   .token.language-javascript .string { color: #032f62; }
