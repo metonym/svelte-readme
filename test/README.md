@@ -75,6 +75,15 @@ interface Interface {
 }
 ```
 
+## YAML highlighting
+
+```yaml
+- ul [data-accordion] # Accordion
+  - li [data-accordion-item] # AccordionItem
+    - button
+    - [role="region"]
+```
+
 ## [rollup.config.js](rollup.config.js)
 
 [package.json](package.json)

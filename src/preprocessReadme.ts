@@ -6,6 +6,7 @@ import Prism from "prismjs";
 import "prismjs/components/prism-bash";
 import "prismjs/components/prism-typescript";
 import "prismjs/components/prism-jsx";
+import "prismjs/components/prism-yaml";
 import "prism-svelte";
 import isRelativeUrl from "is-relative-url";
 import { PreprocessorGroup } from "svelte/types/compiler/preprocess";
@@ -16,7 +17,8 @@ const aliases: Record<string, string> = {
   sh: "bash",
   js: "javascript",
   ts: "typescript",
-  tsx: "typescript"
+  tsx: "typescript",
+  yml: "yaml",
 };
 
 let md: Markdown;

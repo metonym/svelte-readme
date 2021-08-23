@@ -44,6 +44,7 @@ function getPackageJSON() {
 }
 
 const custom_css = `
+  .language-yaml { color: #0550ae; }
   .language-typescript { color: #0550ae; }
   .language-typescript .string { color: #0a3069; }
   .language-typescript .number { color: #005cc5; }
