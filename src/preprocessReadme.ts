@@ -120,7 +120,11 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
 
             if (id === "table-of-contents") return;
 
-            const text = node.children[0].raw;
+            const text = node.children
+              .flatMap((child: any) => (child.type === "Element" ? child.children : child))
+              .filter((child: any) => child.type === "Text")
+              .map((child: any) => child.raw)
+              .join("");
 
             if (text !== undefined) {
               if (prev === "h3") {

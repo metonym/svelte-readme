@@ -88,6 +88,8 @@ interface Interface {
 
 [package.json](package.json)
 
+## Rendering with `svelte:component`
+
 ## License
 
 [MIT](../LICENSE)
