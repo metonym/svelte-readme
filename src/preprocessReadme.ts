@@ -34,6 +34,8 @@ interface PreprocessReadmeOptions {
 export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<PreprocessorGroup, "markup"> {
   const prefixUrl = opts.prefixUrl || `${opts.homepage}/tree/master/`;
 
+  let script_content: string[] = [];
+
   if (!md) {
     md = new Markdown({
       html: true,
@@ -41,6 +43,17 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
       typographer: true,
       highlight(source, lang) {
         if (lang === "svelte") {
+          const { instance } = parse(source);
+
+          script_content = [
+            ...script_content,
+            ...source
+              .slice(instance.start, instance.end)
+              .split("\n")
+              .slice(1, -1)
+              .map((line) => line.trim().replace(new RegExp(opts.name!, "g"), opts.svelte!)),
+          ];
+
           const regex = new RegExp('"' + opts.name + '"', "g");
           const modifiedSource = encodeURI(source.replace(regex, '"' + opts.svelte + '"'));
           const formattedCode = prettier.format(source, {
@@ -85,7 +98,6 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
       `
       );
 
-      let script_content = "";
       let style_content = "";
       let result = md.render(content);
       let cursor = 0;
@@ -162,14 +174,6 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
             const replace = result.slice(parent!.start + cursor, parent!.end + cursor);
             result = result.replace(replace, markup + replace.replace(raw_value, ""));
             cursor += markup.length - raw_value.length;
-
-            walk(value_ast, {
-              enter(node) {
-                if (node.type === "Script") {
-                  script_content += value.slice(node.content.start, node.content.end);
-                }
-              },
-            });
           }
         },
       });
@@ -184,7 +188,7 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
       );
 
       return {
-        code: `<script>${script_content}</script>
+        code: `<script>${[...new Set(script_content)].join("")}</script>
                <style>${style_content}</style>
                <main class="markdown-body">${result}</main>`,
       };

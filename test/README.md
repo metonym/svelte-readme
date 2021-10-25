@@ -35,6 +35,7 @@ npm i -D svelte-readme
 ### Basic
 
 <!-- prettier-ignore-start -->
+
 ```svelte
 <script>
   import Button from "my-svelte-component";
@@ -45,9 +46,13 @@ npm i -D svelte-readme
   $: document.body.className = count + "";
 </script>
 
-<Button attribute="value" on:click={() => { count++; }}>
-  Increment the count
-</Button>
+<Button
+  attribute="value"
+  on:click={() => {
+    count++;
+  }}
+>Increment the count</Button
+>
 
 <button type="button">Button</button>
 
@@ -56,8 +61,24 @@ npm i -D svelte-readme
 {#each items as item}
   {item}
 {/each}
+
 ```
-<!-- prettier-ignore-end -->
+
+Second script block:
+
+```svelte
+<script>
+  import Button from "my-svelte-component";
+</script>
+
+<Button
+  attribute="value"
+  on:click={() => {
+    console.log("hello world");
+  }}
+>Print 'hello world'</Button>
+
+```
 
 ### Usage with X
 

@@ -2,6 +2,7 @@
   "compilerOptions": {
     "declaration": true,
     "esModuleInterop": true,
+    "downlevelIteration": true,
     "moduleResolution": "node",
     "lib": ["ESNext"],
     "outDir": "dist",
