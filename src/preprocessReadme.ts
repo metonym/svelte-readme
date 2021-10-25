@@ -45,14 +45,16 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
         if (lang === "svelte") {
           const { instance } = parse(source);
 
-          script_content = [
-            ...script_content,
-            ...source
-              .slice(instance.start, instance.end)
-              .split("\n")
-              .slice(1, -1)
-              .map((line) => line.trim().replace(new RegExp(opts.name!, "g"), opts.svelte!)),
-          ];
+          if (instance !== undefined) {
+            script_content = [
+              ...script_content,
+              ...source
+                .slice(instance.start, instance.end)
+                .split("\n")
+                .slice(1, -1)
+                .map((line) => line.trim().replace(new RegExp(opts.name!, "g"), opts.svelte!)),
+            ];
+          }
 
           const regex = new RegExp('"' + opts.name + '"', "g");
           const modifiedSource = encodeURI(source.replace(regex, '"' + opts.svelte + '"'));
