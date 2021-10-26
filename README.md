@@ -145,6 +145,19 @@ interface CreateConfigOptions {
 }
 ```
 
+## Limitations
+
+### Comments in script blocks
+
+Single line comments in Svelte script blocks are not supported.
+
+Use multi-line comments instead.
+
+```diff
+- let toggled; // comment
++ let toggled; /** comment */
+```
+
 ## Prior art
 
 This project is inspired by [MDsveX](https://github.com/pngwn/mdsvex).

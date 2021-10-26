@@ -69,14 +69,32 @@ Second script block:
 ```svelte
 <script>
   import Button from "my-svelte-component";
+
+   
+  let toggled; /** comment */
 </script>
 
 <Button
+  bind:toggled
   attribute="value"
   on:click={() => {
     console.log("hello world");
   }}
->Print 'hello world'</Button>
+>Print 'hello world'</Button
+>
+
+{toggled}
+
+```
+
+```svelte no-eval
+<script>
+  import { onMount } from "svelte";
+
+  onMount(() => {
+    document.title = 'title';
+  });
+</script>
 
 ```
 
