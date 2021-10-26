@@ -41,11 +41,12 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
       html: true,
       linkify: true,
       typographer: true,
-      highlight(source, lang) {
+      highlight(source, lang, attrs) {
         if (lang === "svelte") {
+          const noEval = /no-eval/.test(attrs);
           const { instance } = parse(source);
 
-          if (instance !== undefined) {
+          if (instance !== undefined && !noEval) {
             script_content = [
               ...script_content,
               ...source
@@ -64,7 +65,9 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
             svelteBracketNewLine: true,
           });
           const svelteCode = Prism.highlight(formattedCode, Prism.languages.svelte, "svelte");
-          return `<pre class="language-${lang}" data-svelte="${modifiedSource}">{@html \`${svelteCode}\`}</pre>`;
+          return `<pre class="language-${lang}" ${
+            noEval ? "" : `data-svelte="${modifiedSource}"`
+          }>{@html \`${svelteCode}\`}</pre>`;
         }
 
         try {

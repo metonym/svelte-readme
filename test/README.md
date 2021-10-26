@@ -87,6 +87,17 @@ Second script block:
 
 ```
 
+```svelte eval
+<script>
+  import { onMount } from "svelte";
+
+  onMount(() => {
+    console.log('eval')
+  });
+</script>
+
+```
+
 ```svelte no-eval
 <script>
   import { onMount } from "svelte";
