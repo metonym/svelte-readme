@@ -70,7 +70,6 @@ Second script block:
 <script>
   import Button from "my-svelte-component";
 
-   
   let toggled; /** comment */
 </script>
 
@@ -92,7 +91,7 @@ Second script block:
   import { onMount } from "svelte";
 
   onMount(() => {
-    console.log('eval')
+    console.log("eval");
   });
 </script>
 
@@ -103,7 +102,18 @@ Second script block:
   import { onMount } from "svelte";
 
   onMount(() => {
-    document.title = 'title';
+    document.title = "title";
+  });
+</script>
+
+```
+
+```svelte no-display
+<script>
+  import { onMount } from "svelte";
+
+  onMount(() => {
+    console.log("eval no display");
   });
 </script>
 
