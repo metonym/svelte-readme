@@ -150,6 +150,10 @@ interface Interface {
 
 ## Rendering with `svelte:component`
 
+## `svelte:component`
+
+## `truncate` action
+
 ## License
 
 [MIT](../LICENSE)
