@@ -31,6 +31,14 @@ interface PreprocessReadmeOptions {
   repoUrl: string;
 }
 
+const getChildNodeText = (node: any) => {
+  return node.children
+    .flatMap((child: any) => (child.type === "Element" ? child.children : child))
+    .filter((child: any) => child.type === "Text")
+    .map((child: any) => child.raw)
+    .join("");
+};
+
 export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<PreprocessorGroup, "markup"> {
   const prefixUrl = opts.prefixUrl || `${opts.homepage}/tree/master/`;
 
@@ -138,11 +146,7 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
 
             if (id === "table-of-contents") return;
 
-            const text = node.children
-              .flatMap((child: any) => (child.type === "Element" ? child.children : child))
-              .filter((child: any) => child.type === "Text")
-              .map((child: any) => child.raw)
-              .join("");
+            const text = getChildNodeText(node);
 
             if (text !== undefined) {
               if (prev === "h3") {
@@ -158,7 +162,7 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
           if (node.type === "Element" && node.name === "h3") {
             // @ts-ignore
             const id = node.attributes.find((attr) => attr.name === "id").value[0].raw;
-            const text = node.children[0].raw;
+            const text = getChildNodeText(node);
 
             if (text !== undefined) {
               if (prev === "h2") {

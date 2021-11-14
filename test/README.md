@@ -148,9 +148,9 @@ interface Interface {
 
 [package.json](package.json)
 
-## Rendering with `svelte:component`
+### Rendering with `svelte:component`
 
-## `svelte:component`
+### `svelte:component`
 
 ## `truncate` action
 
