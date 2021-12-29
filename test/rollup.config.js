@@ -12,10 +12,10 @@ export default () => {
     return svelteReadme({
       plugins: [
         DEV &&
-        serve({
-          contentBase: "dist",
-          port: 5000,
-        }),
+          serve({
+            contentBase: "dist",
+            port: 5000,
+          }),
       ],
     });
 

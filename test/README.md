@@ -34,8 +34,6 @@ npm i -D svelte-readme
 
 ### Basic
 
-<!-- prettier-ignore-start -->
-
 ```svelte
 <script>
   import Button from "my-svelte-component";
@@ -51,8 +49,9 @@ npm i -D svelte-readme
   on:click={() => {
     count++;
   }}
->Increment the count</Button
 >
+  Increment the count
+</Button>
 
 <button type="button">Button</button>
 
@@ -61,7 +60,6 @@ npm i -D svelte-readme
 {#each items as item}
   {item}
 {/each}
-
 ```
 
 Second script block:
@@ -78,12 +76,10 @@ Second script block:
   attribute="value"
   on:click={() => {
     console.log("hello world");
-  }}
->Print 'hello world'</Button
+  }}>Print 'hello world'</Button
 >
 
 {toggled}
-
 ```
 
 ```svelte eval
@@ -94,7 +90,6 @@ Second script block:
     console.log("eval");
   });
 </script>
-
 ```
 
 ```svelte no-eval
@@ -105,7 +100,6 @@ Second script block:
     document.title = "title";
   });
 </script>
-
 ```
 
 ```svelte no-display
@@ -116,7 +110,6 @@ Second script block:
     console.log("eval no display");
   });
 </script>
-
 ```
 
 ### Usage with X
