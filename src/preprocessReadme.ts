@@ -70,8 +70,6 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
           const modifiedSource = encodeURI(source.replace(regex, '"' + opts.svelte + '"'));
           const formattedCode = prettier.format(source, {
             parser: "svelte",
-            // @ts-ignore
-            svelteBracketNewLine: true,
           });
           const svelteCode = Prism.highlight(formattedCode, Prism.languages.svelte, "svelte");
           return `<pre class="language-${lang}" ${
@@ -116,7 +114,7 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
       let result = md.render(content);
       let cursor = 0;
 
-      const ast = (parse(result) as unknown) as Node;
+      const ast = parse(result) as unknown as Node;
 
       let headings = [];
       let prev: undefined | "h2" | "h3" = undefined;
@@ -178,7 +176,7 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
           if (node.type === "Attribute" && node.name === "data-svelte") {
             const raw_value = node.value[0].raw;
             const value = decodeURI(raw_value);
-            const value_ast = (parse(value) as unknown) as Node;
+            const value_ast = parse(value) as unknown as Node;
             const markup =
               `<div class="code-fence">` + value.slice(value_ast.html.start, value_ast.html.end) + "</div>";
             const replace = result.slice(parent!.start + cursor, parent!.end + cursor);
