@@ -74,10 +74,10 @@
   dependencies:
     "@types/node" "*"
 
-"@types/html-minifier@^4.0.0":
-  version "4.0.1"
-  resolved "https://registry.yarnpkg.com/@types/html-minifier/-/html-minifier-4.0.1.tgz#9486ffc144f8d7b8f75b07939c500ac3d73617a0"
-  integrity sha512-6u58FWQbWP45bsxVeMJo0yk2LEsjjZsCwn0JDe/i5Edk3L+b9TR5eZ2FGaMCrLdtGYpME5AGxUqv8o+3hWKogw==
+"@types/html-minifier@^4.0.2":
+  version "4.0.2"
+  resolved "https://registry.yarnpkg.com/@types/html-minifier/-/html-minifier-4.0.2.tgz#ea0b927ad0019821a2e9d14ba9c57d105b63cecc"
+  integrity sha512-4IkmkXJP/25R2fZsCHDX2abztXuQRzUAZq39PfCMz2loLFj8vS9y7aF6vDl58koXSTpsF+eL4Lc5Y4Aww/GCTQ==
   dependencies:
     "@types/clean-css" "*"
     "@types/relateurl" "*"
@@ -540,10 +540,10 @@ markdown-it-anchor@^6.0.1:
   resolved "https://registry.yarnpkg.com/markdown-it-anchor/-/markdown-it-anchor-6.0.1.tgz#f54b78757d0b61455faf8ced775b39498bd6d6f9"
   integrity sha512-8qX4r5R6AtXla9HKCouEQ40inw69O5jR4VUXlZySsBLxIXlsJ3Yi9JV6JWPU4ZdA8jWTGDDJjJYNLwQ0W4jCag==
 
-markdown-it@^12.0.4:
-  version "12.2.0"
-  resolved "https://registry.yarnpkg.com/markdown-it/-/markdown-it-12.2.0.tgz#091f720fd5db206f80de7a8d1f1a7035fd0d38db"
-  integrity sha512-Wjws+uCrVQRqOoJvze4HCqkKl1AsSh95iFAeQDwnyfxM09divCBSXlDR1uTvyUP3Grzpn4Ru8GeCxYPM8vkCQg==
+markdown-it@^12.3.0:
+  version "12.3.0"
+  resolved "https://registry.yarnpkg.com/markdown-it/-/markdown-it-12.3.0.tgz#11490c61b412b8f41530319c005ecdcd4367171f"
+  integrity sha512-T345UZZ6ejQWTjG6PSEHplzNy5m4kF6zvUpHVDv8Snl/pEU0OxIK0jGg8YLVNwJvT8E0YJC7/2UvssJDk/wQCQ==
   dependencies:
     argparse "^2.0.1"
     entities "~2.1.0"
@@ -638,15 +638,15 @@ postcss@^8.2.4:
     picocolors "^1.0.0"
     source-map-js "^0.6.2"
 
-prettier-plugin-svelte@^2.1.0:
-  version "2.4.0"
-  resolved "https://registry.yarnpkg.com/prettier-plugin-svelte/-/prettier-plugin-svelte-2.4.0.tgz#482bb6003bf1d5bd7ff002261a42a32b87d42d00"
-  integrity sha512-JwJ9bOz4XHLQtiLnX4mTSSDUdhu12WH8sTwy/XTDCSyPlah6IcV7NWeYBZscPEcceu2YnW8Y9sJCP40Z2UH9GA==
+prettier-plugin-svelte@^2.5.1:
+  version "2.5.1"
+  resolved "https://registry.yarnpkg.com/prettier-plugin-svelte/-/prettier-plugin-svelte-2.5.1.tgz#6c2f5e7fbe2aa208b340b75edc4fdfda33fb254c"
+  integrity sha512-IhZUcqr7Bg4LY15d87t9lDr7EyC0IPehkzH5ya5igG8zYwf3UYaYDFnVW2mckREaZyLREcH9YOouesmt4f5Ozg==
 
-prettier@^2.2.1:
-  version "2.4.1"
-  resolved "https://registry.yarnpkg.com/prettier/-/prettier-2.4.1.tgz#671e11c89c14a4cfc876ce564106c4a6726c9f5c"
-  integrity sha512-9fbDAXSBcc6Bs1mZrDYb3XKzDLm4EXXL9sC1LqKP5rZkT6KRr/rf9amVUcODVXgguK/isJz0d0hP72WeaKWsvA==
+prettier@^2.5.1:
+  version "2.5.1"
+  resolved "https://registry.yarnpkg.com/prettier/-/prettier-2.5.1.tgz#fff75fa9d519c54cf0fce328c1017d94546bc56a"
+  integrity sha512-vBZcPRUR5MZJwoyi3ZoyQlc1rXeEck8KgeC9AwwOn+exuxLxq5toTRDTSaVrXHxelDMHy9zlicw8u66yxoSUFg==
 
 prism-svelte@^0.4.7:
   version "0.4.7"
@@ -731,10 +731,10 @@ rollup@^1.31.1:
     "@types/node" "*"
     acorn "^7.1.0"
 
-rollup@^2.36.2:
-  version "2.58.3"
-  resolved "https://registry.yarnpkg.com/rollup/-/rollup-2.58.3.tgz#71a08138d9515fb65043b6a18618b2ed9ac8d239"
-  integrity sha512-ei27MSw1KhRur4p87Q0/Va2NAYqMXOX++FNEumMBcdreIRLURKy+cE2wcDJKBn0nfmhP2ZGrJkP1XPO+G8FJQw==
+rollup@^2.62.0:
+  version "2.62.0"
+  resolved "https://registry.yarnpkg.com/rollup/-/rollup-2.62.0.tgz#9e640b419fc5b9e0241844f6d55258bd79986ecc"
+  integrity sha512-cJEQq2gwB0GWMD3rYImefQTSjrPYaC6s4J9pYqnstVLJ1CHa/aZNVkD4Epuvg4iLeMA4KRiq7UM7awKK6j7jcw==
   optionalDependencies:
     fsevents "~2.3.2"
 
