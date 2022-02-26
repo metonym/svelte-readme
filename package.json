@@ -10,7 +10,7 @@
     "preprocess": "node scripts/preprocessStyles",
     "dev": "yarn preprocess && tsc -w",
     "prepack": "yarn preprocess && tsc",
-    "format": "prettier --write '.'"
+    "format": "prettier --ignore-path .gitignore --write ."
   },
   "dependencies": {
     "@rollup/plugin-node-resolve": "^11.1.0",
