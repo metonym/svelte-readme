@@ -30,5 +30,5 @@ const custom_css = `
 postcss(plugin)
   .process(github_css, { from: undefined })
   .then((result) => {
-    fs.writeFileSync("src/style.ts", `export const css = \`${result.css}${custom_css}\`;`);
+    fs.writeFileSync("src/style.ts", `export const css = \`${result.css}${custom_css}\`;\n`);
   });
