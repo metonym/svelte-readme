@@ -10,11 +10,13 @@
     "preprocess": "node scripts/preprocessStyles",
     "dev": "bun run preprocess && tsc -w",
     "prepack": "bun run preprocess && tsc",
-    "format": "biome format --write ."
+    "format": "biome format --write .",
+    "verify": "node scripts/verifyPreprocess.js"
   },
   "dependencies": {
     "@rollup/plugin-node-resolve": "^11.1.0",
     "@rollup/plugin-virtual": "^2.0.3",
+    "estree-walker": "^2.0.2",
     "fs-extra": "^9.0.1",
     "html-minifier": "^4.0.0",
     "is-relative-url": "^3.0.0",
@@ -28,6 +30,9 @@
     "rollup-plugin-svelte": "^7.0.0",
     "rollup-plugin-terser": "^7.0.2"
   },
+  "peerDependencies": {
+    "svelte": "^4.0.0 || ^5.0.0"
+  },
   "devDependencies": {
     "@biomejs/biome": "2.5.2",
     "@types/fs-extra": "^9.0.6",
@@ -40,7 +45,7 @@
     "@types/rollup__plugin-virtual": "^2.0.1",
     "github-markdown-css": "4.0.0",
     "postcss": "^8.2.4",
-    "svelte": "^3.31.2",
+    "svelte": "^5.0.0",
     "ts-node-dev": "^1.1.1",
     "typescript": "^4.1.3"
   },
