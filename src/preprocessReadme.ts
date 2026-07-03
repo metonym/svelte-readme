@@ -10,8 +10,9 @@ import "prismjs/components/prism-yaml";
 import "prism-svelte";
 import isRelativeUrl from "is-relative-url";
 import { PreprocessorGroup } from "svelte/types/compiler/preprocess";
-import { Node } from "estree-walker";
 import { URL } from "url";
+
+type Node = Record<string, any> & { start: number; end: number; type: string };
 
 const aliases: Record<string, string> = {
   sh: "bash",
@@ -120,7 +121,7 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
       let prev: undefined | "h2" | "h3" = undefined;
 
       walk(ast, {
-        enter(node, parent) {
+        enter(node: any, parent: any) {
           if (node.type === "Attribute" && node.name === "href") {
             const value = node.value[0];
 

@@ -25,7 +25,7 @@ Check out my cool component library.
 ## Install
 
 ```bash
-yarn add -D svelte-readme
+bun add -D svelte-readme
 # OR
 npm i -D svelte-readme
 ```

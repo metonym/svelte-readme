@@ -8,8 +8,8 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "preprocess": "node scripts/preprocessStyles",
-    "dev": "yarn preprocess && tsc -w",
-    "prepack": "yarn preprocess && tsc",
+    "dev": "bun run preprocess && tsc -w",
+    "prepack": "bun run preprocess && tsc",
     "format": "prettier --ignore-path .gitignore --write ."
   },
   "dependencies": {
