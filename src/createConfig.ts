@@ -236,7 +236,7 @@ export default function createConfig(opts: Partial<CreateConfigOptions> = {}): I
           minifyCSS: true,
           removeEmptyAttributes: true,
         })
-      : template
+      : template,
   );
 
   return {

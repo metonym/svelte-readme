@@ -4,7 +4,7 @@ const postcss = require("postcss");
 
 const github_css = fs.readFileSync(
   path.join(process.cwd(), "./node_modules/github-markdown-css/github-markdown.css"),
-  "utf-8"
+  "utf-8",
 );
 
 const plugin = postcss.plugin("postcss-plugin", () => {
@@ -13,7 +13,7 @@ const plugin = postcss.plugin("postcss-plugin", () => {
       node.selector = node.selector.replace(/\.markdown-body /g, "").replace(/^\.markdown-body/g, "main");
       if (
         /(^\.f6|\.bg-|\.text-|\.lh-|\.tab-size|\.task-list|\.mb|\.py|\.my|\.px|\.py|\.pl|commit|blob-|octicon|border|rounded)/.test(
-          node.selector
+          node.selector,
         )
       ) {
         node.remove();
