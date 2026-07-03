@@ -1,4 +1,5 @@
-import { walk, parse } from "svelte/compiler";
+import { parse } from "svelte/compiler";
+import { walk } from "estree-walker";
 import Markdown from "markdown-it";
 import markdownItAnchor from "markdown-it-anchor";
 import prettier from "prettier";
@@ -9,7 +10,7 @@ import "prismjs/components/prism-jsx";
 import "prismjs/components/prism-yaml";
 import "prism-svelte";
 import isRelativeUrl from "is-relative-url";
-import { PreprocessorGroup } from "svelte/types/compiler/preprocess";
+import { PreprocessorGroup } from "svelte/compiler";
 import { URL } from "url";
 
 type Node = Record<string, any> & { start: number; end: number; type: string };
@@ -120,7 +121,7 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
       let headings = [];
       let prev: undefined | "h2" | "h3" = undefined;
 
-      walk(ast, {
+      walk(ast as any, {
         enter(node: any, parent: any) {
           if (node.type === "Attribute" && node.name === "href") {
             const value = node.value[0];

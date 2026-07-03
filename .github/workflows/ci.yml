@@ -10,6 +10,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        svelte: [4, 5]
+
     steps:
       - uses: actions/checkout@v4
 
@@ -19,4 +23,8 @@ jobs:
 
       - run: bun install --frozen-lockfile
 
+      - run: bun add -D svelte@${{ matrix.svelte }}
+
       - run: bun run prepack
+
+      - run: bun run verify

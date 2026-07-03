@@ -9,7 +9,7 @@ import { createHash } from "crypto";
 import htmlminifier from "html-minifier";
 import { css as github_styles } from "./style";
 import { Plugin, OutputOptions, InputOptions } from "rollup";
-import { PreprocessorGroup } from "svelte/types/compiler/preprocess";
+import { PreprocessorGroup } from "svelte/compiler";
 
 function hashREADME() {
   try {
