@@ -10,7 +10,7 @@
     "preprocess": "node scripts/preprocessStyles",
     "dev": "bun run preprocess && tsc -w",
     "prepack": "bun run preprocess && tsc",
-    "format": "prettier --ignore-path .gitignore --write ."
+    "format": "biome format --write ."
   },
   "dependencies": {
     "@rollup/plugin-node-resolve": "^11.1.0",
@@ -29,6 +29,7 @@
     "rollup-plugin-terser": "^7.0.2"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.2",
     "@types/fs-extra": "^9.0.6",
     "@types/html-minifier": "^4.0.2",
     "@types/markdown-it": "^12.0.1",
@@ -49,14 +50,8 @@
   },
   "homepage": "https://github.com/metonym/svelte-readme",
   "bugs": "https://github.com/metonym/svelte-readme/issues",
-  "keywords": [
-    "svelte",
-    "svelte-component",
-    "documentation"
-  ],
-  "files": [
-    "dist"
-  ],
+  "keywords": ["svelte", "svelte-component", "documentation"],
+  "files": ["dist"],
   "prettier": {
     "printWidth": 120
   }

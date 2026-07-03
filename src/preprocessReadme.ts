@@ -83,7 +83,7 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
           return `<pre class="language-${alias_lang}">{@html \`${Prism.highlight(
             source,
             Prism.languages[alias_lang],
-            alias_lang
+            alias_lang,
           )}\`}</pre>`;
         } catch (e) {
           console.error(`Could not highlight language "${lang}".`);
@@ -108,7 +108,7 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
         "<!-- TOC -->",
         `
 ## Table of Contents
-      `
+      `,
       );
 
       let style_content = "";
@@ -193,7 +193,7 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
 
       result = result.replace(
         `<h2 id="table-of-contents">Table of Contents</h2>`,
-        `<p><strong>Table of Contents</strong></p><ul>${headings.join("\n")}</ul>`
+        `<p><strong>Table of Contents</strong></p><ul>${headings.join("\n")}</ul>`,
       );
 
       return {
