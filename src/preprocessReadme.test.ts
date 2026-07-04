@@ -1,4 +1,5 @@
 import { describe, expect, spyOn, test } from "bun:test";
+import prettier from "prettier";
 import { preprocessReadme } from "./preprocessReadme.js";
 
 const NAME = "my-svelte-component";
@@ -182,6 +183,23 @@ describe("preprocessReadme", () => {
 
     expect(result?.code).toContain(`import x from "${SVELTE_ENTRY}"`);
     expect(result?.code).toContain('console.log("aXb")');
+  });
+
+  test("falls back to unformatted source when prettier.format() throws on a svelte fence", async () => {
+    const errorSpy = spyOn(console, "error").mockImplementation(() => {});
+    const formatSpy = spyOn(prettier, "format").mockImplementation(() => {
+      throw new Error("boom");
+    });
+
+    const code = await markup('```svelte\n<script>\n  let count = 0;\n</script>\n<button>{count}</button>\n```');
+
+    expect(code).toContain("<button>{count}</button>");
+    expect(errorSpy).toHaveBeenCalledWith(
+      "Could not format svelte code block; displaying it unformatted.",
+    );
+
+    formatSpy.mockRestore();
+    errorSpy.mockRestore();
   });
 
   test("highlights fenced code using Prism language aliases", async () => {
