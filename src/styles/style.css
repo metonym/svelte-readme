@@ -1,30 +1,5 @@
 /**
- * Adapted from github-markdown-css (MIT License)
- * https://github.com/sindresorhus/github-markdown-css
- *
- * Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this
- * software and associated documentation files (the "Software"), to deal in the Software
- * without restriction, including without limitation the rights to use, copy, modify,
- * merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to the following
- * conditions:
- *
- * The above copyright notice and this permission notice shall be included in all copies
- * or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
- * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
- * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * Selectors were rescoped from `.markdown-body` to `main`, and rules specific to
- * GitHub's own chrome (diff/blob/octicon/utility classes) were dropped since they never
- * match rendered README markup. The trailing `p`/`pre` rules below are this project's
- * own spacing overrides, not from the upstream stylesheet.
+ * Base markdown rendering styles, scoped to `main`.
  *
  * Colors, font stacks, and the block-spacing unit are pulled out as custom properties
  * so a consumer can retheme this (e.g. dark mode, brand colors) by overriding them on
@@ -32,27 +7,27 @@
  **/
 
 :root {
-  --gh-font-sans: -apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji;
-  --gh-font-mono: SFMono-Regular,Consolas,Liberation Mono,Menlo,monospace;
+  --sr-font-sans: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji;
+  --sr-font-mono: ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace;
 
-  --gh-color-fg: #24292e;
-  --gh-color-fg-muted: #6a737d;
-  --gh-color-fg-subtle: #444d56;
-  --gh-color-link: #0366d6;
+  --sr-color-fg: #18181b;
+  --sr-color-fg-muted: #71717a;
+  --sr-color-fg-subtle: #52525b;
+  --sr-color-link: #4f46e5;
 
-  --gh-color-canvas: #fff;
-  --gh-color-canvas-subtle: #f6f8fa;
-  --gh-color-kbd-bg: #fafbfc;
-  --gh-color-code-bg: rgba(27,31,35,.05);
+  --sr-color-canvas: #fff;
+  --sr-color-canvas-subtle: #f4f4f5;
+  --sr-color-kbd-bg: #fafafa;
+  --sr-color-code-bg: rgba(24,24,27,.06);
 
-  --gh-color-border: #dfe2e5;
-  --gh-color-border-muted: #eaecef;
-  --gh-color-border-kbd: #d1d5da;
-  --gh-color-border-table: #c6cbd1;
-  --gh-color-hr: #e1e4e8;
+  --sr-color-border: #e4e4e7;
+  --sr-color-border-muted: #ececef;
+  --sr-color-border-kbd: #d4d4d8;
+  --sr-color-border-table: #d4d4d8;
+  --sr-color-hr: #e4e4e7;
 
-  --gh-spacing: 16px;
-  --gh-spacing-lg: 24px;
+  --sr-spacing: 20px;
+  --sr-spacing-lg: 32px;
 }
 
 .anchor {
@@ -79,9 +54,9 @@ main {
   -ms-text-size-adjust: 100%;
   -webkit-text-size-adjust: 100%;
   line-height: 1.5;
-  color: var(--gh-color-fg);
-  font-family: var(--gh-font-sans);
-  font-size: 16px;
+  color: var(--sr-color-fg);
+  font-family: var(--sr-font-sans);
+  font-size: 15px;
   word-wrap: break-word;
 }
 
@@ -154,7 +129,7 @@ input {
 }
 
 a {
-  color: var(--gh-color-link);
+  color: var(--sr-color-link);
   text-decoration: none;
 }
 
@@ -172,7 +147,7 @@ hr {
   overflow: hidden;
   background: transparent;
   border: 0;
-  border-bottom: 1px solid var(--gh-color-border);
+  border-bottom: 1px solid var(--sr-color-border);
 }
 
 hr:after,
@@ -202,14 +177,14 @@ details summary {
 kbd {
   display: inline-block;
   padding: 3px 5px;
-  font: 11px var(--gh-font-mono);
+  font: 11px var(--sr-font-mono);
   line-height: 10px;
-  color: var(--gh-color-fg-subtle);
+  color: var(--sr-color-fg-subtle);
   vertical-align: middle;
-  background-color: var(--gh-color-kbd-bg);
-  border: 1px solid var(--gh-color-border-kbd);
+  background-color: var(--sr-color-kbd-bg);
+  border: 1px solid var(--sr-color-border-kbd);
   border-radius: 3px;
-  box-shadow: inset 0 -1px 0 var(--gh-color-border-kbd);
+  box-shadow: inset 0 -1px 0 var(--sr-color-border-kbd);
 }
 
 h1,
@@ -295,7 +270,7 @@ dd {
 
 code,
 pre {
-  font-family: var(--gh-font-mono);
+  font-family: var(--sr-font-mono);
   font-size: 12px;
 }
 
@@ -314,15 +289,15 @@ input::-webkit-outer-spin-button {
 :checked+.radio-label {
   position: relative;
   z-index: 1;
-  border-color: var(--gh-color-link);
+  border-color: var(--sr-color-link);
 }
 
 hr {
-  border-bottom-color: #eee;
+  border-bottom-color: var(--sr-color-border-muted);
 }
 
-main:after,
-.markdown-body:before {
+main:before,
+main:after {
   display: table;
   content: "";
 }
@@ -353,21 +328,21 @@ pre,
 table,
 ul {
   margin-top: 0;
-  margin-bottom: var(--gh-spacing);
+  margin-bottom: var(--sr-spacing);
 }
 
 hr {
   height: .25em;
   padding: 0;
-  margin: var(--gh-spacing-lg) 0;
-  background-color: var(--gh-color-hr);
+  margin: var(--sr-spacing-lg) 0;
+  background-color: var(--sr-color-hr);
   border: 0;
 }
 
 blockquote {
   padding: 0 1em;
-  color: var(--gh-color-fg-muted);
-  border-left: .25em solid var(--gh-color-border);
+  color: var(--sr-color-fg-muted);
+  border-left: .25em solid var(--sr-color-border);
 }
 
 blockquote>:first-child {
@@ -384,8 +359,8 @@ h3,
 h4,
 h5,
 h6 {
-  margin-top: var(--gh-spacing-lg);
-  margin-bottom: var(--gh-spacing);
+  margin-top: var(--sr-spacing-lg);
+  margin-bottom: var(--sr-spacing);
   font-weight: 600;
   line-height: 1.25;
 }
@@ -397,7 +372,7 @@ h1 {
 h1,
 h2 {
   padding-bottom: .3em;
-  border-bottom: 1px solid var(--gh-color-border-muted);
+  border-bottom: 1px solid var(--sr-color-border-muted);
 }
 
 h2 {
@@ -418,7 +393,7 @@ h5 {
 
 h6 {
   font-size: .85em;
-  color: var(--gh-color-fg-muted);
+  color: var(--sr-color-fg-muted);
 }
 
 ol,
@@ -439,7 +414,7 @@ li {
 }
 
 li>p {
-  margin-top: var(--gh-spacing);
+  margin-top: var(--sr-spacing);
 }
 
 li+li {
@@ -452,15 +427,15 @@ dl {
 
 dl dt {
   padding: 0;
-  margin-top: var(--gh-spacing);
+  margin-top: var(--sr-spacing);
   font-size: 1em;
   font-style: italic;
   font-weight: 600;
 }
 
 dl dd {
-  padding: 0 var(--gh-spacing);
-  margin-bottom: var(--gh-spacing);
+  padding: 0 var(--sr-spacing);
+  margin-bottom: var(--sr-spacing);
 }
 
 table {
@@ -476,22 +451,22 @@ table th {
 table td,
 table th {
   padding: 6px 13px;
-  border: 1px solid var(--gh-color-border);
+  border: 1px solid var(--sr-color-border);
 }
 
 table tr {
-  background-color: var(--gh-color-canvas);
-  border-top: 1px solid var(--gh-color-border-table);
+  background-color: var(--sr-color-canvas);
+  border-top: 1px solid var(--sr-color-border-table);
 }
 
 table tr:nth-child(2n) {
-  background-color: var(--gh-color-canvas-subtle);
+  background-color: var(--sr-color-canvas-subtle);
 }
 
 img {
   max-width: 100%;
   box-sizing: initial;
-  background-color: var(--gh-color-canvas);
+  background-color: var(--sr-color-canvas);
 }
 
 img[align=right] {
@@ -506,7 +481,7 @@ code {
   padding: .2em .4em;
   margin: 0;
   font-size: 85%;
-  background-color: var(--gh-color-code-bg);
+  background-color: var(--sr-color-code-bg);
   border-radius: 3px;
 }
 
@@ -525,7 +500,7 @@ pre>code {
 }
 
 .highlight {
-  margin-bottom: var(--gh-spacing);
+  margin-bottom: var(--sr-spacing);
 }
 
 .highlight pre {
@@ -535,11 +510,11 @@ pre>code {
 
 .highlight pre,
 pre {
-  padding: var(--gh-spacing);
+  padding: var(--sr-spacing);
   overflow: auto;
   font-size: 85%;
   line-height: 1.45;
-  background-color: var(--gh-color-canvas-subtle);
+  background-color: var(--sr-color-canvas-subtle);
   border-radius: 3px;
 }
 
@@ -555,7 +530,7 @@ pre code {
   border: 0;
 }
 
-/* Overrides to keep spacing consistent with our own layout, not GitHub's. */
+/* Overrides to keep spacing consistent with our own layout. */
 
 p {
   min-height: 28px;

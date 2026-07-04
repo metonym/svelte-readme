@@ -25,7 +25,7 @@ At its core, this library is a simple Svelte preprocessor.
 2. Use `README.md` as the Svelte source code
 3. Parse Markdown using [Markdown It](https://github.com/markdown-it/markdown-it)
 4. Highlight code with a built-in highlighter (`svelte`, `typescript`/`javascript`, `json`, `yaml`, `bash`) and run `svelte` code fence blocks so that demos are juxtaposed with code
-5. Style the result with [GitHub Markdown CSS](https://github.com/sindresorhus/github-markdown-css) to maintain a consistent look with [github.com](https://github.com/)
+5. Style the result with a built-in, themeable stylesheet inspired by GitHub's markdown rendering
 
 ## Installation
 
