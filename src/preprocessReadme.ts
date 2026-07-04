@@ -61,19 +61,18 @@ function pushHeadingToToc(
   return level;
 }
 
+// Shared by every snippet below that needs `onMount` (TOC scroll-spy, copy-button
+// wiring): each snippet is concatenated directly into the final <script> tag rather
+// than merged through `script_content`'s line-level Set dedup, so importing `onMount`
+// separately in each one would double-declare the binding when more than one snippet
+// is present on the same page. Aliased so it can't collide with a demo's own import
+// of the same name either.
+const SVELTE_README_ON_MOUNT_IMPORT = `import { onMount as __svelteReadmeOnMount } from "svelte";`;
+
 // Underlines whichever `.sr-toc-sidebar` link points at the heading currently
 // scrolled into the top portion of the viewport (the `.sr-toc-inline` copy shown
 // on mobile has no sticky position to track against, so it's excluded).
-// Concatenated directly into the final <script> tag (not merged through
-// `script_content`'s line-level Set dedup),
-// since a generic line here — e.g. a bare `onMount(() => {` — could otherwise
-// collide with an identical line from an unrelated demo fence and get dropped,
-// leaving the rest of this function's body dangling outside any function. The
-// `onMount` import is aliased so it can't collide with a demo's own import of
-// the same name either.
-const TOC_SCROLL_SPY_SCRIPT = `import { onMount as __svelteReadmeOnMount } from "svelte";
-
-__svelteReadmeOnMount(() => {
+const TOC_SCROLL_SPY_SCRIPT = `__svelteReadmeOnMount(() => {
   // \`href\` and the heading's \`id\` are both the same slug produced by the
   // preprocessor, so this looks it up verbatim (no decode/encode step).
   const __svelteReadmeTocEntries = Array.from(
@@ -142,6 +141,51 @@ __svelteReadmeOnMount(() => {
   __svelteReadmeSyncScrollSpy();
 });`;
 
+// Rendered as the last child of the `<pre>` it copies (see the two `highlight()` return
+// templates below) so it visually overlays that `<pre>`'s corner via `position: absolute`
+// without needing a wrapper element — which would break markdown-it's fence renderer (it
+// only skips its own `<pre><code>` wrapping when `highlight()`'s return starts with `<pre`).
+const COPY_BUTTON_MARKUP = `<button type="button" class="sr-copy-button" aria-label="Copy code" title="Copy code"><svg class="sr-copy-icon" aria-hidden="true" viewBox="0 0 16 16" width="12" height="12"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path></svg><svg class="sr-copy-check" aria-hidden="true" viewBox="0 0 16 16" width="12" height="12"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path></svg></button>`;
+
+// Copies the enclosing `<pre>`'s source to the clipboard when its copy button is
+// clicked, swapping the button's icon to a checkmark for 2s of feedback. The timeout
+// is tracked per-button (rather than toggled) so repeated clicks within that window
+// reset the timer instead of flickering the icon back to "copy" and re-triggering
+// the swap.
+const COPY_BUTTON_SCRIPT = `__svelteReadmeOnMount(() => {
+  const __svelteReadmeCopyTimeouts = new WeakMap();
+
+  for (const __svelteReadmeCopyButton of document.querySelectorAll(
+    ".sr-copy-button",
+  )) {
+    __svelteReadmeCopyButton.addEventListener("click", () => {
+      const __svelteReadmeCodePre = __svelteReadmeCopyButton.closest("pre");
+
+      if (!__svelteReadmeCodePre) return;
+
+      navigator.clipboard
+        .writeText(__svelteReadmeCodePre.textContent ?? "")
+        .then(() => {
+          __svelteReadmeCopyButton.classList.add("sr-copy-copied");
+
+          const __svelteReadmeExistingTimeout =
+            __svelteReadmeCopyTimeouts.get(__svelteReadmeCopyButton);
+          if (__svelteReadmeExistingTimeout !== undefined) {
+            clearTimeout(__svelteReadmeExistingTimeout);
+          }
+
+          __svelteReadmeCopyTimeouts.set(
+            __svelteReadmeCopyButton,
+            setTimeout(() => {
+              __svelteReadmeCopyButton.classList.remove("sr-copy-copied");
+              __svelteReadmeCopyTimeouts.delete(__svelteReadmeCopyButton);
+            }, 2000),
+          );
+        });
+    });
+  }
+});`;
+
 export function preprocessReadme(
   opts: Pick<PreprocessReadmeOptions, "name" | "svelte"> &
     Partial<PreprocessReadmeOptions>,
@@ -150,6 +194,7 @@ export function preprocessReadme(
 
   let script_content: string[] = [];
   let pending_format: { placeholder: string; source: string }[] = [];
+  let hasCodeBlock = false;
   const declared_variables = new Map<string, string>();
   const reserved_names = new Set<string>();
   const name_regex = new RegExp(escapeRegExp(opts.name), "g");
@@ -158,6 +203,8 @@ export function preprocessReadme(
   const md = new Markdown({
     html: true,
     highlight(source, lang, attrs) {
+      hasCodeBlock = true;
+
       if (lang === "svelte") {
         const noEval = NO_EVAL_ATTR.test(attrs);
         const noDisplay = NO_DISPLAY_ATTR.test(attrs);
@@ -211,9 +258,14 @@ export function preprocessReadme(
         const placeholder = `__SVELTE_README_FORMAT_${pending_format.length}__`;
         pending_format.push({ placeholder, source });
 
+        // The copy button is a child of `<pre>` itself (not a wrapper around it) for two
+        // reasons: markdown-it's fence renderer only skips its own `<pre><code>` wrapping
+        // when `highlight()`'s return starts with a literal `<pre`, and the `data-svelte`
+        // attribute needs to stay directly on `<pre>` for the walker below (which locates
+        // its containing element to splice the live demo in as a preceding sibling).
         return `<pre class="language-${lang}" ${
           noEval || noDisplay ? "" : `data-svelte="${modifiedSource}"`
-        }>{@html \`${placeholder}\`}</pre>`;
+        }>{@html \`${placeholder}\`}${COPY_BUTTON_MARKUP}</pre>`;
       }
 
       try {
@@ -221,10 +273,10 @@ export function preprocessReadme(
         const highlighted = escapeForTemplateLiteral(
           highlightCode(source, alias_lang),
         );
-        return `<pre class="language-${alias_lang}">{@html \`${highlighted}\`}</pre>`;
+        return `<pre class="language-${alias_lang}">{@html \`${highlighted}\`}${COPY_BUTTON_MARKUP}</pre>`;
       } catch (_e) {
         console.error(`Could not highlight language "${lang}".`);
-        return `<pre class="language-${lang}">{@html \`${escapeForTemplateLiteral(source)}\`}</pre>`;
+        return `<pre class="language-${lang}">{@html \`${escapeForTemplateLiteral(source)}\`}${COPY_BUTTON_MARKUP}</pre>`;
       }
     },
   });
@@ -279,6 +331,7 @@ export function preprocessReadme(
   async function processMarkup(content: string) {
     script_content = [];
     pending_format = [];
+    hasCodeBlock = false;
 
     if (opts.repoUrl) {
       content = content.replaceAll(
@@ -362,6 +415,48 @@ export function preprocessReadme(
       headings.push("</ul>");
     }
 
+    // Wraps each highlighted `<pre>` in a non-scrolling `<div class="sr-code-block">`
+    // so the copy button (already rendered as `<pre>`'s last child, to satisfy
+    // markdown-it's fence renderer — see `COPY_BUTTON_MARKUP`) can anchor its
+    // `position: absolute` to that wrapper instead of to `<pre>` itself. `<pre>` has
+    // its own `overflow: auto` for long lines, and an absolutely positioned
+    // descendant anchored via `right` drifts with that internal horizontal scroll —
+    // anchoring to a non-scrolling ancestor instead keeps the button pinned to the
+    // visible corner. Run as a second pass (fresh parse, its own cursor) rather than
+    // folded into the walk above: that walk's `cursor` model assumes each edit nets
+    // out to a single insertion point, but wrapping a node needs an insertion both
+    // before its start and after its end, which would throw off the position math
+    // for anything nested inside it (e.g. the `data-svelte` attribute handled above).
+    if (hasCodeBlock) {
+      const codeBlockAst = parse(result) as unknown as Node;
+      let codeBlockCursor = 0;
+
+      walk(
+        // biome-ignore lint/suspicious/noExplicitAny: estree-walker's real types don't match Svelte's AST (see `Node` above)
+        codeBlockAst as any,
+        {
+          // biome-ignore lint/suspicious/noExplicitAny: estree-walker's real types don't match Svelte's AST (see `Node` above)
+          enter(node: any) {
+            if (node.type !== "Element" || node.name !== "pre") return;
+
+            const classAttr = node.attributes.find(
+              // biome-ignore lint/suspicious/noExplicitAny: see above
+              (attr: any) => attr.name === "class",
+            );
+            if (!classAttr?.value?.[0]?.raw?.startsWith("language-")) return;
+
+            const preSource = result.slice(
+              node.start + codeBlockCursor,
+              node.end + codeBlockCursor,
+            );
+            const wrapped = `<div class="sr-code-block">${preSource}</div>`;
+            result = result.replace(preSource, wrapped);
+            codeBlockCursor += wrapped.length - preSource.length;
+          },
+        },
+      );
+    }
+
     const formattedBlocks = await Promise.all(
       pending_format.map(async ({ source }) => {
         if (!opts.format) return source;
@@ -407,7 +502,9 @@ export function preprocessReadme(
 
     return {
       code: `<script>${[...new Set(script_content)].join("\n")}
-               ${headings.length ? TOC_SCROLL_SPY_SCRIPT : ""}</script>
+               ${headings.length || hasCodeBlock ? SVELTE_README_ON_MOUNT_IMPORT : ""}
+               ${headings.length ? TOC_SCROLL_SPY_SCRIPT : ""}
+               ${hasCodeBlock ? COPY_BUTTON_SCRIPT : ""}</script>
                ${style_content.trim() ? `<style>${style_content}</style>` : ""}
                <div class="sr-layout"><main class="markdown-body">${result}</main>${tocSidebar}</div>`,
     };

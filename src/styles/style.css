@@ -555,6 +555,69 @@ pre {
   box-shadow: inset 0 1px 2px rgba(24, 24, 27, 0.08);
 }
 
+/* Copy-to-clipboard button rendered as the last child of each code snippet's `<pre>`
+   (see `COPY_BUTTON_MARKUP` in `preprocessReadme.ts`) and overlaid on its corner via
+   `position: absolute`. Anchored against `.sr-code-block` (a non-scrolling wrapper
+   `preprocessReadme.ts` adds around every highlighted `<pre>`) rather than `<pre>`
+   itself — `<pre>` has its own `overflow: auto` for long lines, and a `right`-anchored
+   absolute child of a scrolling box drifts with that box's horizontal scroll.
+
+   The bleed (negative margin equal to `pre`'s own padding, same technique as the
+   table/details bleed above) moves from `pre` to `.sr-code-block` here, with `pre`'s
+   own margin canceled below — otherwise `.sr-code-block`'s box (what the button is
+   positioned against) would stop short of `pre`'s bled edge, leaving the button
+   inset from the visible corner by the full bleed amount. */
+
+.sr-code-block {
+  position: relative;
+  margin-right: calc(var(--sr-spacing) * -1);
+  margin-left: calc(var(--sr-spacing) * -1);
+}
+
+.sr-code-block pre {
+  margin-right: 0;
+  margin-left: 0;
+}
+
+.sr-copy-button {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  color: var(--sr-color-fg-muted);
+  cursor: pointer;
+  appearance: none;
+  background-color: var(--sr-color-canvas);
+  border: 1px solid var(--sr-color-border);
+  border-radius: 0.375rem;
+}
+
+/* Same specificity as `.sr-copy-check` below (one class each) so source order
+   decides the default state — a `.sr-copy-button svg` selector here would win on
+   specificity regardless of order and defeat that rule's `display: none`. */
+.sr-copy-icon,
+.sr-copy-check {
+  display: block;
+  fill: currentColor;
+}
+
+/* `.sr-copy-copied` is toggled client-side by the copy-button script for 2s of
+   feedback after a successful copy — never present in server-rendered markup. */
+.sr-copy-check {
+  display: none;
+}
+
+.sr-copy-button.sr-copy-copied .sr-copy-icon {
+  display: none;
+}
+
+.sr-copy-button.sr-copy-copied .sr-copy-check {
+  display: block;
+}
+
 /* `details`/`summary`, styled with the same clickable material as the code-fence
    button above. `summary` bleeds out to the `details` border via a negative
    margin (same technique as the table/pre bleed) so its background spans the

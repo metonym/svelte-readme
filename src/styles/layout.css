@@ -128,6 +128,7 @@ main.markdown-body blockquote p {
      just push these boxes past the viewport edge instead of aligning them. */
   main.markdown-body table,
   main.markdown-body pre,
+  main.markdown-body .sr-code-block,
   main.markdown-body .code-fence,
   main.markdown-body details {
     margin-right: 0;
