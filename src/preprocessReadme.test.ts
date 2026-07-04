@@ -184,6 +184,42 @@ describe("preprocessReadme", () => {
     expect(after).toContain('console.log("after edit")');
   });
 
+  // Every svelte fence in a README is merged into one shared <script>, so a variable name
+  // reused across fences for something different would collide once merged. The preprocessor
+  // detects this and renames the later declaration (in both its script and markup) instead of
+  // letting the second definition silently shadow/clobber the first.
+  test("auto-renames a variable that collides with a differently-defined one from an earlier fence", async () => {
+    const content = [
+      '```svelte\n<script>\n  let count = 0;\n</script>\n<p>{count}</p>\n```',
+      '```svelte\n<script>\n  let count = "duplicate";\n</script>\n<p>{count}</p>\n```',
+    ].join("\n\n");
+    const code = await markup(content);
+
+    const extractedScript = code?.match(/^<script>([\s\S]*?)<\/script>/)?.[1];
+
+    expect(extractedScript).toContain("let count = 0;");
+    expect(extractedScript).toContain('let count2 = "duplicate";');
+
+    // the first fence's markup still references the original name...
+    expect(code).toContain('<div class="code-fence"><p>{count}</p></div>');
+    // ...and the second fence's markup is rewritten to reference the renamed one
+    expect(code).toContain('<div class="code-fence"><p>{count2}</p></div>');
+  });
+
+  test("does not rename a variable declared identically across fences", async () => {
+    const content = [
+      '```svelte\n<script>\n  let count = 0;\n</script>\n<p>{count}</p>\n```',
+      '```svelte\n<script>\n  let count = 0;\n</script>\n<p>{count}</p>\n```',
+    ].join("\n\n");
+    const code = await markup(content);
+
+    const extractedScript = code?.match(/^<script>([\s\S]*?)<\/script>/)?.[1];
+
+    // identical declarations are deduplicated via the Set in the final script assembly
+    expect(extractedScript?.match(/let count = 0;/g)).toHaveLength(1);
+    expect(extractedScript).not.toContain("count2");
+  });
+
   test("treats a package name containing regex metacharacters as a literal string", async () => {
     // "a.b" is a valid (if unusual) npm name; "." is also a regex wildcard, so an
     // unescaped pattern would incorrectly also match "aXb" below.
