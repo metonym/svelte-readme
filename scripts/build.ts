@@ -7,7 +7,7 @@ const isWatchMode =
 // `svelte`, `vite` must resolve to the consumer's own installed versions.
 // `prismjs`/`prism-svelte` are dynamically imported by language, so they must stay
 // resolvable at runtime rather than get inlined into this package's own bundle.
-const external = ["svelte", "vite", "html-minifier", "prismjs", "prism-svelte"];
+const external = ["svelte", "vite", "prismjs", "prism-svelte"];
 
 await $`rm -rf dist`;
 

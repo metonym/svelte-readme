@@ -7,7 +7,6 @@ import {
   svelte,
   type Options as VitePluginSvelteOptions,
 } from "@sveltejs/vite-plugin-svelte";
-import htmlminifier from "html-minifier";
 import {
   type ConfigEnv,
   type Plugin,
@@ -96,12 +95,6 @@ const custom_css = `
 `;
 
 interface CreateConfigOptions {
-  /**
-   * set to `true` to minify the HTML/JS
-   * @default false in dev, true in build
-   */
-  minify: boolean;
-
   /**
    * set the folder to emit the files
    * @default "dist"
@@ -218,7 +211,6 @@ export default function createConfig(
 ): (env: ConfigEnv) => Promise<UserConfig> {
   return async (env) => {
     const DEV = env.command === "serve" && !env.isPreview;
-    const minify = opts.minify === true || !DEV;
     const pkg = getPackageJSON();
     const output_dir = opts.outDir || "dist";
     const svelteOptions: Partial<VitePluginSvelteOptions> = {
@@ -243,7 +235,6 @@ export default function createConfig(
     );
     console.log("[createConfig] options:");
     console.group();
-    console.log("minify:", minify);
     console.log("outDir:", output_dir);
     console.log("svelte:", svelteOptions);
     console.groupEnd();
@@ -307,14 +298,7 @@ export default function createConfig(
       </html>
     `;
 
-      return minify
-        ? htmlminifier.minify(template, {
-            collapseWhitespace: true,
-            conservativeCollapse: true,
-            minifyCSS: true,
-            removeEmptyAttributes: true,
-          })
-        : template;
+      return template;
     }
 
     async function renderSSR(): Promise<{ head: string; body: string }> {
@@ -426,7 +410,6 @@ export default function createConfig(
       appType: "custom",
       build: {
         outDir: output_dir,
-        minify,
         rollupOptions: {
           input: VIRTUAL_HYDRATE_ENTRY_ID,
           output: { entryFileNames: "s-[hash].js" },
