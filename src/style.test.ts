@@ -2,17 +2,23 @@ import { describe, expect, test } from "bun:test";
 import { css } from "./style.js";
 
 describe("style", () => {
-  test("exports a non-empty CSS string", () => {
-    expect(typeof css).toBe("string");
-    expect(css.length).toBeGreaterThan(0);
+  test("exports a promise resolving to a non-empty CSS string", async () => {
+    expect(css).toBeInstanceOf(Promise);
+
+    const resolved = await css;
+
+    expect(typeof resolved).toBe("string");
+    expect(resolved.length).toBeGreaterThan(0);
   });
 
-  test("includes the base GitHub markdown selectors", () => {
-    expect(css).toContain("main {");
-    expect(css).toContain(".anchor {");
+  test("includes the base GitHub markdown selectors", async () => {
+    const resolved = await css;
+    expect(resolved).toContain("main {");
+    expect(resolved).toContain(".anchor {");
   });
 
-  test("strips scoped .markdown-body classes emitted by postcss preprocessing", () => {
-    expect(css).not.toContain(".markdown-body ");
+  test("strips scoped .markdown-body classes emitted by postcss preprocessing", async () => {
+    const resolved = await css;
+    expect(resolved).not.toContain(".markdown-body ");
   });
 });

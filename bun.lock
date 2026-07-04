@@ -6,6 +6,8 @@
       "name": "svelte-readme",
       "dependencies": {
         "html-minifier": "^4.0.0",
+        "prism-svelte": "^0.4.7",
+        "prismjs": "^1.23.0",
       },
       "devDependencies": {
         "@biomejs/biome": "2.5.2",
@@ -22,8 +24,6 @@
         "markdown-it": "^12.3.0",
         "markdown-it-anchor": "^6.0.1",
         "postcss": "^8.2.4",
-        "prism-svelte": "^0.4.7",
-        "prismjs": "^1.23.0",
         "svelte": "^5.56.4",
         "vite": "^8.1.3",
       },

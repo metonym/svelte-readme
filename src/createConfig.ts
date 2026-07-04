@@ -215,8 +215,8 @@ function logSSRFallback(error: unknown) {
 
 export default function createConfig(
   opts: Partial<CreateConfigOptions> = {},
-): (env: ConfigEnv) => UserConfig {
-  return (env) => {
+): (env: ConfigEnv) => Promise<UserConfig> {
+  return async (env) => {
     const DEV = env.command === "serve" && !env.isPreview;
     const minify = opts.minify === true || !DEV;
     const pkg = getPackageJSON();
@@ -248,7 +248,7 @@ export default function createConfig(
     console.log("svelte:", svelteOptions);
     console.groupEnd();
 
-    let css = github_styles;
+    let css = await github_styles;
 
     if (!opts.disableDefaultCSS) {
       css += `/**

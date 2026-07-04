@@ -41,7 +41,9 @@ function isPlugin(value: unknown): value is Plugin {
   return typeof value === "object" && value !== null && "name" in value;
 }
 
-function getHtmlPlugin(config: ReturnType<ReturnType<typeof createConfig>>) {
+function getHtmlPlugin(
+  config: Awaited<ReturnType<ReturnType<typeof createConfig>>>,
+) {
   const plugin = config.plugins
     ?.filter(isPlugin)
     .find((p) => p.name === "svelte-readme-html");
@@ -50,7 +52,7 @@ function getHtmlPlugin(config: ReturnType<ReturnType<typeof createConfig>>) {
 }
 
 function getVirtualEntriesPlugin(
-  config: ReturnType<ReturnType<typeof createConfig>>,
+  config: Awaited<ReturnType<ReturnType<typeof createConfig>>>,
 ) {
   const plugin = config.plugins
     ?.filter(isPlugin)
@@ -61,19 +63,25 @@ function getVirtualEntriesPlugin(
 }
 
 describe("createConfig", () => {
-  test("defaults to a dist output dir, minified in build mode", () => {
-    const config = createConfig()({ command: "build", mode: "production" });
+  test("defaults to a dist output dir, minified in build mode", async () => {
+    const config = await createConfig()({
+      command: "build",
+      mode: "production",
+    });
     expect(config.build?.outDir).toBe("dist");
     expect(config.build?.minify).toBe(true);
   });
 
-  test("does not minify by default in serve/dev mode", () => {
-    const config = createConfig()({ command: "serve", mode: "development" });
+  test("does not minify by default in serve/dev mode", async () => {
+    const config = await createConfig()({
+      command: "serve",
+      mode: "development",
+    });
     expect(config.build?.minify).toBe(false);
   });
 
-  test("respects explicit minify and outDir overrides", () => {
-    const config = createConfig({ minify: true, outDir: "public" })({
+  test("respects explicit minify and outDir overrides", async () => {
+    const config = await createConfig({ minify: true, outDir: "public" })({
       command: "serve",
       mode: "development",
     });
@@ -81,15 +89,21 @@ describe("createConfig", () => {
     expect(config.build?.outDir).toBe("public");
   });
 
-  test("uses the hydrate entry module as the rollup input", () => {
-    const config = createConfig()({ command: "build", mode: "production" });
+  test("uses the hydrate entry module as the rollup input", async () => {
+    const config = await createConfig()({
+      command: "build",
+      mode: "production",
+    });
     expect(config.build?.rollupOptions?.input).toBe(
       "virtual:svelte-readme-hydrate-entry",
     );
   });
 
-  test("resolves and loads the hydrate entry as a README-backed Svelte component", () => {
-    const config = createConfig()({ command: "build", mode: "production" });
+  test("resolves and loads the hydrate entry as a README-backed Svelte component", async () => {
+    const config = await createConfig()({
+      command: "build",
+      mode: "production",
+    });
     const virtualEntriesPlugin = getVirtualEntriesPlugin(config);
 
     // biome-ignore lint/suspicious/noExplicitAny: Vite's hook types allow a plain function or a `{ handler }` object; createConfig defines these as plain functions, so cast past the union.
@@ -110,7 +124,7 @@ describe("createConfig", () => {
       svelte: "./src/index.js",
       description: "A demo component",
     });
-    const config = createConfig({ outDir: "out" })({
+    const config = await createConfig({ outDir: "out" })({
       command: "build",
       mode: "production",
     });
@@ -133,7 +147,10 @@ describe("createConfig", () => {
   });
 
   test("falls back to a generic meta description when package.json has none", async () => {
-    const config = createConfig()({ command: "build", mode: "production" });
+    const config = await createConfig()({
+      command: "build",
+      mode: "production",
+    });
     const htmlPlugin = getHtmlPlugin(config);
 
     await htmlPlugin.writeBundle(
@@ -151,7 +168,7 @@ describe("createConfig", () => {
   });
 
   test("disableDefaultCSS omits the bundled GitHub styles, custom style is still appended", async () => {
-    const config = createConfig({
+    const config = await createConfig({
       disableDefaultCSS: true,
       style: ".custom { color: blue; }",
     })({
