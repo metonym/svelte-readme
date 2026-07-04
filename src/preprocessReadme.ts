@@ -362,13 +362,13 @@ export function preprocessReadme(
       script_content = [];
 
       if (opts.repoUrl) {
-        content = content.replace(
+        content = content.replaceAll(
           "<!-- REPO_URL -->",
           `[GitHub repo](${opts.repoUrl})`,
         );
       }
 
-      content = content.replace(
+      content = content.replaceAll(
         "<!-- TOC -->",
         `
 ## Table of Contents

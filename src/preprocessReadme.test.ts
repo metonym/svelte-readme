@@ -60,6 +60,20 @@ describe("preprocessReadme", () => {
     expect(code).toContain("<!-- REPO_URL -->");
   });
 
+  test("replaces every REPO_URL marker, not just the first", async () => {
+    const withRepoUrl = preprocessReadme({
+      name: NAME,
+      svelte: SVELTE_ENTRY,
+      repoUrl: "https://github.com/metonym/svelte-readme",
+    });
+    const result = await withRepoUrl.markup({
+      content: "<!-- REPO_URL -->\n\n<!-- REPO_URL -->",
+      filename: "README.md",
+    });
+
+    expect(result?.code?.match(/GitHub repo/g)).toHaveLength(2);
+  });
+
   test("rewrites relative links against the default prefix URL (homepage/tree/master)", async () => {
     const code = await markup("[rel](./foo.md)");
     expect(code).toContain(
