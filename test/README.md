@@ -38,7 +38,7 @@ npm i -D svelte-readme
 <script>
   import Button from "my-svelte-component";
 
-  let count = 0;
+  let count = 0; // single line comment
   let items = [];
 
   $: document.body.className = count + "";
@@ -68,7 +68,7 @@ Second script block:
 <script>
   import Button from "my-svelte-component";
 
-  let toggled; /** comment */
+  let toggled; // single line comment
 </script>
 
 <Button

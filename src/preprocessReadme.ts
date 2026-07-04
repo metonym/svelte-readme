@@ -197,7 +197,7 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
       );
 
       return {
-        code: `<script>${[...new Set(script_content)].join("")}</script>
+        code: `<script>${[...new Set(script_content)].join("\n")}</script>
                <style>${style_content}</style>
                <main class="markdown-body">${result}</main>`,
       };
