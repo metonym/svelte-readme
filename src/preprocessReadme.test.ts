@@ -195,7 +195,7 @@ describe("preprocessReadme", () => {
     ].join("\n\n");
     const code = await markup(content);
 
-    const extractedScript = code?.match(/^<script>([\s\S]*?)<\/script>/)?.[1];
+    const extractedScript = code?.match(EXTRACTED_SCRIPT)?.[1];
 
     expect(extractedScript).toContain("let count = 0;");
     expect(extractedScript).toContain('let count2 = "duplicate";');
@@ -213,7 +213,7 @@ describe("preprocessReadme", () => {
     ].join("\n\n");
     const code = await markup(content);
 
-    const extractedScript = code?.match(/^<script>([\s\S]*?)<\/script>/)?.[1];
+    const extractedScript = code?.match(EXTRACTED_SCRIPT)?.[1];
 
     // identical declarations are deduplicated via the Set in the final script assembly
     expect(extractedScript?.match(/let count = 0;/g)).toHaveLength(1);
@@ -228,8 +228,12 @@ describe("preprocessReadme", () => {
       svelte: SVELTE_ENTRY,
       homepage: "https://github.com/metonym/svelte-readme",
     });
-    const content = '```svelte\n<script>\n  import x from "a.b";\n  console.log("aXb");\n</script>\n```';
-    const result = await withDottedName.markup({ content, filename: "README.md" });
+    const content =
+      '```svelte\n<script>\n  import x from "a.b";\n  console.log("aXb");\n</script>\n```';
+    const result = await withDottedName.markup({
+      content,
+      filename: "README.md",
+    });
 
     expect(result?.code).toContain(`import x from "${SVELTE_ENTRY}"`);
     expect(result?.code).toContain('console.log("aXb")');
@@ -241,10 +245,14 @@ describe("preprocessReadme", () => {
       throw new Error("boom");
     });
 
-    const code = await markup("```svelte\n<script>\n  let count = 0;\n</script>\n<button>{count}</button>\n```");
+    const code = await markup(
+      "```svelte\n<script>\n  let count = 0;\n</script>\n<button>{count}</button>\n```",
+    );
 
     expect(code).toContain("<button>{count}</button>");
-    expect(errorSpy).toHaveBeenCalledWith("Could not format svelte code block; displaying it unformatted.");
+    expect(errorSpy).toHaveBeenCalledWith(
+      "Could not format svelte code block; displaying it unformatted.",
+    );
 
     formatSpy.mockRestore();
     errorSpy.mockRestore();
