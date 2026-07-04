@@ -127,6 +127,14 @@ interface CreateConfigOptions {
   prefixUrl: string;
 
   /**
+   * Called with the source of each `svelte` code fence before it's highlighted for display,
+   * so it can be pretty-printed with your own formatter (e.g. Prettier). The code fence is
+   * displayed unformatted if this is omitted or its result rejects/throws.
+   * @default undefined
+   */
+  format: (source: string) => string | Promise<string>;
+
+  /**
    * `@sveltejs/vite-plugin-svelte` options
    * @default {}
    */
@@ -222,7 +230,11 @@ export default function createConfig(
       extensions: [".svelte", ".md", ...(opts.svelte?.extensions ?? [])],
       preprocess: [
         ...toArray(opts.svelte?.preprocess),
-        preprocessReadme({ ...pkg, prefixUrl: opts.prefixUrl }),
+        preprocessReadme({
+          ...pkg,
+          prefixUrl: opts.prefixUrl,
+          format: opts.format,
+        }),
       ],
     };
 

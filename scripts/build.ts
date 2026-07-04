@@ -5,13 +5,7 @@ const isWatchMode =
   process.argv.includes("-w") || process.argv.includes("--watch");
 
 // `svelte`, `vite` must resolve to the consumer's own installed versions.
-const external = [
-  "svelte",
-  "vite",
-  "prettier",
-  "prettier-plugin-svelte",
-  "html-minifier",
-];
+const external = ["svelte", "vite", "html-minifier"];
 
 await $`rm -rf dist`;
 
