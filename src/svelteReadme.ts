@@ -27,33 +27,27 @@ const github_styles: string = fs.readFileSync(
   path.join(dirname, "style.css"),
   "utf-8",
 );
+const layout_styles: string = fs.readFileSync(
+  path.join(dirname, "layout.css"),
+  "utf-8",
+);
+const button_styles: string = fs.readFileSync(
+  path.join(dirname, "button.css"),
+  "utf-8",
+);
 
 // Each grammar's own token colors are colocated with its highlighter under `./highlight`
 // (see `baseTokenStyles`'s doc comment in `./highlight/shared.js` for why); this only
 // composes them plus the page-layout CSS that isn't specific to any grammar.
-const custom_css = `
-  ${baseTokenStyles}
-  ${typescriptStyles}
-  ${svelteStyles}
-  ${jsonStyles}
-  ${yamlStyles}
-  ${bashStyles}
-
-  .code-fence { padding: 24px 15px; border: 1px solid #eaecef; border-bottom: 0; }
-
-  main {
-    box-sizing: border-box;
-    max-width: 980px;
-    margin: 0 auto;
-    padding: 45px;
-  }
-
-  @media (max-width: 767px) {
-    main { padding: 15px; }
-  }
-
-
-`;
+const custom_css = [
+  baseTokenStyles,
+  typescriptStyles,
+  svelteStyles,
+  jsonStyles,
+  yamlStyles,
+  bashStyles,
+  layout_styles,
+].join("\n");
 
 interface SvelteReadmeOptions {
   /**
@@ -178,32 +172,7 @@ export function svelteReadme(
   let css = github_styles;
 
   if (!opts.disableDefaultCSS) {
-    css += `/**
-      * GitHub Primer button CSS
-      * https://primer.style/css/components/buttons
-      **/
-    .code-fence button {
-      font-family: inherit;
-      text-transform: none;
-      position: relative;
-      display: inline-block;
-      padding: 5px 16px;
-      font-size: 14px;
-      font-weight: 500;
-      line-height: 20px;
-      white-space: nowrap;
-      vertical-align: middle;
-      cursor: pointer;
-      user-select: none;
-      border: 1px solid;
-      border-radius: 6px;
-      appearance: none;
-      color: #24292e;
-      background-color: #fafbfc;
-      border-color: rgba(27,31,35,0.15);
-      box-shadow: 0 1px 0 rgba(27,31,35,0.04), inset 0 1px 0 rgba(255,255,255,0.25);
-      transition: background-color 0.2s cubic-bezier(0.3, 0, 0.5, 1);
-    }`;
+    css += button_styles;
   }
 
   function renderTemplate(

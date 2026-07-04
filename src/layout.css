@@ -1,0 +1,18 @@
+.code-fence {
+  padding: 24px 15px;
+  border: 1px solid #eaecef;
+  border-bottom: 0;
+}
+
+main {
+  box-sizing: border-box;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 45px;
+}
+
+@media (max-width: 767px) {
+  main {
+    padding: 15px;
+  }
+}
