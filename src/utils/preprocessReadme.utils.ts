@@ -82,7 +82,15 @@ export const getChildNodeText = (node: Node) => {
 };
 
 export type Declaration = { name: string; start: number; end: number };
-export type IdentifierRange = { start: number; end: number; name: string };
+export type IdentifierRange = {
+  start: number;
+  end: number;
+  name: string;
+  // Overrides the plain `renameMap.get(name)` substitution — used for shorthand `class:foo`
+  // directives (see `collectIdentifierRanges`), where the replacement text must expand to
+  // `class:foo={renamedFoo}` rather than replacing `foo` itself.
+  replacement?: string;
+};
 
 const collectPatternNames = (
   pattern: Node | undefined,
@@ -245,6 +253,28 @@ export const collectIdentifierRanges = (
             parent.exported !== parent.local
           )
             return;
+
+          // Shorthand `class:foo` directives reuse the same source span for both the bound
+          // variable and the literal CSS class name (Svelte parses `foo` as the directive's
+          // `expression`, but the compiled class name comes from that same text). Renaming
+          // that span in place would silently rename the CSS class too, so expand it to the
+          // explicit form instead, which keeps `foo` as the class name and only swaps the
+          // variable it's bound to. Explicit-form directives (`class:foo={bar}`) already give
+          // the expression its own span outside the class-name text, so they need no special
+          // handling — detected here by the expression ending exactly where the directive does.
+          if (
+            (parent.type === "Class" || parent.type === "ClassDirective") &&
+            parent.expression === node &&
+            node.end === parent.end
+          ) {
+            ranges.push({
+              start: parent.start,
+              end: parent.end,
+              name: node.name,
+              replacement: `class:${node.name}={${renameMap.get(node.name)}}`,
+            });
+            return;
+          }
         }
 
         ranges.push({ start: node.start, end: node.end, name: node.name });
@@ -264,10 +294,13 @@ export const applyRenames = (
 
   let result = source;
 
-  for (const { start, end, name } of [...ranges].sort(
+  for (const { start, end, name, replacement } of [...ranges].sort(
     (a, b) => b.start - a.start,
   )) {
-    result = result.slice(0, start) + renameMap.get(name) + result.slice(end);
+    result =
+      result.slice(0, start) +
+      (replacement ?? renameMap.get(name)) +
+      result.slice(end);
   }
 
   return result;

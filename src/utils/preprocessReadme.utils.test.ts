@@ -195,6 +195,37 @@ describe("collectIdentifierRanges", () => {
     // the `.count` member access and the `{ count: 1 }` shorthand-less key are not.
     expect(ranges.length).toBe(2);
   });
+
+  test("rewrites a shorthand class: directive to explicit form instead of renaming the class name", () => {
+    const { html } = parse("<div class:intersecting>{intersecting}</div>");
+    const ranges = collectIdentifierRanges(
+      html,
+      new Map([["intersecting", "intersecting2"]]),
+    );
+
+    // one range for the `class:intersecting` directive (expanded to explicit form) and
+    // one for the `{intersecting}` expression tag
+    expect(ranges.length).toBe(2);
+
+    const directiveRange = ranges.find((r) => r.replacement !== undefined);
+    expect(directiveRange?.replacement).toBe(
+      "class:intersecting={intersecting2}",
+    );
+  });
+
+  test("leaves an explicit class: directive's class name untouched", () => {
+    const { html } = parse(
+      "<div class:intersecting={intersecting}>{intersecting}</div>",
+    );
+    const ranges = collectIdentifierRanges(
+      html,
+      new Map([["intersecting", "intersecting2"]]),
+    );
+
+    // both ranges are plain identifier renames (the class name literal is never visited)
+    expect(ranges.every((r) => r.replacement === undefined)).toBe(true);
+    expect(ranges.length).toBe(2);
+  });
 });
 
 describe("applyRenames", () => {
@@ -213,5 +244,22 @@ describe("applyRenames", () => {
     const renameMap = new Map([["count", "count2"]]);
 
     expect(applyRenames(source, ranges, renameMap)).toBe("count2 + count2");
+  });
+
+  test("uses a range's explicit replacement instead of the rename map when provided", () => {
+    const source = "class:count";
+    const ranges = [
+      {
+        start: 0,
+        end: 11,
+        name: "count",
+        replacement: "class:count={count2}",
+      },
+    ];
+    const renameMap = new Map([["count", "count2"]]);
+
+    expect(applyRenames(source, ranges, renameMap)).toBe(
+      "class:count={count2}",
+    );
   });
 });
