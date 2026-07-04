@@ -12,6 +12,12 @@ import {
   type UserConfig,
   build as viteBuild,
 } from "vite";
+import { styles as bashStyles } from "./highlight/bash.js";
+import { styles as jsonStyles } from "./highlight/json.js";
+import { baseTokenStyles } from "./highlight/shared.js";
+import { styles as svelteStyles } from "./highlight/svelte.js";
+import { styles as typescriptStyles } from "./highlight/typescript.js";
+import { styles as yamlStyles } from "./highlight/yaml.js";
 import { preprocessReadme } from "./preprocessReadme.js";
 import { purgeUnusedCss } from "./purgeCss.js";
 
@@ -47,34 +53,16 @@ function getPackageJSON() {
   }
 }
 
+// Each grammar's own token colors are colocated with its highlighter under `./highlight`
+// (see `baseTokenStyles`'s doc comment in `./highlight/shared.js` for why); this only
+// composes them plus the page-layout CSS that isn't specific to any grammar.
 const custom_css = `
-  .language-yaml { color: #0550ae; }
-  .language-typescript { color: #0550ae; }
-  .language-typescript .string { color: #0a3069; }
-  .language-typescript .number { color: #005cc5; }
-  .language-typescript .class-name { color: #24292f; }
-  .token.keyword { color: #d73a49; }
-
-  .token.language-javascript { color: #24292e; }
-  .token.language-javascript .function { color: #005cc5; }
-  .token.language-javascript .string { color: #032f62; }
-  .token.language-javascript .number { color: #005cc5; }
-  .token.language-javascript .keyword { color: #d73a49; }
-  .token.each { color: #d73a49; }
-  .token.punctuation { color: #24292e }
-  .token.tag { color: #22863a; }
-  .token.attr-name { color: #6f42c1; }
-  .token.attr-value { color: #032f62; }
-  .token.operator { color: #d73a49; }
-  .token.comment { color: #6a737d; }
-  .token.function { color: #6f42c1; }
-  .token.string { color: #032f62; }
-
-  .token.each .language-javascript:last-child { color: #e36209; }
-
-  .language-css { color: #032f62; }
-  .language-css .selector { color: #22863a; }
-  .language-css .property { color: #005cc5; }
+  ${baseTokenStyles}
+  ${typescriptStyles}
+  ${svelteStyles}
+  ${jsonStyles}
+  ${yamlStyles}
+  ${bashStyles}
 
   .code-fence { padding: 24px 15px; border: 1px solid #eaecef; border-bottom: 0; }
 
