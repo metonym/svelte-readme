@@ -197,6 +197,29 @@ const virtualEntriesPlugin: Plugin = {
   },
 };
 
+// Hand-rolled instead of pulling in an HTML minifier: collapses runs of
+// insignificant whitespace (template indentation, blank lines from empty
+// interpolations) down to a single space. `<pre>`/`<script>` contents are
+// left untouched — `<pre>` because its whitespace is meaningful (rendered
+// code samples), `<script>` because collapsing a `//` line comment's
+// trailing newline into a space would swallow the rest of the line.
+function collapseWhitespace(html: string): string {
+  const preserved: string[] = [];
+
+  const withPlaceholders = html.replace(
+    /<(pre|script)[^>]*>[\s\S]*?<\/\1>/gi,
+    (match) => {
+      preserved.push(match);
+      return `\0${preserved.length - 1}\0`;
+    },
+  );
+
+  return withPlaceholders
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\0(\d+)\0/g, (_, i) => preserved[Number(i)]);
+}
+
 function logSSRFallback(error: unknown) {
   console.warn(
     "[svelte-readme] Failed to server-render README.md — falling back to client-only rendering.\n" +
@@ -298,7 +321,7 @@ export default function createConfig(
       </html>
     `;
 
-      return template;
+      return collapseWhitespace(template);
     }
 
     async function renderSSR(): Promise<{ head: string; body: string }> {
