@@ -1,12 +1,12 @@
-import { svelte, Options as VitePluginSvelteOptions } from "@sveltejs/vite-plugin-svelte";
-import { preprocessReadme } from "./preprocessReadme.js";
+import { createRequire } from "node:module";
+import path from "node:path";
+import { svelte, type Options as VitePluginSvelteOptions } from "@sveltejs/vite-plugin-svelte";
 import fs from "fs-extra";
-import path from "path";
-import { createRequire } from "module";
 import htmlminifier from "html-minifier";
+import type { PreprocessorGroup } from "svelte/compiler";
+import type { ConfigEnv, Plugin, UserConfig } from "vite";
+import { preprocessReadme } from "./preprocessReadme.js";
 import { css as github_styles } from "./style.js";
-import { Plugin, UserConfig, ConfigEnv } from "vite";
-import { PreprocessorGroup } from "svelte/compiler";
 
 const require = createRequire(import.meta.url);
 
@@ -131,7 +131,7 @@ interface CreateConfigOptions {
 }
 
 const VIRTUAL_ENTRY_ID = "virtual:svelte-readme-entry";
-const RESOLVED_VIRTUAL_ENTRY_ID = "\0" + VIRTUAL_ENTRY_ID;
+const RESOLVED_VIRTUAL_ENTRY_ID = `\0${VIRTUAL_ENTRY_ID}`;
 
 export default function createConfig(opts: Partial<CreateConfigOptions> = {}): (env: ConfigEnv) => UserConfig {
   return (env) => {
@@ -278,7 +278,7 @@ export default function createConfig(opts: Partial<CreateConfigOptions> = {}): (
       appType: "custom",
       build: {
         outDir: output_dir,
-        minify: minify ? "esbuild" : false,
+        minify,
         rollupOptions: {
           input: VIRTUAL_ENTRY_ID,
           output: { entryFileNames: "s-[hash].js" },
