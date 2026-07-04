@@ -61,8 +61,5 @@
   ],
   "files": [
     "dist"
-  ],
-  "prettier": {
-    "printWidth": 120
-  }
+  ]
 }
