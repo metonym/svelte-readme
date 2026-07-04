@@ -1,5 +1,7 @@
 .code-fence {
-  padding: 1.5rem 0.9375rem;
+  padding: 1.5rem var(--sr-spacing);
+  margin-right: calc(var(--sr-spacing) * -1);
+  margin-left: calc(var(--sr-spacing) * -1);
   border: 1px solid var(--sr-color-border-muted);
   border-bottom: 0;
   overflow-x: auto;
@@ -8,7 +10,7 @@
 .sr-layout {
   display: grid;
   grid-template-columns: 11.25rem minmax(0, 60rem) 11.25rem;
-  column-gap: 2.5rem;
+  column-gap: 3.125rem;
   max-width: 87.5rem;
   margin: 0 auto;
   padding: 2.8125rem;
@@ -25,7 +27,7 @@ main.markdown-body {
    (mobile) — only one of the two is ever visible at a given viewport width. */
 .sr-toc {
   font-family: var(--sr-font-sans);
-  font-size: 0.75rem;
+  font-size: var(--sr-text-xs);
   color: var(--sr-color-fg-muted);
 }
 
@@ -53,8 +55,7 @@ main.markdown-body {
 }
 
 .sr-toc a.sr-toc-active {
-  color: var(--sr-color-fg);
-  font-weight: 600;
+  color: var(--sr-color-link);
   text-decoration: underline;
 }
 
@@ -66,7 +67,7 @@ main.markdown-body {
   top: 0;
   align-self: stretch;
   max-height: 100vh;
-  padding: 2rem 0;
+  padding: 1.5rem 0 2rem;
   overflow-y: auto;
 }
 
@@ -76,6 +77,10 @@ main.markdown-body {
 
 main.markdown-body p {
   max-width: 52ch;
+}
+
+main.markdown-body blockquote p {
+  max-width: none;
 }
 
 /* Between the mobile breakpoint and the full desktop width, the fixed-width empty
@@ -115,5 +120,25 @@ main.markdown-body p {
   .sr-toc-inline {
     display: block;
     margin-bottom: var(--sr-spacing-lg);
+  }
+
+  /* The desktop bleed (negative margin equal to the box's own padding) assumes
+     room in the gutter outside the text column to bleed into. On mobile there's
+     no gutter — the layout padding above is already tight — so bleeding here would
+     just push these boxes past the viewport edge instead of aligning them. */
+  main.markdown-body table,
+  main.markdown-body pre,
+  main.markdown-body .code-fence,
+  main.markdown-body details {
+    margin-right: 0;
+    margin-left: 0;
+  }
+
+  /* `table`'s desktop `width: fit-content` can still exceed the viewport here if a
+     cell's content can't wrap below some minimum width (e.g. a long unbroken
+     string) — cap it so the table's own horizontal scrollbar handles the overflow
+     instead of the page growing wider than the viewport. */
+  main.markdown-body table {
+    max-width: 100%;
   }
 }
