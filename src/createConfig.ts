@@ -1,4 +1,3 @@
-import fs from "node:fs";
 import fsPromises from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -20,38 +19,18 @@ import { styles as typescriptStyles } from "./highlight/typescript.js";
 import { styles as yamlStyles } from "./highlight/yaml.js";
 import { preprocessReadme } from "./preprocessReadme.js";
 import { purgeUnusedCss } from "./purgeCss.js";
+import {
+  collapseWhitespace,
+  getPackageJSON,
+  logSSRFallback,
+  toArray,
+} from "./utils.js";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const github_styles: Promise<string> = fsPromises.readFile(
   path.join(dirname, "style.css"),
   "utf-8",
 );
-
-function toArray<T>(value: T | T[] | undefined): T[] {
-  if (value === undefined) return [];
-  return Array.isArray(value) ? value : [value];
-}
-
-function getPackageJSON() {
-  try {
-    const path_pkg = path.join(process.cwd(), "package.json");
-    const pkg = JSON.parse(fs.readFileSync(path_pkg, "utf-8"));
-
-    if (!pkg.name) throw Error(`Package name is required as "name".`);
-    if (!pkg.svelte) throw Error(`Svelte code entry is required as "svelte".`);
-
-    return {
-      name: pkg.name,
-      svelte: pkg.svelte,
-      description: pkg.description,
-      homepage: pkg.homepage,
-      repoUrl: pkg.repository?.url,
-    };
-  } catch (error) {
-    console.log(error);
-    process.exit(1);
-  }
-}
 
 // Each grammar's own token colors are colocated with its highlighter under `./highlight`
 // (see `baseTokenStyles`'s doc comment in `./highlight/shared.js` for why); this only
@@ -182,38 +161,6 @@ const virtualEntriesPlugin: Plugin = {
     }
   },
 };
-
-// Hand-rolled instead of pulling in an HTML minifier: collapses runs of
-// insignificant whitespace (template indentation, blank lines from empty
-// interpolations) down to a single space. `<pre>`/`<script>` contents are
-// left untouched — `<pre>` because its whitespace is meaningful (rendered
-// code samples), `<script>` because collapsing a `//` line comment's
-// trailing newline into a space would swallow the rest of the line.
-function collapseWhitespace(html: string): string {
-  const preserved: string[] = [];
-
-  const withPlaceholders = html.replace(
-    /<(pre|script)[^>]*>[\s\S]*?<\/\1>/gi,
-    (match) => {
-      preserved.push(match);
-      return `\0${preserved.length - 1}\0`;
-    },
-  );
-
-  return withPlaceholders
-    .replace(/\s+/g, " ")
-    .trim()
-    .replace(/\0(\d+)\0/g, (_, i) => preserved[Number(i)]);
-}
-
-function logSSRFallback(error: unknown) {
-  console.warn(
-    "[svelte-readme] Failed to server-render README.md — falling back to client-only rendering.\n" +
-      "If this happens outside a simple `document`/`window` property access, guard the browser-only " +
-      'code (e.g. `if (typeof document !== "undefined")`) or move it into `onMount`.',
-  );
-  console.warn(error);
-}
 
 export default function createConfig(
   opts: Partial<CreateConfigOptions> = {},
