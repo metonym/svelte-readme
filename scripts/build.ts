@@ -59,8 +59,7 @@ async function buildProject() {
     return;
   }
 
-  await emitTypeDeclarations();
-  copyCssFiles();
+  await Promise.all([emitTypeDeclarations(), copyCssFiles()]);
 
   console.log("✓ Build completed");
 }
