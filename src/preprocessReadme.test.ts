@@ -113,6 +113,11 @@ describe("preprocessReadme", () => {
     expect(code).toContain('<main class="markdown-body">\n<h1 id="hi">Hi</h1>');
   });
 
+  test("omits the <style> tag entirely when the markdown has no <style> block", async () => {
+    const code = await markup("# Hi");
+    expect(code).not.toContain("<style>");
+  });
+
   test("builds a nested table of contents from h2/h3 headings", async () => {
     const content = `
 <!-- TOC -->

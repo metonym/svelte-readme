@@ -563,7 +563,7 @@ export function preprocessReadme(
 
     return {
       code: `<script>${[...new Set(script_content)].join("\n")}</script>
-               <style>${style_content}</style>
+               ${style_content.trim() ? `<style>${style_content}</style>` : ""}
                <main class="markdown-body">${result}</main>`,
     };
   }
