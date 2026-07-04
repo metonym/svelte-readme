@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import postcss from "postcss";
+import postcss, { type Plugin } from "postcss";
 
 const github_css = fs.readFileSync(
   path.join(
@@ -13,8 +13,9 @@ const github_css = fs.readFileSync(
 const REMOVED_SELECTOR =
   /(^\.f6|\.bg-|\.text-|\.lh-|\.tab-size|\.task-list|\.mb|\.py|\.my|\.px|\.py|\.pl|commit|blob-|octicon|border|rounded)/;
 
-const plugin = postcss.plugin("postcss-plugin", () => {
-  return (root) => {
+const plugin: Plugin = {
+  postcssPlugin: "postcss-plugin",
+  Once(root) {
     root.walkRules((node) => {
       node.selector = node.selector
         .replace(/\.markdown-body /g, "")
@@ -23,15 +24,15 @@ const plugin = postcss.plugin("postcss-plugin", () => {
         node.remove();
       }
     });
-  };
-});
+  },
+};
 
 const custom_css = `
   p { min-height: 28px; }
   pre { margin-bottom: 48px; }
 `;
 
-postcss(plugin)
+postcss([plugin])
   .process(github_css, { from: undefined })
   .then((result) => {
     fs.writeFileSync(
