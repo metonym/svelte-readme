@@ -13,7 +13,7 @@ import { styles as svelteStyles } from "./highlight/svelte.js";
 import { styles as typescriptStyles } from "./highlight/typescript.js";
 import { styles as yamlStyles } from "./highlight/yaml.js";
 import { preprocessReadme } from "./preprocessReadme.js";
-import { buttonStyles, githubStyles, layoutStyles } from "./styles/index.js";
+import { defaultStyles, layoutStyles } from "./styles/index.js";
 import { purgeUnusedCss } from "./utils/purgeCss.js";
 import {
   collapseWhitespace,
@@ -154,12 +154,6 @@ export function svelteReadme(
     ],
   };
 
-  let css = githubStyles;
-
-  if (!opts.disableDefaultCSS) {
-    css += buttonStyles;
-  }
-
   function renderTemplate(
     scriptSrc: string,
     ssr?: { head: string; body: string },
@@ -185,7 +179,7 @@ export function svelteReadme(
           <meta name="description" content="${pkg.description || `${pkg.name} demo`}" />
           <title>${pkg.name}</title>
           <style>
-            ${!opts.disableDefaultCSS ? purge(css) : ""}
+            ${!opts.disableDefaultCSS ? purge(defaultStyles) : ""}
             ${purge(custom_css)}
             ${opts.style || ""}
           </style>
