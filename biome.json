@@ -1,8 +1,9 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.5.2/schema.json",
-	"vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
-	"files": { "includes": ["**", "!!**/dist", "!!**/*.svelte"] },
-	"assist": {
-		"actions": { "source": { "organizeImports": "on" } }
-	}
+  "$schema": "https://biomejs.dev/schemas/2.5.2/schema.json",
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "files": { "includes": ["**", "!!**/dist", "!!**/*.svelte"] },
+  "formatter": { "indentStyle": "space" },
+  "assist": {
+    "actions": { "source": { "organizeImports": "on" } }
+  }
 }
