@@ -174,7 +174,6 @@ export function svelteReadme(
     ],
   };
 
-  let DEV = false;
   let css = github_styles;
 
   if (!opts.disableDefaultCSS) {
@@ -279,18 +278,7 @@ export function svelteReadme(
 
   const htmlPlugin: Plugin = {
     name: "svelte-readme-html",
-    config(_, env) {
-      DEV = env.command === "serve" && !env.isPreview;
-
-      console.log(
-        `[svelteReadme] Running in ${DEV ? "development" : "production"}`,
-      );
-      console.log("[svelteReadme] options:");
-      console.group();
-      console.log("outDir:", output_dir);
-      console.log("svelte:", svelteOptions);
-      console.groupEnd();
-
+    config() {
       return {
         appType: "custom",
         build: {
