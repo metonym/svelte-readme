@@ -1,18 +1,10 @@
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { type Claim, gapFill, renderClaims } from "./shared.js";
-
-const dirname = path.dirname(fileURLToPath(import.meta.url));
+import { type Claim, gapFill, readGrammarCss, renderClaims } from "./shared.js";
 
 // Falls back to this default text color for unclaimed scalars (e.g. a bare `key:` with
 // no recognized value type) and keys (`atrule`), which have no dedicated color of their
 // own — everything else this module claims (string/number/boolean/comment) is styled
 // in `./shared.js`.
-export const styles: string = fs.readFileSync(
-  path.join(dirname, "yaml.css"),
-  "utf-8",
-);
+export const styles: string = readGrammarCss(import.meta.url, "yaml.css");
 
 const KEY_RE = /^(\s*(?:-\s+)?)([^\s:#][^:]*?)(:)(\s|$)/;
 const QUOTED_RE = /^["'][\s\S]*["']$/;
