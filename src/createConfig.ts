@@ -14,6 +14,7 @@ import {
   build as viteBuild,
 } from "vite";
 import { preprocessReadme } from "./preprocessReadme.js";
+import { purgeUnusedCss } from "./purgeCss.js";
 import { css as github_styles } from "./style.js";
 
 const require = createRequire(import.meta.url);
@@ -297,6 +298,16 @@ export default function createConfig(
       scriptSrc: string,
       ssr?: { head: string; body: string },
     ) {
+      // Rules that can't match anything in the rendered README are dropped, so the served
+      // stylesheet only carries what this particular README actually uses. Only runs when SSR
+      // succeeded (real markup to check against); on SSR failure the unpurged CSS ships as-is,
+      // same fallback-to-safe behavior as the rest of this file's SSR handling. `opts.style` is
+      // left untouched — it's consumer-authored and may target markup that only exists after
+      // hydration (e.g. state toggled in `onMount`), which purging can't see.
+      const html = ssr ? `${ssr.head}${ssr.body}` : undefined;
+      const purge = (input: string) =>
+        html ? purgeUnusedCss(input, html) : input;
+
       const template = `
       <!DOCTYPE html>
       <html lang="en">
@@ -306,8 +317,8 @@ export default function createConfig(
           <meta name="description" content="${pkg.description || `${pkg.name} demo`}" />
           <title>${pkg.name}</title>
           <style>
-            ${!opts.disableDefaultCSS ? css : ""}
-            ${custom_css}
+            ${!opts.disableDefaultCSS ? purge(css) : ""}
+            ${purge(custom_css)}
             ${opts.style || ""}
           </style>
           ${opts?.head ?? ""}
