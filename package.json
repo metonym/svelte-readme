@@ -20,6 +20,7 @@
     "prepack": "bun run preprocess && tsgo",
     "lint": "biome check --write .",
     "lint:changed": "biome check --write --changed --since=master --no-errors-on-unmatched .",
+    "test": "bun test",
     "verify": "bun scripts/verifyPreprocess.ts"
   },
   "dependencies": {
