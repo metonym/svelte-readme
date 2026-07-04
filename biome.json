@@ -15,7 +15,14 @@
     "expand": "auto",
     "useEditorconfig": true
   },
-  "linter": { "enabled": false },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "style": { "noNonNullAssertion": "off" },
+      "suspicious": { "noExplicitAny": "off" }
+    }
+  },
   "javascript": {
     "formatter": {
       "jsxQuoteStyle": "double",
@@ -36,6 +43,7 @@
     }
   },
   "assist": {
-    "enabled": false
+    "enabled": true,
+    "actions": { "source": { "organizeImports": "on" } }
   }
 }

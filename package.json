@@ -18,7 +18,8 @@
     "preprocess": "bun scripts/preprocessStyles.ts",
     "dev": "bun run preprocess && tsc -w",
     "prepack": "bun run preprocess && tsc",
-    "format": "biome format --write .",
+    "lint": "biome check --write .",
+    "lint:changed": "biome check --write --changed --since=master --no-errors-on-unmatched .",
     "verify": "bun scripts/verifyPreprocess.ts"
   },
   "dependencies": {
