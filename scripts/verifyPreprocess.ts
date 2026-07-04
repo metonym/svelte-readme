@@ -1,5 +1,4 @@
 import assert from "node:assert";
-import sveltePackage from "svelte/package.json" with { type: "json" };
 import { preprocessReadme } from "../dist/index.js";
 
 const pre = preprocessReadme({
@@ -46,5 +45,5 @@ Promise.resolve(markup({ content, filename: "README.md" })).then((result) => {
   assert(H2_ANCHOR_ID.test(result.code), "h2 anchor id missing");
   assert(H3_ANCHOR_ID.test(result.code), "h3 anchor id missing");
 
-  console.log(`[verifyPreprocess] OK against svelte@${sveltePackage.version}`);
+  console.log("[verifyPreprocess] OK");
 });
