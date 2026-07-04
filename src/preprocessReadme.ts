@@ -1,15 +1,10 @@
+import { URL } from "node:url";
 import { walk } from "estree-walker";
 import Markdown from "markdown-it";
 import markdownItAnchor from "markdown-it-anchor";
 import Prism from "prismjs";
-import { parse } from "svelte/compiler";
-import "prismjs/components/prism-bash.js";
-import "prismjs/components/prism-typescript.js";
-import "prismjs/components/prism-jsx.js";
-import "prismjs/components/prism-yaml.js";
-import "prism-svelte";
-import { URL } from "node:url";
 import type { PreprocessorGroup } from "svelte/compiler";
+import { parse } from "svelte/compiler";
 
 // Svelte's markup/script AST has no official types, and shares no common shape with the
 // ESTree nodes `estree-walker` expects — this loose record covers both.
@@ -24,12 +19,44 @@ const aliases: Record<string, string> = {
   yml: "yaml",
 };
 
+type LanguageLoader = () => Promise<unknown>;
+
+// Grammars are loaded on demand (and cached on `Prism.languages` for the process)
+// instead of imported statically, so a README that never fences e.g. YAML never pays
+// to load that grammar. `javascript`/`markup`/`css`/`clike` ship in Prism's core, so
+// languages that extend them (typescript, jsx) don't need load-order handling here.
+const defaultLanguageLoaders: Record<string, LanguageLoader> = {
+  bash: () => import("prismjs/components/prism-bash.js"),
+  typescript: () => import("prismjs/components/prism-typescript.js"),
+  jsx: () => import("prismjs/components/prism-jsx.js"),
+  yaml: () => import("prismjs/components/prism-yaml.js"),
+  svelte: () => import("prism-svelte"),
+};
+
+function loadLanguage(
+  id: string,
+  loaders: Record<string, LanguageLoader>,
+): Promise<unknown> {
+  if (Prism.languages[id]) return Promise.resolve();
+
+  const loader = loaders[id];
+  if (!loader) return Promise.resolve();
+
+  // A failed load (unpublished package, network hiccup, etc.) just leaves the
+  // grammar unregistered; `highlight()` already falls back to raw output when
+  // `Prism.languages[id]` is missing.
+  return loader().catch(() => {});
+}
+
 interface PreprocessReadmeOptions {
   name: string;
   svelte: string;
   prefixUrl: string;
   homepage: string;
   repoUrl: string;
+  // Consumer-supplied grammar loaders, keyed by the alias-resolved language id
+  // (e.g. "python"). Merged over (and can override) the built-in loaders above.
+  languages: Record<string, LanguageLoader>;
   /**
    * Called with the source of each `svelte` code fence before it's highlighted for display,
    * so the consumer can pretty-print it with their own formatter (e.g. Prettier). The code
@@ -43,6 +70,7 @@ const URL_SCHEME = /^[a-zA-Z][a-zA-Z\d+\-.]*:/;
 const NO_EVAL_ATTR = /no-eval/;
 const NO_DISPLAY_ATTR = /no-display/;
 const NODE_MODULES_PATH = /node_modules/;
+const FENCE_INFO_WHITESPACE = /\s+/;
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -261,6 +289,10 @@ export function preprocessReadme(
     Partial<PreprocessReadmeOptions>,
 ): Pick<PreprocessorGroup, "markup"> {
   const prefixUrl = opts.prefixUrl || `${opts.homepage}/tree/master/`;
+  const languageLoaders: Record<string, LanguageLoader> = {
+    ...defaultLanguageLoaders,
+    ...opts.languages,
+  };
 
   let script_content: string[] = [];
   let pending_format: { placeholder: string; source: string }[] = [];
@@ -362,6 +394,180 @@ export function preprocessReadme(
       escapeCurlyBraces(defaultRule(tokens, idx, options, env, self));
   }
 
+  async function processMarkup(content: string) {
+    script_content = [];
+    pending_format = [];
+
+    if (opts.repoUrl) {
+      content = content.replaceAll(
+        "<!-- REPO_URL -->",
+        `[GitHub repo](${opts.repoUrl})`,
+      );
+    }
+
+    content = content.replaceAll(
+      "<!-- TOC -->",
+      `
+## Table of Contents
+      `,
+    );
+
+    // markdown-it's `highlight` callback is synchronous, so every grammar a fence
+    // needs must already be registered on `Prism.languages` before rendering runs.
+    // Scanning the parsed fence tokens up front lets each language load lazily
+    // (and only once per process) instead of every grammar being imported eagerly.
+    const tokens = md.parse(content, {});
+    const fenceLanguages = new Set<string>();
+
+    for (const token of tokens) {
+      if (token.type !== "fence" || !token.info) continue;
+      const lang = token.info.trim().split(FENCE_INFO_WHITESPACE)[0];
+      if (lang) fenceLanguages.add(aliases[lang] || lang);
+    }
+
+    await Promise.all(
+      [...fenceLanguages].map((lang) => loadLanguage(lang, languageLoaders)),
+    );
+
+    let style_content = "";
+    let result = md.renderer.render(tokens, md.options, {});
+    let cursor = 0;
+
+    const ast = parse(result) as unknown as Node;
+
+    const headings = [];
+    let prev: undefined | "h2" | "h3";
+
+    walk(
+      // biome-ignore lint/suspicious/noExplicitAny: estree-walker's real types don't match Svelte's AST (see `Node` above)
+      ast as any,
+      {
+        // biome-ignore lint/suspicious/noExplicitAny: estree-walker's real types don't match Svelte's AST (see `Node` above)
+        enter(node: any, parent: any) {
+          if (node.type === "Attribute" && node.name === "href") {
+            const value = node.value[0];
+
+            if (
+              value &&
+              !value.raw.startsWith("#") &&
+              isRelativeUrl(value.raw)
+            ) {
+              const relative_path = new URL(value.raw, prefixUrl).href;
+              result = result.replace(value.raw, relative_path);
+              cursor += relative_path.length - value.raw.length;
+            }
+          }
+
+          if (node.type === "Style") {
+            style_content += result.slice(node.content.start, node.content.end);
+            const replace_style = result.slice(
+              node.start + cursor,
+              node.end + cursor,
+            );
+            result = result.replace(replace_style, "");
+            cursor -= replace_style.length;
+          }
+
+          if (node.type === "Element" && node.name === "h2") {
+            // @ts-expect-error
+            const id = node.attributes.find((attr) => attr.name === "id")
+              .value[0].raw;
+
+            if (id === "table-of-contents") return;
+
+            const text = getChildNodeText(node);
+
+            if (text !== undefined) {
+              if (prev === "h3") {
+                headings.push(`</ul><li><a href="#${id}">${text}</a></li>`);
+              } else {
+                headings.push(`<li><a href="#${id}">${text}</a></li>`);
+              }
+
+              prev = "h2";
+            }
+          }
+
+          if (node.type === "Element" && node.name === "h3") {
+            // @ts-expect-error
+            const id = node.attributes.find((attr) => attr.name === "id")
+              .value[0].raw;
+            const text = getChildNodeText(node);
+
+            if (text !== undefined) {
+              if (prev === "h2") {
+                headings.push(`<ul><li><a href="#${id}">${text}</a></li>`);
+              } else {
+                headings.push(`<li><a href="#${id}">${text}</a></li>`);
+              }
+
+              prev = "h3";
+            }
+          }
+
+          if (
+            node.type === "Attribute" &&
+            node.name === "data-svelte" &&
+            parent
+          ) {
+            const raw_value = node.value[0].raw;
+            const value = decodeURI(raw_value);
+            const value_ast = parse(value) as unknown as Node;
+            const markup = `<div class="code-fence">${value.slice(value_ast.html.start, value_ast.html.end)}</div>`;
+            const replace = result.slice(
+              parent.start + cursor,
+              parent.end + cursor,
+            );
+            result = result.replace(
+              replace,
+              markup + replace.replace(raw_value, ""),
+            );
+            cursor += markup.length - raw_value.length;
+          }
+        },
+      },
+    );
+
+    if (prev === "h3") {
+      headings.push("</ul>");
+    }
+
+    result = result.replace(
+      `<h2 id="table-of-contents">Table of Contents</h2>`,
+      `<p><strong>Table of Contents</strong></p><ul>${headings.join("\n")}</ul>`,
+    );
+
+    const formattedBlocks = await Promise.all(
+      pending_format.map(async ({ source }) => {
+        if (!opts.format) return source;
+
+        try {
+          return await opts.format(source);
+        } catch (_e) {
+          console.error(
+            "Could not format svelte code block; displaying it unformatted.",
+          );
+          return source;
+        }
+      }),
+    );
+
+    pending_format.forEach(({ placeholder }, i) => {
+      const svelteCode = Prism.highlight(
+        formattedBlocks[i],
+        Prism.languages.svelte,
+        "svelte",
+      );
+      result = result.replace(placeholder, svelteCode);
+    });
+
+    return {
+      code: `<script>${[...new Set(script_content)].join("\n")}</script>
+               <style>${style_content}</style>
+               <main class="markdown-body">${result}</main>`,
+    };
+  }
+
   return {
     // @ts-expect-error
     markup: async ({ content, filename }) => {
@@ -371,163 +577,7 @@ export function preprocessReadme(
       )
         return null;
 
-      script_content = [];
-      pending_format = [];
-
-      if (opts.repoUrl) {
-        content = content.replaceAll(
-          "<!-- REPO_URL -->",
-          `[GitHub repo](${opts.repoUrl})`,
-        );
-      }
-
-      content = content.replaceAll(
-        "<!-- TOC -->",
-        `
-## Table of Contents
-      `,
-      );
-
-      let style_content = "";
-      let result = md.render(content);
-      let cursor = 0;
-
-      const ast = parse(result) as unknown as Node;
-
-      const headings = [];
-      let prev: undefined | "h2" | "h3";
-
-      walk(
-        // biome-ignore lint/suspicious/noExplicitAny: estree-walker's real types don't match Svelte's AST (see `Node` above)
-        ast as any,
-        {
-          // biome-ignore lint/suspicious/noExplicitAny: estree-walker's real types don't match Svelte's AST (see `Node` above)
-          enter(node: any, parent: any) {
-            if (node.type === "Attribute" && node.name === "href") {
-              const value = node.value[0];
-
-              if (
-                value &&
-                !value.raw.startsWith("#") &&
-                isRelativeUrl(value.raw)
-              ) {
-                const relative_path = new URL(value.raw, prefixUrl).href;
-                result = result.replace(value.raw, relative_path);
-                cursor += relative_path.length - value.raw.length;
-              }
-            }
-
-            if (node.type === "Style") {
-              style_content += result.slice(
-                node.content.start,
-                node.content.end,
-              );
-              const replace_style = result.slice(
-                node.start + cursor,
-                node.end + cursor,
-              );
-              result = result.replace(replace_style, "");
-              cursor -= replace_style.length;
-            }
-
-            if (node.type === "Element" && node.name === "h2") {
-              // @ts-expect-error
-              const id = node.attributes.find((attr) => attr.name === "id")
-                .value[0].raw;
-
-              if (id === "table-of-contents") return;
-
-              const text = getChildNodeText(node);
-
-              if (text !== undefined) {
-                if (prev === "h3") {
-                  headings.push(`</ul><li><a href="#${id}">${text}</a></li>`);
-                } else {
-                  headings.push(`<li><a href="#${id}">${text}</a></li>`);
-                }
-
-                prev = "h2";
-              }
-            }
-
-            if (node.type === "Element" && node.name === "h3") {
-              // @ts-expect-error
-              const id = node.attributes.find((attr) => attr.name === "id")
-                .value[0].raw;
-              const text = getChildNodeText(node);
-
-              if (text !== undefined) {
-                if (prev === "h2") {
-                  headings.push(`<ul><li><a href="#${id}">${text}</a></li>`);
-                } else {
-                  headings.push(`<li><a href="#${id}">${text}</a></li>`);
-                }
-
-                prev = "h3";
-              }
-            }
-
-            if (
-              node.type === "Attribute" &&
-              node.name === "data-svelte" &&
-              parent
-            ) {
-              const raw_value = node.value[0].raw;
-              const value = decodeURI(raw_value);
-              const value_ast = parse(value) as unknown as Node;
-              const markup = `<div class="code-fence">${value.slice(value_ast.html.start, value_ast.html.end)}</div>`;
-              const replace = result.slice(
-                parent.start + cursor,
-                parent.end + cursor,
-              );
-              result = result.replace(
-                replace,
-                markup + replace.replace(raw_value, ""),
-              );
-              cursor += markup.length - raw_value.length;
-            }
-          },
-        },
-      );
-
-      if (prev === "h3") {
-        headings.push("</ul>");
-      }
-
-      result = result.replace(
-        `<h2 id="table-of-contents">Table of Contents</h2>`,
-        `<p><strong>Table of Contents</strong></p><ul>${headings.join("\n")}</ul>`,
-      );
-
-      const formattedBlocks = await Promise.all(
-        pending_format.map(async ({ source }) => {
-          if (!opts.format) return source;
-
-          try {
-            return await opts.format(source);
-          } catch (_e) {
-            console.error(
-              "Could not format svelte code block; displaying it unformatted.",
-            );
-            return source;
-          }
-        }),
-      );
-
-      pending_format.forEach(({ placeholder }, i) => {
-        const svelteCode = Prism.highlight(
-          formattedBlocks[i],
-          Prism.languages.svelte,
-          "svelte",
-        );
-        result = result.replace(placeholder, svelteCode);
-      });
-
-      return {
-        code: `<script>${[...new Set(script_content)].join("\n")}</script>
-               <style>${style_content}</style>
-               <main class="markdown-body">${result}</main>`,
-      };
+      return processMarkup(content);
     },
   };
 }
