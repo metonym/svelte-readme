@@ -16,7 +16,7 @@ import {
   highlightCode,
   isRelativeUrl,
   type Node,
-} from "./preprocessReadme.utils.js";
+} from "./utils/preprocessReadme.utils.js";
 
 interface PreprocessReadmeOptions {
   name: string;

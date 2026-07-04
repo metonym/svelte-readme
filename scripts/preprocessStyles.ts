@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import postcss, { type Plugin } from "postcss";
 
-const OUTPUT_PATH = "src/style.css";
+const OUTPUT_PATH = "src/styles/style.css";
 
 // Lives inside node_modules so it self-invalidates for free whenever dependencies
 // are reinstalled — a bumped `github-markdown-css` version changes `github_css`'s

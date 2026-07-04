@@ -1,8 +1,8 @@
 import { walk } from "estree-walker";
-import { highlightBash } from "./highlight/bash.js";
-import { highlightJson } from "./highlight/json.js";
-import { highlightTypeScript } from "./highlight/typescript.js";
-import { highlightYaml } from "./highlight/yaml.js";
+import { highlightBash } from "../highlight/bash.js";
+import { highlightJson } from "../highlight/json.js";
+import { highlightTypeScript } from "../highlight/typescript.js";
+import { highlightYaml } from "../highlight/yaml.js";
 
 // Svelte's markup/script AST has no official types, and shares no common shape with the
 // ESTree nodes `estree-walker` expects — this loose record covers both.
