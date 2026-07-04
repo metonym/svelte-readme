@@ -73,6 +73,13 @@ describe("purgeUnusedCss", () => {
     expect(purgeUnusedCss(css, html)).toBe(css);
   });
 
+  test("keeps a rule targeting an always-keep attribute even when absent from the html", () => {
+    const css = "details[open]>summary{border-bottom:1px solid #ececef}";
+    const html = "<main><details><summary>x</summary></details></main>";
+    expect(purgeUnusedCss(css, html, ["open"])).toBe(css);
+    expect(purgeUnusedCss(css, html)).toBe("");
+  });
+
   test("strips comments before scanning so they don't get misread as selectors", () => {
     const css =
       "/** GitHub Primer button CSS **/\n.code-fence button{padding:5px}";

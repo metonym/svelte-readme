@@ -58,14 +58,16 @@ function isTokenPresent(token: Token, html: string): boolean {
 function isSelectorUsed(
   selectorList: string,
   html: string,
-  alwaysKeepClasses: Set<string>,
+  alwaysKeepTokens: Set<string>,
 ): boolean {
   return selectorList.split(",").some((selector) => {
     const tokens = extractTokens(selector);
     return (
       tokens.length === 0 ||
       tokens.some(
-        (token) => token.type === "class" && alwaysKeepClasses.has(token.name),
+        (token) =>
+          (token.type === "class" || token.type === "attr") &&
+          alwaysKeepTokens.has(token.name),
       ) ||
       tokens.every((token) => isTokenPresent(token, html))
     );
@@ -93,17 +95,19 @@ function findMatchingBrace(css: string, openIndex: number): number {
 // hand-written blocks this runs against — so a manual brace-depth scan is enough
 // without a full CSS parser.
 //
-// `alwaysKeepClasses` covers classes that only ever get added client-side after
-// hydration (e.g. `sr-toc-active`, toggled by scroll-spy JS) — they never appear in
-// the server-rendered `html` this purge checks against, so without an explicit
-// allowlist their rules would look unused and get stripped from every build.
+// `alwaysKeepTokens` covers classes and attributes that only ever get added
+// client-side after hydration or user interaction (e.g. the `sr-toc-active` class
+// toggled by scroll-spy JS, or the `open` attribute a native `<details>` only gains
+// once a user expands it) — they never appear in the server-rendered `html` this
+// purge checks against, so without an explicit allowlist their rules would look
+// unused and get stripped from every build.
 export function purgeUnusedCss(
   rawCss: string,
   html: string,
-  alwaysKeepClasses: string[] = [],
+  alwaysKeepTokens: string[] = [],
 ): string {
   const css = rawCss.replace(/\/\*[\s\S]*?\*\//g, "");
-  return purgeStrippedCss(css, html, new Set(alwaysKeepClasses));
+  return purgeStrippedCss(css, html, new Set(alwaysKeepTokens));
 }
 
 // Recurses on `@media`/`@supports` bodies without redoing the comment strip (already

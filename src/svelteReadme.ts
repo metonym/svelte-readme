@@ -164,11 +164,12 @@ export function svelteReadme(
     // same fallback-to-safe behavior as the rest of this file's SSR handling. `opts.style` is
     // left untouched — it's consumer-authored and may target markup that only exists after
     // hydration (e.g. state toggled in `onMount`), which purging can't see. `sr-toc-active` is
-    // our own such class (toggled by the TOC scroll-spy script), so it's explicitly allowlisted
+    // our own such class (toggled by the TOC scroll-spy script), and `open` is the attribute a
+    // native `<details>` only gains once a user expands it, so both are explicitly allowlisted
     // rather than silently stripped.
     const html = ssr ? `${ssr.head}${ssr.body}` : undefined;
     const purge = (input: string) =>
-      html ? purgeUnusedCss(input, html, ["sr-toc-active"]) : input;
+      html ? purgeUnusedCss(input, html, ["sr-toc-active", "open"]) : input;
 
     const template = `
       <!DOCTYPE html>

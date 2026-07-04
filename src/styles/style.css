@@ -38,6 +38,16 @@
 
   --sr-spacing: 1.25rem;
   --sr-spacing-lg: 2rem;
+  --sr-spacing-xl: 3rem;
+
+  --sr-text-2xs: 0.6875rem;
+  --sr-text-xs: 0.75rem;
+  --sr-text-sm: 0.8125rem;
+  --sr-text-base: 0.9375rem;
+  --sr-text-lg: 1.125rem;
+  --sr-text-xl: 1.25rem;
+  --sr-text-2xl: 1.5rem;
+  --sr-text-3xl: 2rem;
 }
 
 .anchor {
@@ -66,7 +76,7 @@ main {
   line-height: 1.5;
   color: var(--sr-color-fg);
   font-family: var(--sr-font-sans);
-  font-size: 0.9375rem;
+  font-size: var(--sr-text-base);
   word-wrap: break-word;
 }
 
@@ -89,11 +99,6 @@ a:hover {
 
 strong {
   font-weight: bolder;
-}
-
-h1 {
-  font-size: 2em;
-  margin: 0.67em 0;
 }
 
 img {
@@ -186,7 +191,7 @@ details summary {
 kbd {
   display: inline-block;
   padding: 0.1875rem 0.3125rem;
-  font: 0.6875rem var(--sr-font-mono);
+  font: var(--sr-text-2xs) var(--sr-font-mono);
   line-height: 0.625rem;
   color: var(--sr-color-fg-subtle);
   vertical-align: middle;
@@ -194,55 +199,6 @@ kbd {
   border: 1px solid var(--sr-color-border-kbd);
   border-radius: 0.1875rem;
   box-shadow: inset 0 -1px 0 var(--sr-color-border-kbd);
-}
-
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  margin-top: 0;
-  margin-bottom: 0;
-}
-
-h1 {
-  font-size: 2rem;
-}
-
-h1,
-h2 {
-  font-weight: 600;
-}
-
-h2 {
-  font-size: 1.5rem;
-}
-
-h3 {
-  font-size: 1.25rem;
-}
-
-h3,
-h4 {
-  font-weight: 600;
-}
-
-h4 {
-  font-size: 1rem;
-}
-
-h5 {
-  font-size: 0.875rem;
-}
-
-h5,
-h6 {
-  font-weight: 600;
-}
-
-h6 {
-  font-size: 0.75rem;
 }
 
 p {
@@ -280,7 +236,6 @@ dd {
 code,
 pre {
   font-family: var(--sr-font-mono);
-  font-size: 0.75rem;
 }
 
 pre {
@@ -377,33 +332,28 @@ h6 {
 }
 
 h1 {
-  font-size: 2em;
-}
-
-h1,
-h2 {
-  padding-bottom: 0.3em;
-  border-bottom: 1px solid var(--sr-color-border-muted);
+  font-size: var(--sr-text-3xl);
 }
 
 h2 {
-  font-size: 1.5em;
+  margin-top: var(--sr-spacing-xl);
+  font-size: var(--sr-text-2xl);
 }
 
 h3 {
-  font-size: 1.25em;
+  font-size: var(--sr-text-xl);
 }
 
 h4 {
-  font-size: 1em;
+  font-size: var(--sr-text-lg);
 }
 
 h5 {
-  font-size: 0.875em;
+  font-size: var(--sr-text-sm);
 }
 
 h6 {
-  font-size: 0.85em;
+  font-size: var(--sr-text-xs);
   color: var(--sr-color-fg-muted);
 }
 
@@ -413,11 +363,18 @@ ul {
 }
 
 ol ol,
-ol ul,
+ol ul {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+/* A numbered sub-list (above) reads as a continuation of its parent's sequence —
+   tight to its own numbering flow. A bulleted sub-list is a categorical grouping,
+   so it gets the extra bottom margin to set it apart from the next category. */
 ul ol,
 ul ul {
   margin-top: 0;
-  margin-bottom: 0;
+  margin-bottom: var(--sr-spacing);
 }
 
 li {
@@ -451,8 +408,11 @@ dl dd {
 
 table {
   display: block;
-  width: 100%;
+  width: fit-content;
+  margin-right: -0.8125rem;
+  margin-left: -0.8125rem;
   overflow: auto;
+  font-size: var(--sr-text-sm);
 }
 
 table th {
@@ -493,7 +453,6 @@ code {
   margin: 0;
   font-size: 85%;
   background-color: var(--sr-color-code-bg);
-  border-radius: 0.1875rem;
 }
 
 pre {
@@ -522,11 +481,12 @@ pre > code {
 .highlight pre,
 pre {
   padding: var(--sr-spacing);
+  margin-right: calc(var(--sr-spacing) * -1);
+  margin-left: calc(var(--sr-spacing) * -1);
   overflow: auto;
   font-size: 85%;
   line-height: 1.45;
   background-color: var(--sr-color-canvas-subtle);
-  border-radius: 0.1875rem;
 }
 
 pre code {
@@ -547,7 +507,7 @@ p {
   min-height: 1.75rem;
 }
 pre {
-  margin-bottom: 3rem;
+  margin-bottom: var(--sr-spacing-xl);
 }
 
 /* Default code-fence button styling (formerly `button.css`). */
@@ -558,7 +518,7 @@ pre {
   position: relative;
   display: inline-block;
   padding: 0.1875rem 0.625rem;
-  font-size: 0.75rem;
+  font-size: var(--sr-text-xs);
   font-weight: 500;
   line-height: 1rem;
   white-space: nowrap;
@@ -593,4 +553,73 @@ pre {
 .code-fence button:active {
   background: var(--sr-color-canvas-subtle);
   box-shadow: inset 0 1px 2px rgba(24, 24, 27, 0.08);
+}
+
+/* `details`/`summary`, styled with the same clickable material as the code-fence
+   button above. `summary` bleeds out to the `details` border via a negative
+   margin (same technique as the table/pre bleed) so its background spans the
+   full box edge-to-edge, rather than sitting inset with the revealed content. */
+
+details {
+  padding: 0 var(--sr-spacing);
+  margin-right: calc(var(--sr-spacing) * -1);
+  margin-left: calc(var(--sr-spacing) * -1);
+  border: 1px solid var(--sr-color-border-muted);
+}
+
+/* Bottom padding only applies once there's revealed content to pad — otherwise
+   (closed, just the summary bar) it'd reserve empty space below the summary,
+   showing as a hollow gap before the box's own bottom border. */
+details[open] {
+  padding-bottom: var(--sr-spacing);
+}
+
+summary {
+  padding: 0.75rem var(--sr-spacing);
+  margin: 0 calc(var(--sr-spacing) * -1);
+  font-weight: 500;
+  color: var(--sr-color-fg);
+  background: linear-gradient(
+    180deg,
+    var(--sr-color-kbd-bg),
+    var(--sr-color-canvas-subtle)
+  );
+  box-shadow:
+    0 1px 0 rgba(24, 24, 27, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transition:
+    background 0.2s cubic-bezier(0.3, 0, 0.5, 1),
+    box-shadow 0.15s;
+}
+
+summary:hover {
+  background: linear-gradient(
+    180deg,
+    var(--sr-color-canvas-subtle),
+    var(--sr-color-border)
+  );
+}
+
+summary:active {
+  background: var(--sr-color-canvas-subtle);
+  box-shadow: inset 0 1px 2px rgba(24, 24, 27, 0.08);
+}
+
+details[open] > summary {
+  border-bottom: 1px solid var(--sr-color-border-muted);
+}
+
+summary + * {
+  margin-top: var(--sr-spacing);
+}
+
+/* Adjacent `details` conjoin into a single accordion: no gap and no doubled
+   border at the seam between them. */
+details + details {
+  margin-top: 0;
+  border-top: 0;
+}
+
+details:has(+ details) {
+  margin-bottom: 0;
 }
