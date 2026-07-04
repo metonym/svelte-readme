@@ -15,9 +15,8 @@
     "./package.json": "./package.json"
   },
   "scripts": {
-    "preprocess": "bun scripts/preprocessStyles.ts",
-    "dev": "bun run preprocess && bun scripts/build.ts -w",
-    "build": "bun run preprocess && bun scripts/build.ts",
+    "dev": "bun scripts/build.ts -w",
+    "build": "bun scripts/build.ts",
     "build:demo": "bun run build && bun link && cd test && bun ci && bun link svelte-readme && bun run build",
     "lint": "biome check --write .",
     "lint:changed": "biome check --write --changed --since=master --no-errors-on-unmatched .",
@@ -31,9 +30,7 @@
     "@types/node": "^14.14.21",
     "@typescript/native-preview": "^7.0.0-dev.20260703.1",
     "estree-walker": "^3.0.3",
-    "github-markdown-css": "4.0.0",
     "markdown-it": "^14.3.0",
-    "postcss": "^8.2.4",
     "svelte": "^5.56.4",
     "vite": "^8.1.3"
   },
