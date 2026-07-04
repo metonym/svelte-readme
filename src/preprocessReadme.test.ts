@@ -95,9 +95,8 @@ describe("preprocessReadme", () => {
     expect(code).toContain('<h3 id="sub-section-a">Sub Section A</h3>');
   });
 
-  // A preprocessor instance accumulates extracted script content across `markup()`
-  // calls (it's meant to keep reprocessing the same README), so these three fence
-  // variants share one call to keep the expected accumulation self-contained.
+  // A single `markup()` call merges every svelte fence in that README into one shared
+  // `<script>`, so these three fence variants share one call to exercise that merge.
   test("handles svelte code fences: default demo, `no-eval`, and `no-display`", async () => {
     const content = [
       '```svelte\n<script>\n  import Button from "my-svelte-component";\n  let count = 0;\n</script>\n<button>{count}</button>\n```',
@@ -121,6 +120,17 @@ describe("preprocessReadme", () => {
 
     // no-display: evaluated, but not rendered as a live demo
     expect(extractedScript).toContain('console.log("no display")');
+  });
+
+  // Simulates a dev server re-running `markup()` on the same README after an edit
+  // (e.g. HMR): a re-render must not retain script lines removed by the edit.
+  test("does not leak stale script content into a later markup() call on the same instance", async () => {
+    const before = await markup('```svelte\n<script>\n  console.log("before edit");\n</script>\n```');
+    expect(before).toContain('console.log("before edit")');
+
+    const after = await markup('```svelte\n<script>\n  console.log("after edit");\n</script>\n```');
+    expect(after).not.toContain('console.log("before edit")');
+    expect(after).toContain('console.log("after edit")');
   });
 
   test("highlights fenced code using Prism language aliases", async () => {

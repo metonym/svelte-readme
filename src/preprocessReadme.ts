@@ -255,6 +255,8 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
     markup: ({ content, filename }) => {
       if (filename && (/node_modules/.test(filename) || !filename.endsWith(".md"))) return null;
 
+      script_content = [];
+
       if (opts.repoUrl) {
         content = content.replace("<!-- REPO_URL -->", `[GitHub repo](${opts.repoUrl})`);
       }
