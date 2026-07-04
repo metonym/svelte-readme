@@ -1,7 +1,6 @@
-import fs from "node:fs";
 import fsPromises from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { pathToFileURL } from "node:url";
 import {
   svelte,
   type Options as VitePluginSvelteOptions,
@@ -14,27 +13,14 @@ import { styles as svelteStyles } from "./highlight/svelte.js";
 import { styles as typescriptStyles } from "./highlight/typescript.js";
 import { styles as yamlStyles } from "./highlight/yaml.js";
 import { preprocessReadme } from "./preprocessReadme.js";
-import { purgeUnusedCss } from "./purgeCss.js";
+import { buttonStyles, githubStyles, layoutStyles } from "./styles/index.js";
+import { purgeUnusedCss } from "./utils/purgeCss.js";
 import {
   collapseWhitespace,
   getPackageJSON,
   logSSRFallback,
   toArray,
-} from "./utils.js";
-
-const dirname = path.dirname(fileURLToPath(import.meta.url));
-const github_styles: string = fs.readFileSync(
-  path.join(dirname, "style.css"),
-  "utf-8",
-);
-const layout_styles: string = fs.readFileSync(
-  path.join(dirname, "layout.css"),
-  "utf-8",
-);
-const button_styles: string = fs.readFileSync(
-  path.join(dirname, "button.css"),
-  "utf-8",
-);
+} from "./utils/utils.js";
 
 // Each grammar's own token colors are colocated with its highlighter under `./highlight`
 // (see `baseTokenStyles`'s doc comment in `./highlight/shared.js` for why); this only
@@ -46,7 +32,7 @@ const custom_css = [
   jsonStyles,
   yamlStyles,
   bashStyles,
-  layout_styles,
+  layoutStyles,
 ].join("\n");
 
 interface SvelteReadmeOptions {
@@ -168,10 +154,10 @@ export function svelteReadme(
     ],
   };
 
-  let css = github_styles;
+  let css = githubStyles;
 
   if (!opts.disableDefaultCSS) {
-    css += button_styles;
+    css += buttonStyles;
   }
 
   function renderTemplate(
