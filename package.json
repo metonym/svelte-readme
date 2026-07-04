@@ -35,10 +35,6 @@
     "prism-svelte": "^0.4.7",
     "prismjs": "^1.23.0"
   },
-  "peerDependencies": {
-    "svelte": "^5.46.4",
-    "vite": "^8.0.0"
-  },
   "devDependencies": {
     "@biomejs/biome": "2.5.2",
     "@types/fs-extra": "^9.0.6",
