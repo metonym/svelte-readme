@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import fsPromises from "node:fs/promises";
 import path from "node:path";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import {
   svelte,
   type Options as VitePluginSvelteOptions,
@@ -14,7 +14,12 @@ import {
 } from "vite";
 import { preprocessReadme } from "./preprocessReadme.js";
 import { purgeUnusedCss } from "./purgeCss.js";
-import { css as github_styles } from "./style.js";
+
+const dirname = path.dirname(fileURLToPath(import.meta.url));
+const github_styles: Promise<string> = fsPromises.readFile(
+  path.join(dirname, "style.css"),
+  "utf-8",
+);
 
 function toArray<T>(value: T | T[] | undefined): T[] {
   if (value === undefined) return [];
