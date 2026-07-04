@@ -78,12 +78,6 @@ export default defineConfig((env) => svelteReadme()(env));
 ```ts
 interface CreateConfigOptions {
   /**
-   * set to `true` to minify the HTML/JS
-   * @default false in dev, true in build
-   */
-  minify: boolean;
-
-  /**
    * set the folder to emit the files
    * @default "dist"
    */

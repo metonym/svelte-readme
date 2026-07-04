@@ -63,29 +63,19 @@ function getVirtualEntriesPlugin(
 }
 
 describe("createConfig", () => {
-  test("defaults to a dist output dir, minified in build mode", async () => {
+  test("defaults to a dist output dir", async () => {
     const config = await createConfig()({
       command: "build",
       mode: "production",
     });
     expect(config.build?.outDir).toBe("dist");
-    expect(config.build?.minify).toBe(true);
   });
 
-  test("does not minify by default in serve/dev mode", async () => {
-    const config = await createConfig()({
+  test("respects an explicit outDir override", async () => {
+    const config = await createConfig({ outDir: "public" })({
       command: "serve",
       mode: "development",
     });
-    expect(config.build?.minify).toBe(false);
-  });
-
-  test("respects explicit minify and outDir overrides", async () => {
-    const config = await createConfig({ minify: true, outDir: "public" })({
-      command: "serve",
-      mode: "development",
-    });
-    expect(config.build?.minify).toBe(true);
     expect(config.build?.outDir).toBe("public");
   });
 
@@ -188,8 +178,8 @@ describe("createConfig", () => {
       path.join(fixtureDir, "dist", "index.html"),
       "utf-8",
     );
-    expect(html).not.toContain(".anchor{");
-    expect(html).toContain(".custom{color:#00f}");
+    expect(html).not.toContain(".anchor");
+    expect(html).toContain(".custom { color: blue; }");
   });
 
   test("exits with a non-zero status when package.json is missing required fields", () => {
