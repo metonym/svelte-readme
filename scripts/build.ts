@@ -9,8 +9,8 @@ const isWatchMode =
 // own installed versions.
 const external = ["svelte", "vite", "@sveltejs/vite-plugin-svelte"];
 
-// Every `.css` file under `./src` is hand-authored (or, for `style.css`, generated) CSS
-// that a runtime `fs.readFileSync` call composes into the served stylesheet — see the
+// Every `.css` file under `./src` is hand-authored CSS that a runtime
+// `fs.readFileSync` call composes into the served stylesheet — see the
 // `dirname`-relative reads in `svelteReadme.ts` and `./highlight/*.ts`. Bun's bundler
 // concatenates every module into a single `dist/index.js`, so `import.meta.url` — and
 // thus `dirname` — resolves to `dist/` itself for all of them, regardless of how nested
