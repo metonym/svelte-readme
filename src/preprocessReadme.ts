@@ -22,8 +22,6 @@ const aliases: Record<string, string> = {
   yml: "yaml",
 };
 
-let md: Markdown;
-
 interface PreprocessReadmeOptions {
   name: string;
   svelte: string;
@@ -183,76 +181,74 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
   const declared_variables = new Map<string, string>();
   const reserved_names = new Set<string>();
 
-  if (!md) {
-    md = new Markdown({
-      html: true,
-      linkify: true,
-      typographer: true,
-      highlight(source, lang, attrs) {
-        if (lang === "svelte") {
-          const noEval = /no-eval/.test(attrs);
-          const noDisplay = /no-display/.test(attrs);
-          const { instance, html } = parse(source);
+  const md = new Markdown({
+    html: true,
+    linkify: true,
+    typographer: true,
+    highlight(source, lang, attrs) {
+      if (lang === "svelte") {
+        const noEval = /no-eval/.test(attrs);
+        const noDisplay = /no-display/.test(attrs);
+        const { instance, html } = parse(source);
 
-          // Different code fences share a single merged `<script>` once rendered, so a variable
-          // declared identically in two fences (e.g. `let count = 0;`) is fine, but a name reused
-          // for something different would collide. Detect that and rename the later occurrence
-          // (in both its script and markup) before it's merged in.
-          let renamedSource = source;
+        // Different code fences share a single merged `<script>` once rendered, so a variable
+        // declared identically in two fences (e.g. `let count = 0;`) is fine, but a name reused
+        // for something different would collide. Detect that and rename the later occurrence
+        // (in both its script and markup) before it's merged in.
+        let renamedSource = source;
 
-          if (instance !== undefined && !noEval) {
-            const declarations = collectTopLevelDeclarations(instance.content);
-            const renameMap = computeRenameMap(declarations, source, declared_variables, reserved_names);
+        if (instance !== undefined && !noEval) {
+          const declarations = collectTopLevelDeclarations(instance.content);
+          const renameMap = computeRenameMap(declarations, source, declared_variables, reserved_names);
 
-            if (renameMap.size > 0) {
-              const ranges = [
-                ...collectIdentifierRanges(instance.content, renameMap),
-                ...collectIdentifierRanges(html, renameMap),
-              ];
-              renamedSource = applyRenames(source, ranges, renameMap);
-            }
-          }
-
-          const renamedInstance = renamedSource === source ? instance : parse(renamedSource).instance;
-
-          if (renamedInstance !== undefined && !noEval) {
-            script_content = [
-              ...script_content,
-              ...renamedSource
-                .slice(renamedInstance.start, renamedInstance.end)
-                .split("\n")
-                .slice(1, -1)
-                .map((line) => line.trim().replace(new RegExp(opts.name!, "g"), opts.svelte!)),
+          if (renameMap.size > 0) {
+            const ranges = [
+              ...collectIdentifierRanges(instance.content, renameMap),
+              ...collectIdentifierRanges(html, renameMap),
             ];
+            renamedSource = applyRenames(source, ranges, renameMap);
           }
-
-          const regex = new RegExp(`"${opts.name}"`, "g");
-          const modifiedSource = encodeURI(renamedSource.replace(regex, `"${opts.svelte}"`));
-          const formattedCode = prettier.format(source, {
-            parser: "svelte",
-          });
-          const svelteCode = Prism.highlight(formattedCode, Prism.languages.svelte, "svelte");
-          return `<pre class="language-${lang}" ${
-            noEval || noDisplay ? "" : `data-svelte="${modifiedSource}"`
-          }>{@html \`${svelteCode}\`}</pre>`;
         }
 
-        try {
-          const alias_lang = aliases[lang] || lang;
-          return `<pre class="language-${alias_lang}">{@html \`${Prism.highlight(
-            source,
-            Prism.languages[alias_lang],
-            alias_lang,
-          )}\`}</pre>`;
-        } catch (_e) {
-          console.error(`Could not highlight language "${lang}".`);
-          return `<pre class="language-${lang}">{@html \`${source}\`}</pre>`;
-        }
-      },
-    });
+        const renamedInstance = renamedSource === source ? instance : parse(renamedSource).instance;
 
-    md.use(markdownItAnchor);
-  }
+        if (renamedInstance !== undefined && !noEval) {
+          script_content = [
+            ...script_content,
+            ...renamedSource
+              .slice(renamedInstance.start, renamedInstance.end)
+              .split("\n")
+              .slice(1, -1)
+              .map((line) => line.trim().replace(new RegExp(opts.name!, "g"), opts.svelte!)),
+          ];
+        }
+
+        const regex = new RegExp(`"${opts.name}"`, "g");
+        const modifiedSource = encodeURI(renamedSource.replace(regex, `"${opts.svelte}"`));
+        const formattedCode = prettier.format(source, {
+          parser: "svelte",
+        });
+        const svelteCode = Prism.highlight(formattedCode, Prism.languages.svelte, "svelte");
+        return `<pre class="language-${lang}" ${
+          noEval || noDisplay ? "" : `data-svelte="${modifiedSource}"`
+        }>{@html \`${svelteCode}\`}</pre>`;
+      }
+
+      try {
+        const alias_lang = aliases[lang] || lang;
+        return `<pre class="language-${alias_lang}">{@html \`${Prism.highlight(
+          source,
+          Prism.languages[alias_lang],
+          alias_lang,
+        )}\`}</pre>`;
+      } catch (_e) {
+        console.error(`Could not highlight language "${lang}".`);
+        return `<pre class="language-${lang}">{@html \`${source}\`}</pre>`;
+      }
+    },
+  });
+
+  md.use(markdownItAnchor);
 
   return {
     // @ts-expect-error
