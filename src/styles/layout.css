@@ -1,7 +1,7 @@
 .code-fence {
-  padding: 1.5rem var(--sr-spacing);
-  margin-right: calc(var(--sr-spacing) * -1);
-  margin-left: calc(var(--sr-spacing) * -1);
+  padding: 1.5rem var(--sr-box-padding);
+  margin-right: calc(var(--sr-box-padding) * -1);
+  margin-left: calc(var(--sr-box-padding) * -1);
   border: 1px solid var(--sr-color-border-muted);
   border-bottom: 0;
   overflow-x: auto;
@@ -104,6 +104,15 @@ main.markdown-body blockquote p {
 }
 
 @media (max-width: 900px) {
+  /* The desktop scale's upper steps (tuned for a wide text column) read as
+     oversized against a narrow mobile viewport — h1 in particular dwarfs the
+     content below it — so the top of the scale is compressed here. */
+  :root {
+    --sr-text-xl: 1.25rem;
+    --sr-text-2xl: 1.5rem;
+    --sr-text-3xl: 1.875rem;
+  }
+
   .sr-layout {
     grid-template-columns: 1fr;
     padding: 0.9375rem;

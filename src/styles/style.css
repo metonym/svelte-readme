@@ -36,18 +36,19 @@
   --sr-color-border-table: #d4d4d8;
   --sr-color-hr: #e4e4e7;
 
-  --sr-spacing: 1.25rem;
-  --sr-spacing-lg: 2rem;
-  --sr-spacing-xl: 3rem;
+  --sr-spacing: 1.5rem;
+  --sr-spacing-lg: 2.5rem;
+  --sr-spacing-xl: 4rem;
+  --sr-box-padding: 1rem;
 
   --sr-text-2xs: 0.6875rem;
   --sr-text-xs: 0.75rem;
   --sr-text-sm: 0.8125rem;
-  --sr-text-base: 0.9375rem;
+  --sr-text-base: 0.875rem;
   --sr-text-lg: 1.125rem;
-  --sr-text-xl: 1.25rem;
-  --sr-text-2xl: 1.5rem;
-  --sr-text-3xl: 2rem;
+  --sr-text-xl: 1.375rem;
+  --sr-text-2xl: 1.75rem;
+  --sr-text-3xl: 2.5rem;
 }
 
 .anchor {
@@ -430,10 +431,6 @@ table tr {
   border-top: 1px solid var(--sr-color-border-table);
 }
 
-table tr:nth-child(2n) {
-  background-color: var(--sr-color-canvas-subtle);
-}
-
 img {
   max-width: 100%;
   box-sizing: initial;
@@ -480,12 +477,12 @@ pre > code {
 
 .highlight pre,
 pre {
-  padding: var(--sr-spacing);
-  margin-right: calc(var(--sr-spacing) * -1);
-  margin-left: calc(var(--sr-spacing) * -1);
+  padding: var(--sr-box-padding);
+  margin-right: calc(var(--sr-box-padding) * -1);
+  margin-left: calc(var(--sr-box-padding) * -1);
   overflow: auto;
-  font-size: 85%;
-  line-height: 1.45;
+  font-size: var(--sr-text-xs);
+  line-height: 1.4;
   background-color: var(--sr-color-canvas-subtle);
 }
 
@@ -570,8 +567,8 @@ pre {
 
 .sr-code-block {
   position: relative;
-  margin-right: calc(var(--sr-spacing) * -1);
-  margin-left: calc(var(--sr-spacing) * -1);
+  margin-right: calc(var(--sr-box-padding) * -1);
+  margin-left: calc(var(--sr-box-padding) * -1);
 }
 
 .sr-code-block pre {
@@ -593,6 +590,22 @@ pre {
   background-color: var(--sr-color-canvas);
   border: 1px solid var(--sr-color-border);
   border-radius: 0.375rem;
+}
+
+/* Hidden until hover/focus so it doesn't clutter every code block at rest — but
+   only on devices that actually have a hover affordance. On touch-only devices
+   `(hover: none)` there's no hover to reveal it, so it stays visible instead. */
+@media (hover: hover) {
+  .sr-copy-button {
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .sr-code-block:hover .sr-copy-button,
+  .sr-copy-button:focus-visible,
+  .sr-copy-button.sr-copy-copied {
+    opacity: 1;
+  }
 }
 
 /* Same specificity as `.sr-copy-check` below (one class each) so source order
@@ -624,9 +637,9 @@ pre {
    full box edge-to-edge, rather than sitting inset with the revealed content. */
 
 details {
-  padding: 0 var(--sr-spacing);
-  margin-right: calc(var(--sr-spacing) * -1);
-  margin-left: calc(var(--sr-spacing) * -1);
+  padding: 0 var(--sr-box-padding);
+  margin-right: calc(var(--sr-box-padding) * -1);
+  margin-left: calc(var(--sr-box-padding) * -1);
   border: 1px solid var(--sr-color-border-muted);
 }
 
@@ -638,8 +651,8 @@ details[open] {
 }
 
 summary {
-  padding: 0.75rem var(--sr-spacing);
-  margin: 0 calc(var(--sr-spacing) * -1);
+  padding: 0.75rem var(--sr-box-padding);
+  margin: 0 calc(var(--sr-box-padding) * -1);
   font-weight: 500;
   color: var(--sr-color-fg);
   background: linear-gradient(
