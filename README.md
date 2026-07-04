@@ -41,7 +41,7 @@ This library exports two methods:
 - `createConfig` (default export): creates a Vite configuration for you
 - `preprocessReadme`: standalone Svelte markup preprocessor
 
-`createConfig` is tightly coupled with Vite, and requires `svelte` (5.46.4+) and `vite` (8+) as peer dependencies. `preprocessReadme` has no such constraint and works with Svelte 4 or 5. At a minimum, `package.json#svelte` and `package.json#name` are required.
+`createConfig` is tightly coupled with Vite, and requires `svelte` (5.46.4+) and `vite` (8+) as peer dependencies. `preprocessReadme` has no such constraint. At a minimum, `package.json#svelte` and `package.json#name` are required.
 
 **package.json**
 
