@@ -3,10 +3,18 @@ import fsPromises from "node:fs/promises";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { svelte, type Options as VitePluginSvelteOptions } from "@sveltejs/vite-plugin-svelte";
+import {
+  svelte,
+  type Options as VitePluginSvelteOptions,
+} from "@sveltejs/vite-plugin-svelte";
 import htmlminifier from "html-minifier";
 import type { PreprocessorGroup } from "svelte/compiler";
-import { type ConfigEnv, type Plugin, type UserConfig, build as viteBuild } from "vite";
+import {
+  type ConfigEnv,
+  type Plugin,
+  type UserConfig,
+  build as viteBuild,
+} from "vite";
 import { preprocessReadme } from "./preprocessReadme.js";
 import { css as github_styles } from "./style.js";
 
@@ -164,7 +172,8 @@ if (typeof globalThis.navigator === "undefined") globalThis.navigator = __svelte
 const virtualEntriesPlugin: Plugin = {
   name: "svelte-readme-virtual-entries",
   resolveId(id) {
-    if (id === VIRTUAL_HYDRATE_ENTRY_ID) return RESOLVED_VIRTUAL_HYDRATE_ENTRY_ID;
+    if (id === VIRTUAL_HYDRATE_ENTRY_ID)
+      return RESOLVED_VIRTUAL_HYDRATE_ENTRY_ID;
     if (id === VIRTUAL_SSR_ENTRY_ID) return RESOLVED_VIRTUAL_SSR_ENTRY_ID;
   },
   load(id) {
@@ -192,7 +201,9 @@ function logSSRFallback(error: unknown) {
   console.warn(error);
 }
 
-export default function createConfig(opts: Partial<CreateConfigOptions> = {}): (env: ConfigEnv) => UserConfig {
+export default function createConfig(
+  opts: Partial<CreateConfigOptions> = {},
+): (env: ConfigEnv) => UserConfig {
   return (env) => {
     const DEV = env.command === "serve" && !env.isPreview;
     const minify = opts.minify === true || !DEV;
@@ -211,7 +222,9 @@ export default function createConfig(opts: Partial<CreateConfigOptions> = {}): (
       ],
     };
 
-    console.log(`[createConfig] Running in ${DEV ? "development" : "production"}`);
+    console.log(
+      `[createConfig] Running in ${DEV ? "development" : "production"}`,
+    );
     console.log("[createConfig] options:");
     console.group();
     console.log("minify:", minify);
@@ -250,7 +263,10 @@ export default function createConfig(opts: Partial<CreateConfigOptions> = {}): (
     }`;
     }
 
-    function renderTemplate(scriptSrc: string, ssr?: { head: string; body: string }) {
+    function renderTemplate(
+      scriptSrc: string,
+      ssr?: { head: string; body: string },
+    ) {
       const template = `
       <!DOCTYPE html>
       <html lang="en">
@@ -286,7 +302,11 @@ export default function createConfig(opts: Partial<CreateConfigOptions> = {}): (
     }
 
     async function renderSSR(): Promise<{ head: string; body: string }> {
-      const ssrOutDir = path.join(process.cwd(), output_dir, ".svelte-readme-ssr");
+      const ssrOutDir = path.join(
+        process.cwd(),
+        output_dir,
+        ".svelte-readme-ssr",
+      );
 
       await viteBuild({
         configFile: false,
@@ -300,7 +320,10 @@ export default function createConfig(opts: Partial<CreateConfigOptions> = {}): (
             output: { entryFileNames: "entry-server.js" },
           },
         },
-        plugins: [...svelte(svelteOptions as VitePluginSvelteOptions), virtualEntriesPlugin],
+        plugins: [
+          ...svelte(svelteOptions as VitePluginSvelteOptions),
+          virtualEntriesPlugin,
+        ],
       });
 
       const entryPath = path.join(ssrOutDir, "entry-server.js");
@@ -315,12 +338,17 @@ export default function createConfig(opts: Partial<CreateConfigOptions> = {}): (
       name: "svelte-readme-html",
       configureServer(server) {
         server.middlewares.use(async (req, res, next) => {
-          if (req.method !== "GET" || !req.headers.accept?.includes("text/html")) return next();
+          if (
+            req.method !== "GET" ||
+            !req.headers.accept?.includes("text/html")
+          )
+            return next();
 
           let ssr: { head: string; body: string } | undefined;
 
           try {
-            const { renderApp } = await server.ssrLoadModule(VIRTUAL_SSR_ENTRY_ID);
+            const { renderApp } =
+              await server.ssrLoadModule(VIRTUAL_SSR_ENTRY_ID);
             ssr = renderApp();
           } catch (error) {
             server.ssrFixStacktrace(error as Error);
@@ -339,10 +367,17 @@ export default function createConfig(opts: Partial<CreateConfigOptions> = {}): (
         // `vite preview` serves the already-built output_dir as static files and
         // never runs `writeBundle`, so just hand back the index.html written there.
         server.middlewares.use(async (req, res, next) => {
-          if (req.method !== "GET" || !req.headers.accept?.includes("text/html")) return next();
+          if (
+            req.method !== "GET" ||
+            !req.headers.accept?.includes("text/html")
+          )
+            return next();
 
           try {
-            const html = await fsPromises.readFile(path.join(output_dir, "index.html"), "utf-8");
+            const html = await fsPromises.readFile(
+              path.join(output_dir, "index.html"),
+              "utf-8",
+            );
             res.setHeader("Content-Type", "text/html");
             res.end(html);
           } catch {
@@ -352,7 +387,8 @@ export default function createConfig(opts: Partial<CreateConfigOptions> = {}): (
       },
       async writeBundle(_, bundle) {
         const entryChunk = Object.values(bundle).find(
-          (chunk): chunk is typeof chunk & { fileName: string } => "isEntry" in chunk && chunk.isEntry,
+          (chunk): chunk is typeof chunk & { fileName: string } =>
+            "isEntry" in chunk && chunk.isEntry,
         );
 
         if (!entryChunk) return;

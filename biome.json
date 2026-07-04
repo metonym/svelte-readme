@@ -3,6 +3,36 @@
   "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
   "files": { "includes": ["**", "!!**/dist", "!!**/*.svelte"] },
   "formatter": { "indentStyle": "space" },
+  "linter": {
+    "rules": {
+      "performance": {
+        "noAccumulatingSpread": "error",
+        "noAwaitInLoops": "error",
+        "noDelete": "error",
+        "noDynamicNamespaceImportAccess": "error",
+        "noNamespaceImport": "error",
+        "noReExportAll": "error",
+        "useTopLevelRegex": "error"
+      },
+      "complexity": {
+        "noCommaOperator": "error",
+        "noForEach": "error",
+        "noUselessConstructor": "error",
+        "noUselessEmptyExport": "error",
+        "noUselessFragments": "error",
+        "noUselessLabel": "error",
+        "noUselessLoneBlockStatements": "error",
+        "noUselessRename": "error",
+        "noUselessSwitchCase": "error",
+        "noUselessTypeConstraint": "error",
+        "useArrowFunction": "error",
+        "useLiteralKeys": "error"
+      },
+      "suspicious": {
+        "noImportCycles": "error"
+      }
+    }
+  },
   "assist": {
     "actions": { "source": { "organizeImports": "on" } }
   }
