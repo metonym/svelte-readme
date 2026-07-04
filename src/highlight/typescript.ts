@@ -1,3 +1,6 @@
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { walk } from "estree-walker";
 import { parse } from "svelte/compiler";
 import {
@@ -8,16 +11,16 @@ import {
   token,
 } from "./shared.js";
 
+const dirname = path.dirname(fileURLToPath(import.meta.url));
 const WRAPPER_OPEN = '<script lang="ts">';
 
 // This highlighter also renders `javascript` fences (see `preprocessReadme`'s dispatch),
 // which keep their own `.language-javascript` wrapper class rather than being relabeled
 // `typescript`, so both selectors are targeted here.
-export const styles = `
-  .language-typescript, .language-javascript { color: #0550ae; }
-  .language-typescript .string, .language-javascript .string { color: #0a3069; }
-  .language-typescript .class-name, .language-javascript .class-name { color: #24292f; }
-`;
+export const styles: string = fs.readFileSync(
+  path.join(dirname, "typescript.css"),
+  "utf-8",
+);
 
 // Every reserved/contextual JS+TS keyword. Applied only to text that fell outside every
 // AST leaf claim below (see `codeGapFill`) — since real identifiers, member/property

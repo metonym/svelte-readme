@@ -1,0 +1,12 @@
+.language-typescript,
+.language-javascript {
+  color: #0550ae;
+}
+.language-typescript .string,
+.language-javascript .string {
+  color: #0a3069;
+}
+.language-typescript .class-name,
+.language-javascript .class-name {
+  color: #24292f;
+}

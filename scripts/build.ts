@@ -12,6 +12,25 @@ const external = ["svelte", "vite", "@sveltejs/vite-plugin-svelte"];
 const HASH_FILE = "dist/.build-hash";
 const OUTPUT_FILES = ["index.js", "index.d.ts", "style.css"];
 
+// Every `.css` file under `./src` is hand-authored (or, for `style.css`, generated) CSS
+// that a runtime `fs.readFileSync` call composes into the served stylesheet — see the
+// `dirname`-relative reads in `svelteReadme.ts` and `./highlight/*.ts`. Bun's bundler
+// concatenates every module into a single `dist/index.js`, so `import.meta.url` — and
+// thus `dirname` — resolves to `dist/` itself for all of them, regardless of how nested
+// the source file was under `./src`. Copies are flattened to match (by basename, not
+// full relative path); collisions aren't a concern since every CSS file here has a
+// distinct name.
+function copyCssFiles() {
+  const glob = new Bun.Glob("**/*.css");
+
+  for (const file of glob.scanSync({ cwd: "./src" })) {
+    fs.copyFileSync(
+      path.join("./src", file),
+      path.join("dist", path.basename(file)),
+    );
+  }
+}
+
 // Hashes everything that can change the build output: every non-test source file
 // (bun's bundler only pulls in ./src/index.ts's own dependency graph, which for this
 // package is all of ./src), the root tsconfig (drives declaration emit), and this
@@ -88,7 +107,7 @@ async function buildProject() {
   }
 
   const typesOk = await emitTypeDeclarations();
-  await $`cp src/style.css dist/style.css`;
+  copyCssFiles();
 
   // Only cache the hash once the declarations actually succeeded — otherwise a
   // failed tsgo run in watch mode would be "forgotten" and never retried.

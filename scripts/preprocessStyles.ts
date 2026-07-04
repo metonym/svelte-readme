@@ -39,10 +39,11 @@ const plugin: Plugin = {
   },
 };
 
-const custom_css = `
-  p { min-height: 28px; }
-  pre { margin-bottom: 48px; }
-`;
+const OVERRIDES_PATH = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "githubOverrides.css",
+);
+const custom_css = fs.readFileSync(OVERRIDES_PATH, "utf-8");
 
 // Hand-rolled instead of pulling in a CSS minifier dependency: this only ever
 // runs on the well-formed, comment-free stylesheets built here, so a simple
@@ -57,13 +58,15 @@ function minifyCss(css: string): string {
     .trim();
 }
 
-// Hashes the raw upstream CSS plus this script's own source, so either a
-// `github-markdown-css` version bump or an edit to the selector-stripping/minify
-// logic here invalidates the cache — not just a change to the CSS bytes.
+// Hashes the raw upstream CSS plus this script's own source and its override CSS, so a
+// `github-markdown-css` version bump, an edit to the selector-stripping/minify logic here,
+// or a hand-edit to `githubOverrides.css` all invalidate the cache — not just a change to
+// the upstream CSS bytes.
 function hashInputs(): string {
   const hasher = new Bun.CryptoHasher("sha256");
   hasher.update(github_css);
   hasher.update(fs.readFileSync(fileURLToPath(import.meta.url), "utf-8"));
+  hasher.update(custom_css);
   return hasher.digest("hex");
 }
 

@@ -1,0 +1,15 @@
+.language-svelte .tag {
+  color: #22863a;
+}
+.language-svelte .attr-name {
+  color: #6f42c1;
+}
+.language-svelte .attr-value {
+  color: #032f62;
+}
+.language-svelte .selector {
+  color: #22863a;
+}
+.language-svelte .property {
+  color: #005cc5;
+}
