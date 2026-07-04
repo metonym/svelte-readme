@@ -1,13 +1,11 @@
+import { escapeRegExp } from "./preprocessReadme.utils.js";
+
 interface Token {
   type: "tag" | "class" | "id" | "attr";
   name: string;
 }
 
 const AT_RULE_NAME = /^@([-\w]+)/;
-
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
 
 // Extracts the identifiers a selector requires an element to have in order to match:
 // tag names, classes, ids, and attribute names. Pseudo-classes/elements (`:hover`,
@@ -105,7 +103,17 @@ export function purgeUnusedCss(
   alwaysKeepClasses: string[] = [],
 ): string {
   const css = rawCss.replace(/\/\*[\s\S]*?\*\//g, "");
-  const alwaysKeep = new Set(alwaysKeepClasses);
+  return purgeStrippedCss(css, html, new Set(alwaysKeepClasses));
+}
+
+// Recurses on `@media`/`@supports` bodies without redoing the comment strip (already
+// comment-free, having been sliced out of an already-stripped parent) or rebuilding
+// `alwaysKeep` (it doesn't change across the recursion).
+function purgeStrippedCss(
+  css: string,
+  html: string,
+  alwaysKeep: Set<string>,
+): string {
   let result = "";
   let i = 0;
 
@@ -123,7 +131,7 @@ export function purgeUnusedCss(
     const atRule = header.trim().match(AT_RULE_NAME)?.[1];
 
     if (atRule === "media" || atRule === "supports") {
-      const filteredBlock = purgeUnusedCss(block, html, alwaysKeepClasses);
+      const filteredBlock = purgeStrippedCss(block, html, alwaysKeep);
       if (filteredBlock.trim().length > 0) {
         result += `${header}{${filteredBlock}}`;
       }
