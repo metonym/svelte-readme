@@ -10,7 +10,6 @@ import "prismjs/components/prism-jsx.js";
 import "prismjs/components/prism-yaml.js";
 import "prism-svelte";
 import { URL } from "node:url";
-import isRelativeUrl from "is-relative-url";
 import type { PreprocessorGroup } from "svelte/compiler";
 
 type Node = Record<string, any> & { start: number; end: number; type: string };
@@ -31,6 +30,12 @@ interface PreprocessReadmeOptions {
   prefixUrl: string;
   homepage: string;
   repoUrl: string;
+}
+
+function isRelativeUrl(url: string): boolean {
+  // Windows paths (e.g. "c:\foo") aren't absolute URLs, so they're treated as relative.
+  if (/^[a-zA-Z]:\\/.test(url)) return true;
+  return !/^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(url);
 }
 
 const getChildNodeText = (node: any) => {
