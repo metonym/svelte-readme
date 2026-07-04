@@ -316,10 +316,12 @@ main:after {
 }
 
 main > :first-child {
+  /* biome-ignore lint/complexity/noImportantStyles: must win over arbitrary user-authored margins on the README's first/last rendered element */
   margin-top: 0 !important;
 }
 
 main > :last-child {
+  /* biome-ignore lint/complexity/noImportantStyles: must win over arbitrary user-authored margins on the README's first/last rendered element */
   margin-bottom: 0 !important;
 }
 
