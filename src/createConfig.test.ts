@@ -20,10 +20,13 @@ beforeEach(() => {
   writeFixturePackageJson({ name: "my-svelte-component", svelte: "./src/index.js" });
   process.chdir(fixtureDir);
 
-  // createConfig() logs its resolved options on every call; keep test output focused.
+  // createConfig() logs its resolved options on every call, and writeBundle's SSR pass
+  // warns when it falls back to CSR (expected here — fixtures have no real README.md
+  // to server-render). Keep test output focused.
   spyOn(console, "log").mockImplementation(() => {});
   spyOn(console, "group").mockImplementation(() => {});
   spyOn(console, "groupEnd").mockImplementation(() => {});
+  spyOn(console, "warn").mockImplementation(() => {});
 });
 
 afterEach(() => {
@@ -34,7 +37,13 @@ afterEach(() => {
 function getHtmlPlugin(config: ReturnType<ReturnType<typeof createConfig>>) {
   const plugin = (config.plugins as Plugin[]).find((p) => p?.name === "svelte-readme-html");
   if (!plugin) throw new Error("svelte-readme-html plugin not found");
-  return plugin as Required<Pick<Plugin, "resolveId" | "load" | "writeBundle">>;
+  return plugin as Required<Pick<Plugin, "writeBundle">>;
+}
+
+function getVirtualEntriesPlugin(config: ReturnType<ReturnType<typeof createConfig>>) {
+  const plugin = (config.plugins as Plugin[]).find((p) => p?.name === "svelte-readme-virtual-entries");
+  if (!plugin) throw new Error("svelte-readme-virtual-entries plugin not found");
+  return plugin as Required<Pick<Plugin, "resolveId" | "load">>;
 }
 
 describe("createConfig", () => {
@@ -55,21 +64,21 @@ describe("createConfig", () => {
     expect(config.build?.outDir).toBe("public");
   });
 
-  test("uses the virtual entry module as the rollup input", () => {
+  test("uses the hydrate entry module as the rollup input", () => {
     const config = createConfig()({ command: "build", mode: "production" });
-    expect(config.build?.rollupOptions?.input).toBe("virtual:svelte-readme-entry");
+    expect(config.build?.rollupOptions?.input).toBe("virtual:svelte-readme-hydrate-entry");
   });
 
-  test("resolves and loads the virtual entry as a README-backed Svelte component", () => {
+  test("resolves and loads the hydrate entry as a README-backed Svelte component", () => {
     const config = createConfig()({ command: "build", mode: "production" });
-    const htmlPlugin = getHtmlPlugin(config);
+    const virtualEntriesPlugin = getVirtualEntriesPlugin(config);
 
-    const resolved = (htmlPlugin.resolveId as any)("virtual:svelte-readme-entry");
+    const resolved = (virtualEntriesPlugin.resolveId as any)("virtual:svelte-readme-hydrate-entry");
     expect(resolved).toBeTruthy();
 
-    const loaded = (htmlPlugin.load as any)(resolved) as string;
+    const loaded = (virtualEntriesPlugin.load as any)(resolved) as string;
     expect(loaded).toContain('import App from "./README.md"');
-    expect(loaded).toContain("new App({ target: document.body })");
+    expect(loaded).toContain("hydrate(App, { target: document.body })");
   });
 
   test("writeBundle emits an index.html using package name/description and the entry chunk", async () => {
