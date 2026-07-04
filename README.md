@@ -49,12 +49,14 @@ This library exports two methods:
 {
   "name": "my-svelte-component",
   "svelte": "./src/index.js",
-  "main": "./lib/index.js",
-  "module": "./lib/index.mjs",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.js"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "prepack": "BUNDLE=true vite build"
+    "preview": "vite preview"
   },
   "homepage": "https://github.com/metonym/svelte-readme"
 }
@@ -64,33 +66,11 @@ This library exports two methods:
 
 The default export from "svelte-readme" creates a Vite configuration used to develop and generate the demo. Since it needs to know whether Vite is running in dev (`serve`) or build mode, it returns a config function - pass it directly as the default export, or call it yourself with the `env` Vite provides.
 
-```js
-import { svelte } from "@sveltejs/vite-plugin-svelte";
+```ts
 import svelteReadme from "svelte-readme";
 import { defineConfig } from "vite";
-import pkg from "./package.json";
 
-export default defineConfig((env) => {
-  if (process.env.BUNDLE !== "true") {
-    return svelteReadme()(env);
-  }
-
-  return {
-    plugins: [svelte()],
-    build: {
-      outDir: "lib",
-      lib: {
-        entry: pkg.svelte,
-        name: pkg.name,
-        formats: ["es", "umd"],
-        fileName: (format) => (format === "umd" ? "index.js" : "index.mjs"),
-      },
-      rollupOptions: {
-        external: ["svelte"],
-      },
-    },
-  };
-});
+export default defineConfig((env) => svelteReadme()(env));
 ```
 
 ### API
