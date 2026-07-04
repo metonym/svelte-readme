@@ -137,7 +137,7 @@ interface Interface {
     - [role="region"]
 ```
 
-## [rollup.config.js](rollup.config.js)
+## [vite.config.ts](vite.config.ts)
 
 [package.json](package.json)
 

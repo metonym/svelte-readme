@@ -1,5 +1,6 @@
-const assert = require("assert");
-const { preprocessReadme } = require("../dist/preprocessReadme");
+import assert from "node:assert";
+import { preprocessReadme } from "../dist/preprocessReadme.js";
+import { version as svelteVersion } from "svelte/package.json";
 
 const pre = preprocessReadme({
   name: "my-svelte-component",
@@ -26,8 +27,6 @@ const content = `
 `;
 
 Promise.resolve(pre.markup({ content, filename: "README.md" })).then((result) => {
-  const svelteVersion = require("svelte/package.json").version;
-
   assert(result.code.includes("Table of Contents"), "table of contents missing");
   assert(result.code.includes('class="code-fence"'), "code-fence markup missing");
   assert(result.code.includes("$state(0)"), "extracted script content missing");

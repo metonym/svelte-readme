@@ -38,10 +38,10 @@ At its core, this library is a simple Svelte preprocessor.
 
 This library exports two methods:
 
-- `createConfig` (default export): creates a Rollup InputOptions object for you
+- `createConfig` (default export): creates a Vite configuration for you
 - `preprocessReadme`: standalone Svelte markup preprocessor
 
-`createConfig` is tightly coupled with Rollup. At a minimum, `package.json#svelte` and `package.json#name` are required.
+`createConfig` is tightly coupled with Vite, and requires `svelte` (5.46.4+) and `vite` (8+) as peer dependencies. `preprocessReadme` has no such constraint and works with Svelte 4 or 5. At a minimum, `package.json#svelte` and `package.json#name` are required.
 
 **package.json**
 
@@ -52,43 +52,45 @@ This library exports two methods:
   "main": "./lib/index.js",
   "module": "./lib/index.mjs",
   "scripts": {
-    "dev": "rollup -cw",
-    "build": "rollup -c",
-    "prepack": "BUNDLE=true rollup -c"
+    "dev": "vite",
+    "build": "vite build",
+    "prepack": "BUNDLE=true vite build"
   },
   "homepage": "https://github.com/metonym/svelte-readme"
 }
 ```
 
-**rollup.config.js**
+**vite.config.ts**
 
-The default export from "svelte-readme" will create a Rollup configuration used to develop and generate the demo.
+The default export from "svelte-readme" creates a Vite configuration used to develop and generate the demo. Since it needs to know whether Vite is running in dev (`serve`) or build mode, it returns a config function - pass it directly as the default export, or call it yourself with the `env` Vite provides.
 
 ```js
-import resolve from "@rollup/plugin-node-resolve";
-import svelte from "rollup-plugin-svelte";
+import { svelte } from "@sveltejs/vite-plugin-svelte";
 import svelteReadme from "svelte-readme";
+import { defineConfig } from "vite";
 import pkg from "./package.json";
 
-export default () => {
+export default defineConfig((env) => {
   if (process.env.BUNDLE !== "true") {
-    return svelteReadme();
+    return svelteReadme()(env);
   }
 
-  return ["es", "umd"].map((format) => {
-    const UMD = format === "umd";
-
-    return {
-      input: pkg.svelte,
-      output: {
-        format,
-        file: UMD ? pkg.main : pkg.module,
-        name: UMD ? pkg.name : undefined,
+  return {
+    plugins: [svelte()],
+    build: {
+      outDir: "lib",
+      lib: {
+        entry: pkg.svelte,
+        name: pkg.name,
+        formats: ["es", "umd"],
+        fileName: (format) => (format === "umd" ? "index.js" : "index.mjs"),
       },
-      plugins: [svelte(), resolve()],
-    };
-  });
-};
+      rollupOptions: {
+        external: ["svelte"],
+      },
+    },
+  };
+});
 ```
 
 ### API
@@ -97,7 +99,7 @@ export default () => {
 interface CreateConfigOptions {
   /**
    * set to `true` to minify the HTML/JS
-   * @default false
+   * @default false in dev, true in build
    */
   minify: boolean;
 
@@ -126,22 +128,21 @@ interface CreateConfigOptions {
   prefixUrl: string;
 
   /**
-   * `rollup-plugin-svelte` options
+   * `@sveltejs/vite-plugin-svelte` options
    * @default {}
    */
-  svelte: RollupPluginSvelteOptions;
+  svelte: VitePluginSvelteOptions;
 
   /**
-   * Rollup plugins
+   * Vite plugins
    * @default {[]}
    */
   plugins: Plugin[];
 
   /**
-   * Rollup output options
-   * @default {{}}
+   * Append content to the `head` element in `index.html`
    */
-  output: OutputOptions;
+  head: string;
 }
 ```
 
