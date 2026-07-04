@@ -1,17 +1,17 @@
-import { parse } from "svelte/compiler";
 import { walk } from "estree-walker";
 import Markdown from "markdown-it";
 import markdownItAnchor from "markdown-it-anchor";
 import prettier from "prettier";
 import Prism from "prismjs";
+import { parse } from "svelte/compiler";
 import "prismjs/components/prism-bash.js";
 import "prismjs/components/prism-typescript.js";
 import "prismjs/components/prism-jsx.js";
 import "prismjs/components/prism-yaml.js";
 import "prism-svelte";
+import { URL } from "node:url";
 import isRelativeUrl from "is-relative-url";
-import { PreprocessorGroup } from "svelte/compiler";
-import { URL } from "url";
+import type { PreprocessorGroup } from "svelte/compiler";
 
 type Node = Record<string, any> & { start: number; end: number; type: string };
 
@@ -68,8 +68,8 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
             ];
           }
 
-          const regex = new RegExp('"' + opts.name + '"', "g");
-          const modifiedSource = encodeURI(source.replace(regex, '"' + opts.svelte + '"'));
+          const regex = new RegExp(`"${opts.name}"`, "g");
+          const modifiedSource = encodeURI(source.replace(regex, `"${opts.svelte}"`));
           const formattedCode = prettier.format(source, {
             parser: "svelte",
           });
@@ -86,7 +86,7 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
             Prism.languages[alias_lang],
             alias_lang,
           )}\`}</pre>`;
-        } catch (e) {
+        } catch (_e) {
           console.error(`Could not highlight language "${lang}".`);
           return `<pre class="language-${lang}">{@html \`${source}\`}</pre>`;
         }
@@ -97,7 +97,7 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
   }
 
   return {
-    // @ts-ignore
+    // @ts-expect-error
     markup: ({ content, filename }) => {
       if (filename && (/node_modules/.test(filename) || !filename.endsWith(".md"))) return null;
 
@@ -118,8 +118,8 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
 
       const ast = parse(result) as unknown as Node;
 
-      let headings = [];
-      let prev: undefined | "h2" | "h3" = undefined;
+      const headings = [];
+      let prev: undefined | "h2" | "h3";
 
       walk(ast as any, {
         enter(node: any, parent: any) {
@@ -141,7 +141,7 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
           }
 
           if (node.type === "Element" && node.name === "h2") {
-            // @ts-ignore
+            // @ts-expect-error
             const id = node.attributes.find((attr) => attr.name === "id").value[0].raw;
 
             if (id === "table-of-contents") return;
@@ -160,7 +160,7 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
           }
 
           if (node.type === "Element" && node.name === "h3") {
-            // @ts-ignore
+            // @ts-expect-error
             const id = node.attributes.find((attr) => attr.name === "id").value[0].raw;
             const text = getChildNodeText(node);
 
@@ -179,8 +179,7 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
             const raw_value = node.value[0].raw;
             const value = decodeURI(raw_value);
             const value_ast = parse(value) as unknown as Node;
-            const markup =
-              `<div class="code-fence">` + value.slice(value_ast.html.start, value_ast.html.end) + "</div>";
+            const markup = `<div class="code-fence">${value.slice(value_ast.html.start, value_ast.html.end)}</div>`;
             const replace = result.slice(parent!.start + cursor, parent!.end + cursor);
             result = result.replace(replace, markup + replace.replace(raw_value, ""));
             cursor += markup.length - raw_value.length;

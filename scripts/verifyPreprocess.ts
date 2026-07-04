@@ -1,6 +1,6 @@
 import assert from "node:assert";
-import { preprocessReadme } from "../dist/preprocessReadme.js";
 import { version as svelteVersion } from "svelte/package.json";
+import { preprocessReadme } from "../dist/preprocessReadme.js";
 
 const pre = preprocessReadme({
   name: "my-svelte-component",
