@@ -2,10 +2,11 @@ import fs from "node:fs";
 import fsPromises from "node:fs/promises";
 import { createRequire } from "node:module";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { svelte, type Options as VitePluginSvelteOptions } from "@sveltejs/vite-plugin-svelte";
 import htmlminifier from "html-minifier";
 import type { PreprocessorGroup } from "svelte/compiler";
-import type { ConfigEnv, Plugin, UserConfig } from "vite";
+import { type ConfigEnv, type Plugin, type UserConfig, build as viteBuild } from "vite";
 import { preprocessReadme } from "./preprocessReadme.js";
 import { css as github_styles } from "./style.js";
 
@@ -131,8 +132,65 @@ interface CreateConfigOptions {
   head: string;
 }
 
-const VIRTUAL_ENTRY_ID = "virtual:svelte-readme-entry";
-const RESOLVED_VIRTUAL_ENTRY_ID = `\0${VIRTUAL_ENTRY_ID}`;
+const VIRTUAL_HYDRATE_ENTRY_ID = "virtual:svelte-readme-hydrate-entry";
+const RESOLVED_VIRTUAL_HYDRATE_ENTRY_ID = `\0${VIRTUAL_HYDRATE_ENTRY_ID}`;
+const VIRTUAL_SSR_ENTRY_ID = "virtual:svelte-readme-ssr-entry";
+const RESOLVED_VIRTUAL_SSR_ENTRY_ID = `\0${VIRTUAL_SSR_ENTRY_ID}`;
+
+// Demo scripts often touch `document`/`window` directly (e.g. `document.body.className = ...`)
+// without guarding for SSR. Stub these globals during the SSR-only render pass so plain
+// property reads/writes no-op instead of throwing; the real values apply once hydrated in
+// the browser. Anything that isn't a simple property access (a thrown error from a real
+// browser-only API) still surfaces via the try/catch around render() and falls back to CSR.
+const SSR_GLOBAL_STUBS = `function __svelteReadmeStub() {
+  const handler = {
+    get(target, prop) {
+      if (prop === "then" || typeof prop === "symbol") return undefined;
+      if (!(prop in target)) target[prop] = __svelteReadmeStub();
+      return target[prop];
+    },
+    set(target, prop, value) {
+      target[prop] = value;
+      return true;
+    },
+  };
+  return new Proxy(function () {}, handler);
+}
+if (typeof globalThis.document === "undefined") globalThis.document = __svelteReadmeStub();
+if (typeof globalThis.window === "undefined") globalThis.window = __svelteReadmeStub();
+if (typeof globalThis.localStorage === "undefined") globalThis.localStorage = __svelteReadmeStub();
+if (typeof globalThis.navigator === "undefined") globalThis.navigator = __svelteReadmeStub();`;
+
+const virtualEntriesPlugin: Plugin = {
+  name: "svelte-readme-virtual-entries",
+  resolveId(id) {
+    if (id === VIRTUAL_HYDRATE_ENTRY_ID) return RESOLVED_VIRTUAL_HYDRATE_ENTRY_ID;
+    if (id === VIRTUAL_SSR_ENTRY_ID) return RESOLVED_VIRTUAL_SSR_ENTRY_ID;
+  },
+  load(id) {
+    if (id === RESOLVED_VIRTUAL_HYDRATE_ENTRY_ID) {
+      return `import { hydrate } from "svelte";
+              import App from "./README.md";
+              hydrate(App, { target: document.body });`;
+    }
+
+    if (id === RESOLVED_VIRTUAL_SSR_ENTRY_ID) {
+      return `${SSR_GLOBAL_STUBS}
+              import { render } from "svelte/server";
+              import App from "./README.md";
+              export function renderApp() { return render(App); }`;
+    }
+  },
+};
+
+function logSSRFallback(error: unknown) {
+  console.warn(
+    "[svelte-readme] Failed to server-render README.md — falling back to client-only rendering.\n" +
+      "If this happens outside a simple `document`/`window` property access, guard the browser-only " +
+      'code (e.g. `if (typeof document !== "undefined")`) or move it into `onMount`.',
+  );
+  console.warn(error);
+}
 
 export default function createConfig(opts: Partial<CreateConfigOptions> = {}): (env: ConfigEnv) => UserConfig {
   return (env) => {
@@ -143,9 +201,7 @@ export default function createConfig(opts: Partial<CreateConfigOptions> = {}): (
     const svelteOptions: Partial<VitePluginSvelteOptions> = {
       emitCss: opts.svelte?.emitCss ?? false,
       compilerOptions: {
-        // Svelte 5 requires this to keep supporting the `new App({ target })`
-        // instantiation pattern used by the virtual entry below.
-        ...(getSvelteMajorVersion() >= 5 ? { compatibility: { componentApi: 4 }, hmr: false } : {}),
+        ...(getSvelteMajorVersion() >= 5 ? { hmr: false } : {}),
         ...opts.svelte?.compilerOptions,
       },
       extensions: [".svelte", ".md", ...(opts.svelte?.extensions ?? [])],
@@ -194,7 +250,7 @@ export default function createConfig(opts: Partial<CreateConfigOptions> = {}): (
     }`;
     }
 
-    function renderTemplate(scriptSrc: string) {
+    function renderTemplate(scriptSrc: string, ssr?: { head: string; body: string }) {
       const template = `
       <!DOCTYPE html>
       <html lang="en">
@@ -209,9 +265,11 @@ export default function createConfig(opts: Partial<CreateConfigOptions> = {}): (
             ${opts.style || ""}
           </style>
           ${opts?.head ?? ""}
+          ${ssr?.head ?? ""}
         </head>
         <body>
           <noscript>You need to enable JavaScript to run this app.</noscript>
+          ${ssr?.body ?? ""}
           <script type="module" src="${scriptSrc}"></script>
         </body>
       </html>
@@ -227,23 +285,52 @@ export default function createConfig(opts: Partial<CreateConfigOptions> = {}): (
         : template;
     }
 
+    async function renderSSR(): Promise<{ head: string; body: string }> {
+      const ssrOutDir = path.join(process.cwd(), output_dir, ".svelte-readme-ssr");
+
+      await viteBuild({
+        configFile: false,
+        logLevel: "warn",
+        build: {
+          ssr: true,
+          outDir: ssrOutDir,
+          emptyOutDir: true,
+          rollupOptions: {
+            input: VIRTUAL_SSR_ENTRY_ID,
+            output: { entryFileNames: "entry-server.js" },
+          },
+        },
+        plugins: [...svelte(svelteOptions as VitePluginSvelteOptions), virtualEntriesPlugin],
+      });
+
+      const entryPath = path.join(ssrOutDir, "entry-server.js");
+      const mod = await import(pathToFileURL(entryPath).href);
+
+      await fsPromises.rm(ssrOutDir, { recursive: true, force: true });
+
+      return mod.renderApp();
+    }
+
     const htmlPlugin: Plugin = {
       name: "svelte-readme-html",
-      resolveId(id) {
-        if (id === VIRTUAL_ENTRY_ID) return RESOLVED_VIRTUAL_ENTRY_ID;
-      },
-      load(id) {
-        if (id === RESOLVED_VIRTUAL_ENTRY_ID) {
-          return `import App from "./README.md";
-                  const app = new App({ target: document.body });
-                  export default app;`;
-        }
-      },
       configureServer(server) {
         server.middlewares.use(async (req, res, next) => {
           if (req.method !== "GET" || !req.headers.accept?.includes("text/html")) return next();
 
-          const html = await server.transformIndexHtml(req.url ?? "/", renderTemplate(`/@id/${VIRTUAL_ENTRY_ID}`));
+          let ssr: { head: string; body: string } | undefined;
+
+          try {
+            const { renderApp } = await server.ssrLoadModule(VIRTUAL_SSR_ENTRY_ID);
+            ssr = renderApp();
+          } catch (error) {
+            server.ssrFixStacktrace(error as Error);
+            logSSRFallback(error);
+          }
+
+          const html = await server.transformIndexHtml(
+            req.url ?? "/",
+            renderTemplate(`/@id/${VIRTUAL_HYDRATE_ENTRY_ID}`, ssr),
+          );
           res.setHeader("Content-Type", "text/html");
           res.end(html);
         });
@@ -270,8 +357,19 @@ export default function createConfig(opts: Partial<CreateConfigOptions> = {}): (
 
         if (!entryChunk) return;
 
+        let ssr: { head: string; body: string } | undefined;
+
+        try {
+          ssr = await renderSSR();
+        } catch (error) {
+          logSSRFallback(error);
+        }
+
         await fsPromises.mkdir(output_dir, { recursive: true });
-        await fsPromises.writeFile(path.join(output_dir, "index.html"), renderTemplate(`./${entryChunk.fileName}`));
+        await fsPromises.writeFile(
+          path.join(output_dir, "index.html"),
+          renderTemplate(`./${entryChunk.fileName}`, ssr),
+        );
       },
     };
 
@@ -281,13 +379,16 @@ export default function createConfig(opts: Partial<CreateConfigOptions> = {}): (
         outDir: output_dir,
         minify,
         rollupOptions: {
-          input: VIRTUAL_ENTRY_ID,
+          input: VIRTUAL_HYDRATE_ENTRY_ID,
           output: { entryFileNames: "s-[hash].js" },
         },
       },
-      plugins: [...svelte(svelteOptions as VitePluginSvelteOptions), htmlPlugin, ...(opts.plugins || [])].filter(
-        Boolean,
-      ) as Plugin[],
+      plugins: [
+        ...svelte(svelteOptions as VitePluginSvelteOptions),
+        virtualEntriesPlugin,
+        htmlPlugin,
+        ...(opts.plugins || []),
+      ].filter(Boolean) as Plugin[],
     };
   };
 }
