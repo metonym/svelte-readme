@@ -37,10 +37,14 @@ afterEach(() => {
   fs.rmSync(fixtureDir, { recursive: true, force: true });
 });
 
+function isPlugin(value: unknown): value is Plugin {
+  return typeof value === "object" && value !== null && "name" in value;
+}
+
 function getHtmlPlugin(config: ReturnType<ReturnType<typeof createConfig>>) {
-  const plugin = (config.plugins as Plugin[]).find(
-    (p) => p?.name === "svelte-readme-html",
-  );
+  const plugin = config.plugins
+    ?.filter(isPlugin)
+    .find((p) => p.name === "svelte-readme-html");
   if (!plugin) throw new Error("svelte-readme-html plugin not found");
   return plugin as Required<Pick<Plugin, "writeBundle">>;
 }
@@ -48,9 +52,9 @@ function getHtmlPlugin(config: ReturnType<ReturnType<typeof createConfig>>) {
 function getVirtualEntriesPlugin(
   config: ReturnType<ReturnType<typeof createConfig>>,
 ) {
-  const plugin = (config.plugins as Plugin[]).find(
-    (p) => p?.name === "svelte-readme-virtual-entries",
-  );
+  const plugin = config.plugins
+    ?.filter(isPlugin)
+    .find((p) => p.name === "svelte-readme-virtual-entries");
   if (!plugin)
     throw new Error("svelte-readme-virtual-entries plugin not found");
   return plugin as Required<Pick<Plugin, "resolveId" | "load">>;

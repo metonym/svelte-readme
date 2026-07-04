@@ -8,7 +8,6 @@ import {
   type Options as VitePluginSvelteOptions,
 } from "@sveltejs/vite-plugin-svelte";
 import htmlminifier from "html-minifier";
-import type { PreprocessorGroup } from "svelte/compiler";
 import {
   type ConfigEnv,
   type Plugin,
@@ -23,6 +22,11 @@ const require = createRequire(import.meta.url);
 function getSvelteMajorVersion(): number {
   const svelte_pkg = require("svelte/package.json");
   return Number.parseInt(svelte_pkg.version.split(".")[0], 10);
+}
+
+function toArray<T>(value: T | T[] | undefined): T[] {
+  if (value === undefined) return [];
+  return Array.isArray(value) ? value : [value];
 }
 
 function getPackageJSON() {
@@ -217,7 +221,7 @@ export default function createConfig(
       },
       extensions: [".svelte", ".md", ...(opts.svelte?.extensions ?? [])],
       preprocess: [
-        ...((opts.svelte?.preprocess as PreprocessorGroup[]) ?? []),
+        ...toArray(opts.svelte?.preprocess),
         preprocessReadme({ ...pkg, prefixUrl: opts.prefixUrl }),
       ],
     };
@@ -320,10 +324,7 @@ export default function createConfig(
             output: { entryFileNames: "entry-server.js" },
           },
         },
-        plugins: [
-          ...svelte(svelteOptions as VitePluginSvelteOptions),
-          virtualEntriesPlugin,
-        ],
+        plugins: [...svelte(svelteOptions), virtualEntriesPlugin],
       });
 
       const entryPath = path.join(ssrOutDir, "entry-server.js");
@@ -420,11 +421,11 @@ export default function createConfig(
         },
       },
       plugins: [
-        ...svelte(svelteOptions as VitePluginSvelteOptions),
+        ...svelte(svelteOptions),
         virtualEntriesPlugin,
         htmlPlugin,
         ...(opts.plugins || []),
-      ].filter(Boolean) as Plugin[],
+      ].filter(Boolean),
     };
   };
 }

@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import sveltePackage from "svelte/package.json" with { type: "json" };
-import { preprocessReadme } from "../dist/preprocessReadme.js";
+import { preprocessReadme } from "../dist/index.js";
 
 const pre = preprocessReadme({
   name: "my-svelte-component",

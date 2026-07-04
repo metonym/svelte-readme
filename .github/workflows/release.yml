@@ -28,7 +28,7 @@ jobs:
         run: bun ci
 
       - name: Build package
-        run: bun run prepack
+        run: bun run build
 
       - name: Publish package
         env:

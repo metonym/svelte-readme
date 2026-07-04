@@ -52,7 +52,7 @@ jobs:
         run: bun ci
 
       - name: Build package
-        run: bun run prepack
+        run: bun run build
 
       - name: Verify against Svelte 5
         run: bun run verify
@@ -71,7 +71,7 @@ jobs:
         run: bun ci
 
       - name: Build package
-        run: bun run prepack
+        run: bun run build
 
       - name: Link package
         run: bun link

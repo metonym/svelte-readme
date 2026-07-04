@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "declaration": true,
-    "declarationMap": true,
+    "emitDeclarationOnly": true,
     "esModuleInterop": true,
     "target": "ES2022",
     "module": "NodeNext",
