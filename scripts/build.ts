@@ -5,8 +5,9 @@ import { $, build } from "bun";
 const isWatchMode =
   process.argv.includes("-w") || process.argv.includes("--watch");
 
-// `svelte`, `vite` must resolve to the consumer's own installed versions.
-const external = ["svelte", "vite"];
+// `svelte`, `vite`, `@sveltejs/vite-plugin-svelte` must resolve to the consumer's
+// own installed versions.
+const external = ["svelte", "vite", "@sveltejs/vite-plugin-svelte"];
 
 const HASH_FILE = "dist/.build-hash";
 const OUTPUT_FILES = ["index.js", "index.d.ts", "style.css"];
