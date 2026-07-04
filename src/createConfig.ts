@@ -1,6 +1,5 @@
 import fs from "node:fs";
 import fsPromises from "node:fs/promises";
-import { createRequire } from "node:module";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import {
@@ -16,13 +15,6 @@ import {
 import { preprocessReadme } from "./preprocessReadme.js";
 import { purgeUnusedCss } from "./purgeCss.js";
 import { css as github_styles } from "./style.js";
-
-const require = createRequire(import.meta.url);
-
-function getSvelteMajorVersion(): number {
-  const svelte_pkg = require("svelte/package.json");
-  return Number.parseInt(svelte_pkg.version.split(".")[0], 10);
-}
 
 function toArray<T>(value: T | T[] | undefined): T[] {
   if (value === undefined) return [];
@@ -240,7 +232,7 @@ export default function createConfig(
     const svelteOptions: Partial<VitePluginSvelteOptions> = {
       emitCss: opts.svelte?.emitCss ?? false,
       compilerOptions: {
-        ...(getSvelteMajorVersion() >= 5 ? { hmr: false } : {}),
+        hmr: false,
         ...opts.svelte?.compilerOptions,
       },
       extensions: [".svelte", ".md", ...(opts.svelte?.extensions ?? [])],
