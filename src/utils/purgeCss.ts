@@ -57,11 +57,18 @@ function isTokenPresent(token: Token, html: string): boolean {
   }
 }
 
-function isSelectorUsed(selectorList: string, html: string): boolean {
+function isSelectorUsed(
+  selectorList: string,
+  html: string,
+  alwaysKeepClasses: Set<string>,
+): boolean {
   return selectorList.split(",").some((selector) => {
     const tokens = extractTokens(selector);
     return (
       tokens.length === 0 ||
+      tokens.some(
+        (token) => token.type === "class" && alwaysKeepClasses.has(token.name),
+      ) ||
       tokens.every((token) => isTokenPresent(token, html))
     );
   });
@@ -82,13 +89,23 @@ function findMatchingBrace(css: string, openIndex: number): number {
 }
 
 // Drops rules whose selector can't possibly match anything in `html`, so the served
-// stylesheet only carries the subset of a (vendor-supplied, static) CSS blob that this
-// particular README's rendered markup can actually use. Assumes well-formed,
-// comment-free input (no `{`/`}`/`;` inside strings) — true for the generated
-// `github-markdown-css` and the hand-written blocks this runs against — so a manual
-// brace-depth scan is enough without a full CSS parser.
-export function purgeUnusedCss(rawCss: string, html: string): string {
+// stylesheet only carries the subset of the static CSS blob that this particular
+// README's rendered markup can actually use. Assumes well-formed, comment-free input
+// (no `{`/`}`/`;` inside strings) — true for the generated stylesheet and the
+// hand-written blocks this runs against — so a manual brace-depth scan is enough
+// without a full CSS parser.
+//
+// `alwaysKeepClasses` covers classes that only ever get added client-side after
+// hydration (e.g. `sr-toc-active`, toggled by scroll-spy JS) — they never appear in
+// the server-rendered `html` this purge checks against, so without an explicit
+// allowlist their rules would look unused and get stripped from every build.
+export function purgeUnusedCss(
+  rawCss: string,
+  html: string,
+  alwaysKeepClasses: string[] = [],
+): string {
   const css = rawCss.replace(/\/\*[\s\S]*?\*\//g, "");
+  const alwaysKeep = new Set(alwaysKeepClasses);
   let result = "";
   let i = 0;
 
@@ -106,14 +123,14 @@ export function purgeUnusedCss(rawCss: string, html: string): string {
     const atRule = header.trim().match(AT_RULE_NAME)?.[1];
 
     if (atRule === "media" || atRule === "supports") {
-      const filteredBlock = purgeUnusedCss(block, html);
+      const filteredBlock = purgeUnusedCss(block, html, alwaysKeepClasses);
       if (filteredBlock.trim().length > 0) {
         result += `${header}{${filteredBlock}}`;
       }
     } else if (atRule !== undefined) {
       // `@font-face`, `@keyframes`, etc. have no element selector to check — keep as-is.
       result += `${header}{${block}}`;
-    } else if (isSelectorUsed(header, html)) {
+    } else if (isSelectorUsed(header, html, alwaysKeep)) {
       result += `${header}{${block}}`;
     }
 

@@ -118,10 +118,8 @@ describe("preprocessReadme", () => {
     expect(code).not.toContain("<style>");
   });
 
-  test("builds a nested table of contents from h2/h3 headings", async () => {
+  test("builds a nested sidebar table of contents from h2/h3 headings", async () => {
     const content = `
-<!-- TOC -->
-
 ## Section One
 
 ### Sub Section A
@@ -131,7 +129,9 @@ describe("preprocessReadme", () => {
 ## Section Two
 `;
     const code = await markup(content);
-    expect(code).toContain("<p><strong>Table of Contents</strong></p>");
+    expect(code).toContain('<nav class="sr-toc sr-toc-sidebar">');
+    expect(code).toContain('<nav class="sr-toc sr-toc-inline">');
+    expect(code).toContain("<p><strong>On this page</strong></p>");
     expect(code).toContain('<li><a href="#section-one">Section One</a></li>');
     expect(code).toContain(
       '<ul><li><a href="#sub-section-a">Sub Section A</a></li>',

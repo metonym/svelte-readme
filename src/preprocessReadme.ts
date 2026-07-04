@@ -36,6 +36,87 @@ const NO_EVAL_ATTR = /no-eval/;
 const NO_DISPLAY_ATTR = /no-display/;
 const NODE_MODULES_PATH = /node_modules/;
 
+// Underlines whichever `.sr-toc-sidebar` link points at the heading currently
+// scrolled into the top portion of the viewport (the `.sr-toc-inline` copy shown
+// on mobile has no sticky position to track against, so it's excluded).
+// Concatenated directly into the final <script> tag (not merged through
+// `script_content`'s line-level Set dedup),
+// since a generic line here — e.g. a bare `onMount(() => {` — could otherwise
+// collide with an identical line from an unrelated demo fence and get dropped,
+// leaving the rest of this function's body dangling outside any function. The
+// `onMount` import is aliased so it can't collide with a demo's own import of
+// the same name either.
+const TOC_SCROLL_SPY_SCRIPT = `import { onMount as __svelteReadmeOnMount } from "svelte";
+
+__svelteReadmeOnMount(() => {
+  // \`href\` and the heading's \`id\` are both the same slug produced by the
+  // preprocessor, so this looks it up verbatim (no decode/encode step).
+  const __svelteReadmeTocEntries = Array.from(
+    document.querySelectorAll(".sr-toc-sidebar a[href^='#']"),
+  )
+    .map((link) => ({
+      link,
+      target: document.getElementById(link.getAttribute("href").slice(1)),
+    }))
+    .filter((entry) => entry.target);
+
+  if (!__svelteReadmeTocEntries.length) return;
+
+  const __svelteReadmeUpdateActive = () => {
+    const __svelteReadmeOffset = 96;
+    let __svelteReadmeCurrent = null;
+
+    for (const entry of __svelteReadmeTocEntries) {
+      if (entry.target.getBoundingClientRect().top - __svelteReadmeOffset <= 0) {
+        __svelteReadmeCurrent = entry;
+      } else {
+        break;
+      }
+    }
+
+    for (const entry of __svelteReadmeTocEntries) {
+      entry.link.classList.toggle(
+        "sr-toc-active",
+        entry === __svelteReadmeCurrent,
+      );
+    }
+  };
+
+  let __svelteReadmeTicking = false;
+  const __svelteReadmeOnScroll = () => {
+    if (__svelteReadmeTicking) return;
+    __svelteReadmeTicking = true;
+    requestAnimationFrame(() => {
+      __svelteReadmeTicking = false;
+      __svelteReadmeUpdateActive();
+    });
+  };
+
+  // The TOC isn't sticky below the layout's 900px mobile breakpoint (it's a
+  // static block after the content instead), so scroll-spy only runs above it —
+  // and re-syncs on resize/orientation change in case that crosses the breakpoint.
+  const __svelteReadmeMobileQuery = window.matchMedia("(max-width: 900px)");
+  const __svelteReadmeSyncScrollSpy = () => {
+    window.removeEventListener("scroll", __svelteReadmeOnScroll);
+    if (__svelteReadmeMobileQuery.matches) {
+      for (const entry of __svelteReadmeTocEntries) {
+        entry.link.classList.remove("sr-toc-active");
+      }
+    } else {
+      window.addEventListener("scroll", __svelteReadmeOnScroll, {
+        passive: true,
+      });
+      __svelteReadmeUpdateActive();
+    }
+  };
+
+  __svelteReadmeMobileQuery.addEventListener(
+    "change",
+    __svelteReadmeSyncScrollSpy,
+  );
+  __svelteReadmeSyncScrollSpy();
+});`;
+
 export function preprocessReadme(
   opts: Pick<PreprocessReadmeOptions, "name" | "svelte"> &
     Partial<PreprocessReadmeOptions>,
@@ -181,13 +262,6 @@ export function preprocessReadme(
       );
     }
 
-    content = content.replaceAll(
-      "<!-- TOC -->",
-      `
-## Table of Contents
-      `,
-    );
-
     const tokens = md.parse(content, {});
 
     let style_content = "";
@@ -233,9 +307,6 @@ export function preprocessReadme(
             // @ts-expect-error
             const id = node.attributes.find((attr) => attr.name === "id")
               .value[0].raw;
-
-            if (id === "table-of-contents") return;
-
             const text = getChildNodeText(node);
 
             if (text !== undefined) {
@@ -293,11 +364,6 @@ export function preprocessReadme(
       headings.push("</ul>");
     }
 
-    result = result.replace(
-      `<h2 id="table-of-contents">Table of Contents</h2>`,
-      `<p><strong>Table of Contents</strong></p><ul>${headings.join("\n")}</ul>`,
-    );
-
     const formattedBlocks = await Promise.all(
       pending_format.map(async ({ source }) => {
         if (!opts.format) return source;
@@ -322,10 +388,30 @@ export function preprocessReadme(
       result = result.replace(placeholder, () => svelteCode);
     });
 
+    const tocContent = headings.length
+      ? `<p><strong>On this page</strong></p><ul>${headings.join("\n")}</ul>`
+      : "";
+
+    // The sidebar (desktop) copy is always a fixed sibling of `<main>`. The inline
+    // copy (shown on mobile, where there's no sidebar column to stick it in) goes
+    // wherever the README author placed the `<!-- TOC -->` marker, falling back to
+    // right after the content when no marker is present.
+    const tocSidebar = tocContent
+      ? `<nav class="sr-toc sr-toc-sidebar">${tocContent}</nav>`
+      : "";
+
+    if (tocContent) {
+      const tocInline = `<nav class="sr-toc sr-toc-inline">${tocContent}</nav>`;
+      result = result.includes("<!-- TOC -->")
+        ? result.replaceAll("<!-- TOC -->", tocInline)
+        : `${result}${tocInline}`;
+    }
+
     return {
-      code: `<script>${[...new Set(script_content)].join("\n")}</script>
+      code: `<script>${[...new Set(script_content)].join("\n")}
+               ${headings.length ? TOC_SCROLL_SPY_SCRIPT : ""}</script>
                ${style_content.trim() ? `<style>${style_content}</style>` : ""}
-               <main class="markdown-body">${result}</main>`,
+               <div class="sr-layout"><main class="markdown-body">${result}</main>${tocSidebar}</div>`,
     };
   }
 

@@ -1,18 +1,116 @@
 .code-fence {
   padding: 24px 15px;
-  border: 1px solid #eaecef;
+  border: 1px solid var(--sr-color-border-muted);
   border-bottom: 0;
+  overflow-x: auto;
 }
 
-main {
-  box-sizing: border-box;
-  max-width: 980px;
+.sr-layout {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 960px) 180px;
+  column-gap: 40px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 45px;
+  box-sizing: border-box;
 }
 
-@media (max-width: 767px) {
-  main {
+main.markdown-body {
+  grid-column: 2;
+  min-width: 0;
+}
+
+/* Shared between the sticky sidebar TOC (desktop) and the inline TOC rendered at
+   the `<!-- TOC -->` marker, or trailing the content when there's no marker
+   (mobile) — only one of the two is ever visible at a given viewport width. */
+.sr-toc {
+  font-family: var(--sr-font-sans);
+  font-size: 12px;
+  color: var(--sr-color-fg-muted);
+}
+
+.sr-toc p {
+  margin-bottom: 8px;
+  min-height: auto;
+}
+
+.sr-toc ul {
+  margin: 0;
+  padding-left: 1em;
+  list-style: none;
+}
+
+.sr-toc > ul {
+  padding-left: 0;
+}
+
+.sr-toc > ul > li {
+  margin-bottom: 4px;
+}
+
+.sr-toc > ul > ul {
+  margin-bottom: 14px;
+}
+
+.sr-toc a.sr-toc-active {
+  color: var(--sr-color-fg);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.sr-toc-sidebar {
+  grid-column: 3;
+  min-width: 0;
+  box-sizing: border-box;
+  position: sticky;
+  top: 0;
+  align-self: stretch;
+  max-height: 100vh;
+  padding: 32px 0;
+  overflow-y: auto;
+}
+
+.sr-toc-inline {
+  display: none;
+}
+
+main.markdown-body p {
+  max-width: 52ch;
+}
+
+/* Between the mobile breakpoint and the full desktop width, the fixed-width empty
+   spacer column wastes space and pushes content off-center for no reason — drop it
+   and let content use the freed-up width, keeping only the sticky TOC column. */
+@media (max-width: 1300px) {
+  .sr-layout {
+    grid-template-columns: minmax(0, 1fr) 180px;
+  }
+
+  main.markdown-body {
+    grid-column: 1;
+  }
+
+  .sr-toc-sidebar {
+    grid-column: 2;
+  }
+}
+
+@media (max-width: 900px) {
+  .sr-layout {
+    grid-template-columns: 1fr;
     padding: 15px;
+  }
+
+  main.markdown-body {
+    grid-column: 1;
+  }
+
+  .sr-toc-sidebar {
+    display: none;
+  }
+
+  .sr-toc-inline {
+    display: block;
+    margin-bottom: var(--sr-spacing-lg);
   }
 }
