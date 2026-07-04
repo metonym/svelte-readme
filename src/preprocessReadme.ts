@@ -12,6 +12,9 @@ import "prism-svelte";
 import { URL } from "node:url";
 import type { PreprocessorGroup } from "svelte/compiler";
 
+// Svelte's markup/script AST has no official types, and shares no common shape with the
+// ESTree nodes `estree-walker` expects — this loose record covers both.
+// biome-ignore lint/suspicious/noExplicitAny: see above
 type Node = Record<string, any> & { start: number; end: number; type: string };
 
 const aliases: Record<string, string> = {
@@ -36,18 +39,18 @@ function isRelativeUrl(url: string): boolean {
   return !/^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(url);
 }
 
-const getChildNodeText = (node: any) => {
+const getChildNodeText = (node: Node) => {
   return node.children
-    .flatMap((child: any) => (child.type === "Element" ? child.children : child))
-    .filter((child: any) => child.type === "Text")
-    .map((child: any) => child.raw)
+    .flatMap((child: Node) => (child.type === "Element" ? child.children : child))
+    .filter((child: Node) => child.type === "Text")
+    .map((child: Node) => child.raw)
     .join("");
 };
 
 type Declaration = { name: string; start: number; end: number };
 type IdentifierRange = { start: number; end: number; name: string };
 
-const collectPatternNames = (pattern: any, names: string[]): void => {
+const collectPatternNames = (pattern: Node | undefined, names: string[]): void => {
   if (!pattern) return;
 
   switch (pattern.type) {
@@ -74,10 +77,10 @@ const collectPatternNames = (pattern: any, names: string[]): void => {
 // Collects `let`/`const`/`var`, `function`, and `class` bindings declared at the top level of a
 // `<script>` block (including `export let ...` props), so duplicate names across separate code
 // fences can be detected and renamed before they're merged into a single shared `<script>`.
-const collectTopLevelDeclarations = (program: any): Declaration[] => {
+const collectTopLevelDeclarations = (program: Node): Declaration[] => {
   const declarations: Declaration[] = [];
 
-  const visit = (stmt: any) => {
+  const visit = (stmt: Node) => {
     if (stmt.type === "ExportNamedDeclaration" && stmt.declaration) {
       visit(stmt.declaration);
       return;
@@ -140,12 +143,16 @@ const computeRenameMap = (
 
 // Finds every reference to a renamed identifier within a script or markup AST, skipping
 // positions where the name is a property/member key rather than a variable reference.
-const collectIdentifierRanges = (root: any, renameMap: Map<string, string>): IdentifierRange[] => {
+const collectIdentifierRanges = (root: Node, renameMap: Map<string, string>): IdentifierRange[] => {
   const ranges: IdentifierRange[] = [];
 
-  walk(root, {
-    enter(node: any, parent: any) {
-      if (node.type !== "Identifier" || !renameMap.has(node.name)) return;
+  walk(
+    // biome-ignore lint/suspicious/noExplicitAny: estree-walker's real types don't match Svelte's AST (see `Node` above)
+    root as any,
+    {
+      // biome-ignore lint/suspicious/noExplicitAny: estree-walker's real types don't match Svelte's AST (see `Node` above)
+      enter(node: any, parent: any) {
+        if (node.type !== "Identifier" || !renameMap.has(node.name)) return;
 
       if (parent) {
         if (parent.type === "MemberExpression" && parent.property === node && !parent.computed) return;
@@ -155,9 +162,10 @@ const collectIdentifierRanges = (root: any, renameMap: Map<string, string>): Ide
         if (parent.type === "ExportSpecifier" && parent.exported === node && parent.exported !== parent.local) return;
       }
 
-      ranges.push({ start: node.start, end: node.end, name: node.name });
+        ranges.push({ start: node.start, end: node.end, name: node.name });
+      },
     },
-  });
+  );
 
   return ranges;
 };
@@ -174,7 +182,9 @@ const applyRenames = (source: string, ranges: IdentifierRange[], renameMap: Map<
   return result;
 };
 
-export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<PreprocessorGroup, "markup"> {
+export function preprocessReadme(
+  opts: Pick<PreprocessReadmeOptions, "name" | "svelte"> & Partial<PreprocessReadmeOptions>,
+): Pick<PreprocessorGroup, "markup"> {
   const prefixUrl = opts.prefixUrl || `${opts.homepage}/tree/master/`;
 
   let script_content: string[] = [];
@@ -219,7 +229,7 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
               .slice(renamedInstance.start, renamedInstance.end)
               .split("\n")
               .slice(1, -1)
-              .map((line) => line.trim().replace(new RegExp(opts.name!, "g"), opts.svelte!)),
+              .map((line) => line.trim().replace(new RegExp(opts.name, "g"), opts.svelte)),
           ];
         }
 
@@ -277,9 +287,13 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
       const headings = [];
       let prev: undefined | "h2" | "h3";
 
-      walk(ast as any, {
-        enter(node: any, parent: any) {
-          if (node.type === "Attribute" && node.name === "href") {
+      walk(
+        // biome-ignore lint/suspicious/noExplicitAny: estree-walker's real types don't match Svelte's AST (see `Node` above)
+        ast as any,
+        {
+          // biome-ignore lint/suspicious/noExplicitAny: estree-walker's real types don't match Svelte's AST (see `Node` above)
+          enter(node: any, parent: any) {
+            if (node.type === "Attribute" && node.name === "href") {
             const value = node.value[0];
 
             if (value && !value.raw.startsWith("#") && isRelativeUrl(value.raw)) {
@@ -331,17 +345,18 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
             }
           }
 
-          if (node.type === "Attribute" && node.name === "data-svelte") {
+          if (node.type === "Attribute" && node.name === "data-svelte" && parent) {
             const raw_value = node.value[0].raw;
             const value = decodeURI(raw_value);
             const value_ast = parse(value) as unknown as Node;
             const markup = `<div class="code-fence">${value.slice(value_ast.html.start, value_ast.html.end)}</div>`;
-            const replace = result.slice(parent!.start + cursor, parent!.end + cursor);
+            const replace = result.slice(parent.start + cursor, parent.end + cursor);
             result = result.replace(replace, markup + replace.replace(raw_value, ""));
             cursor += markup.length - raw_value.length;
           }
+          },
         },
-      });
+      );
 
       if (prev === "h3") {
         headings.push("</ul>");
