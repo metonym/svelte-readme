@@ -5,8 +5,6 @@ import { fileURLToPath } from "node:url";
 export type Claim = { start: number; end: number; className: string };
 export type GapFill = (text: string) => string;
 
-const dirname = path.dirname(fileURLToPath(import.meta.url));
-
 const ESCAPE_RE = /[&<>]/g;
 const ESCAPE_MAP: Record<string, string> = {
   "&": "&amp;",
@@ -22,15 +20,23 @@ export function token(className: string, text: string): string {
   return `<span class="token ${className}">${escapeHtml(text)}</span>`;
 }
 
+// Reads a CSS file co-located with the calling grammar module — `moduleUrl` is that
+// module's own `import.meta.url`, since resolving the directory here would resolve
+// against this file's location instead.
+export function readGrammarCss(moduleUrl: string, filename: string): string {
+  const dirname = path.dirname(fileURLToPath(moduleUrl));
+  return fs.readFileSync(path.join(dirname, filename), "utf-8");
+}
+
 // Styling for the token classes emitted from this file (`gapFill`'s punctuation/operator
 // fallback) plus the classes every grammar-specific highlighter claims for the same
 // meaning (keyword/comment/function/string/number/boolean) — colocated here, rather than
 // duplicated per grammar, because their meaning doesn't change across grammars. A grammar
 // module only needs its own `styles` export for classes unique to (or recolored for) that
 // grammar; see e.g. `./typescript.js`'s `.language-typescript` overrides.
-export const baseTokenStyles: string = fs.readFileSync(
-  path.join(dirname, "shared.css"),
-  "utf-8",
+export const baseTokenStyles: string = readGrammarCss(
+  import.meta.url,
+  "shared.css",
 );
 
 // Renders `claims` (absolute offsets into `source`) in order, filling every span

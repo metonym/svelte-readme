@@ -1,21 +1,19 @@
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { walk } from "estree-walker";
 import { parse } from "svelte/compiler";
-import { type Claim, escapeHtml, renderClaims, token } from "./shared.js";
+import {
+  type Claim,
+  escapeHtml,
+  readGrammarCss,
+  renderClaims,
+  token,
+} from "./shared.js";
 import { codeGapFill, collectLeafClaims } from "./typescript.js";
-
-const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Classes unique to this highlighter: markup (tag/attr-name/attr-value) and the CSS it
 // claims inside a fence's own `<style>` block (selector/property). Everything else this
 // module emits (keyword, punctuation, comment, string, number, ...) is shared with the
 // script-content highlighter it delegates to (`./typescript.js`) and styled in `./shared.js`.
-export const styles: string = fs.readFileSync(
-  path.join(dirname, "svelte.css"),
-  "utf-8",
-);
+export const styles: string = readGrammarCss(import.meta.url, "svelte.css");
 
 // `{#if ...}` / `{:else}` / `{/each}` etc. — the block-keyword text right after the
 // sigil is matched greedily so e.g. `{:else` comes back as one span.
