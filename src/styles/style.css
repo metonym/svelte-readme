@@ -25,7 +25,35 @@
  * GitHub's own chrome (diff/blob/octicon/utility classes) were dropped since they never
  * match rendered README markup. The trailing `p`/`pre` rules below are this project's
  * own spacing overrides, not from the upstream stylesheet.
+ *
+ * Colors, font stacks, and the block-spacing unit are pulled out as custom properties
+ * so a consumer can retheme this (e.g. dark mode, brand colors) by overriding them on
+ * `:root` or `main`, without having to override individual rules.
  **/
+
+:root {
+  --gh-font-sans: -apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji;
+  --gh-font-mono: SFMono-Regular,Consolas,Liberation Mono,Menlo,monospace;
+
+  --gh-color-fg: #24292e;
+  --gh-color-fg-muted: #6a737d;
+  --gh-color-fg-subtle: #444d56;
+  --gh-color-link: #0366d6;
+
+  --gh-color-canvas: #fff;
+  --gh-color-canvas-subtle: #f6f8fa;
+  --gh-color-kbd-bg: #fafbfc;
+  --gh-color-code-bg: rgba(27,31,35,.05);
+
+  --gh-color-border: #dfe2e5;
+  --gh-color-border-muted: #eaecef;
+  --gh-color-border-kbd: #d1d5da;
+  --gh-color-border-table: #c6cbd1;
+  --gh-color-hr: #e1e4e8;
+
+  --gh-spacing: 16px;
+  --gh-spacing-lg: 24px;
+}
 
 .anchor {
   float: left;
@@ -51,8 +79,8 @@ main {
   -ms-text-size-adjust: 100%;
   -webkit-text-size-adjust: 100%;
   line-height: 1.5;
-  color: #24292e;
-  font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji;
+  color: var(--gh-color-fg);
+  font-family: var(--gh-font-sans);
   font-size: 16px;
   word-wrap: break-word;
 }
@@ -126,7 +154,7 @@ input {
 }
 
 a {
-  color: #0366d6;
+  color: var(--gh-color-link);
   text-decoration: none;
 }
 
@@ -144,7 +172,7 @@ hr {
   overflow: hidden;
   background: transparent;
   border: 0;
-  border-bottom: 1px solid #dfe2e5;
+  border-bottom: 1px solid var(--gh-color-border);
 }
 
 hr:after,
@@ -174,14 +202,14 @@ details summary {
 kbd {
   display: inline-block;
   padding: 3px 5px;
-  font: 11px SFMono-Regular,Consolas,Liberation Mono,Menlo,monospace;
+  font: 11px var(--gh-font-mono);
   line-height: 10px;
-  color: #444d56;
+  color: var(--gh-color-fg-subtle);
   vertical-align: middle;
-  background-color: #fafbfc;
-  border: 1px solid #d1d5da;
+  background-color: var(--gh-color-kbd-bg);
+  border: 1px solid var(--gh-color-border-kbd);
   border-radius: 3px;
-  box-shadow: inset 0 -1px 0 #d1d5da;
+  box-shadow: inset 0 -1px 0 var(--gh-color-border-kbd);
 }
 
 h1,
@@ -267,7 +295,7 @@ dd {
 
 code,
 pre {
-  font-family: SFMono-Regular,Consolas,Liberation Mono,Menlo,monospace;
+  font-family: var(--gh-font-mono);
   font-size: 12px;
 }
 
@@ -286,24 +314,11 @@ input::-webkit-outer-spin-button {
 :checked+.radio-label {
   position: relative;
   z-index: 1;
-  border-color: #0366d6;
+  border-color: var(--gh-color-link);
 }
 
 hr {
   border-bottom-color: #eee;
-}
-
-kbd {
-  display: inline-block;
-  padding: 3px 5px;
-  font: 11px SFMono-Regular,Consolas,Liberation Mono,Menlo,monospace;
-  line-height: 10px;
-  color: #444d56;
-  vertical-align: middle;
-  background-color: #fafbfc;
-  border: 1px solid #d1d5da;
-  border-radius: 3px;
-  box-shadow: inset 0 -1px 0 #d1d5da;
 }
 
 main:after,
@@ -338,21 +353,21 @@ pre,
 table,
 ul {
   margin-top: 0;
-  margin-bottom: 16px;
+  margin-bottom: var(--gh-spacing);
 }
 
 hr {
   height: .25em;
   padding: 0;
-  margin: 24px 0;
-  background-color: #e1e4e8;
+  margin: var(--gh-spacing-lg) 0;
+  background-color: var(--gh-color-hr);
   border: 0;
 }
 
 blockquote {
   padding: 0 1em;
-  color: #6a737d;
-  border-left: .25em solid #dfe2e5;
+  color: var(--gh-color-fg-muted);
+  border-left: .25em solid var(--gh-color-border);
 }
 
 blockquote>:first-child {
@@ -369,8 +384,8 @@ h3,
 h4,
 h5,
 h6 {
-  margin-top: 24px;
-  margin-bottom: 16px;
+  margin-top: var(--gh-spacing-lg);
+  margin-bottom: var(--gh-spacing);
   font-weight: 600;
   line-height: 1.25;
 }
@@ -382,7 +397,7 @@ h1 {
 h1,
 h2 {
   padding-bottom: .3em;
-  border-bottom: 1px solid #eaecef;
+  border-bottom: 1px solid var(--gh-color-border-muted);
 }
 
 h2 {
@@ -403,7 +418,7 @@ h5 {
 
 h6 {
   font-size: .85em;
-  color: #6a737d;
+  color: var(--gh-color-fg-muted);
 }
 
 ol,
@@ -424,7 +439,7 @@ li {
 }
 
 li>p {
-  margin-top: 16px;
+  margin-top: var(--gh-spacing);
 }
 
 li+li {
@@ -437,15 +452,15 @@ dl {
 
 dl dt {
   padding: 0;
-  margin-top: 16px;
+  margin-top: var(--gh-spacing);
   font-size: 1em;
   font-style: italic;
   font-weight: 600;
 }
 
 dl dd {
-  padding: 0 16px;
-  margin-bottom: 16px;
+  padding: 0 var(--gh-spacing);
+  margin-bottom: var(--gh-spacing);
 }
 
 table {
@@ -461,22 +476,22 @@ table th {
 table td,
 table th {
   padding: 6px 13px;
-  border: 1px solid #dfe2e5;
+  border: 1px solid var(--gh-color-border);
 }
 
 table tr {
-  background-color: #fff;
-  border-top: 1px solid #c6cbd1;
+  background-color: var(--gh-color-canvas);
+  border-top: 1px solid var(--gh-color-border-table);
 }
 
 table tr:nth-child(2n) {
-  background-color: #f6f8fa;
+  background-color: var(--gh-color-canvas-subtle);
 }
 
 img {
   max-width: 100%;
   box-sizing: initial;
-  background-color: #fff;
+  background-color: var(--gh-color-canvas);
 }
 
 img[align=right] {
@@ -491,7 +506,7 @@ code {
   padding: .2em .4em;
   margin: 0;
   font-size: 85%;
-  background-color: rgba(27,31,35,.05);
+  background-color: var(--gh-color-code-bg);
   border-radius: 3px;
 }
 
@@ -510,7 +525,7 @@ pre>code {
 }
 
 .highlight {
-  margin-bottom: 16px;
+  margin-bottom: var(--gh-spacing);
 }
 
 .highlight pre {
@@ -520,11 +535,11 @@ pre>code {
 
 .highlight pre,
 pre {
-  padding: 16px;
+  padding: var(--gh-spacing);
   overflow: auto;
   font-size: 85%;
   line-height: 1.45;
-  background-color: #f6f8fa;
+  background-color: var(--gh-color-canvas-subtle);
   border-radius: 3px;
 }
 
