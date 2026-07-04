@@ -226,6 +226,31 @@ describe("preprocessReadme", () => {
     expect(code).toContain('<div class="code-fence"><p>{count2}</p></div>');
   });
 
+  // A `class:foo` directive's `foo` is a literal CSS class name, not (just) a variable
+  // reference — but for the shorthand form, Svelte parses that same span as the directive's
+  // `expression` too. Renaming it like any other identifier reference would silently rename
+  // the class in the DOM, breaking any CSS written against `.foo`.
+  test("preserves the CSS class name of a colliding variable used in a class: directive", async () => {
+    const content = [
+      "```svelte\n<script>\n  let intersecting = false;\n</script>\n<header class:intersecting>{intersecting}</header>\n```",
+      '```svelte\n<script>\n  let intersecting = "other";\n</script>\n<header class:intersecting={intersecting}>{intersecting}</header>\n```',
+    ].join("\n\n");
+    const code = await markup(content);
+
+    const extractedScript = code?.match(EXTRACTED_SCRIPT)?.[1];
+    expect(extractedScript).toContain("let intersecting = false;");
+    expect(extractedScript).toContain('let intersecting2 = "other";');
+
+    // shorthand `class:intersecting` is rewritten to explicit form so the class name
+    // itself (`intersecting`) survives, only the bound variable is renamed
+    expect(code).toContain(
+      '<div class="code-fence"><header class:intersecting>{intersecting}</header></div>',
+    );
+    expect(code).toContain(
+      '<div class="code-fence"><header class:intersecting={intersecting2}>{intersecting2}</header></div>',
+    );
+  });
+
   test("does not rename a variable declared identically across fences", async () => {
     const content = [
       "```svelte\n<script>\n  let count = 0;\n</script>\n<p>{count}</p>\n```",
