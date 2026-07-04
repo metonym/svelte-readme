@@ -2,9 +2,13 @@ import { URL } from "node:url";
 import { walk } from "estree-walker";
 import Markdown from "markdown-it";
 import markdownItAnchor from "markdown-it-anchor";
-import Prism from "prismjs";
 import type { PreprocessorGroup } from "svelte/compiler";
 import { parse } from "svelte/compiler";
+import { highlightBash } from "./highlight/bash.js";
+import { highlightJson } from "./highlight/json.js";
+import { highlightSvelte } from "./highlight/svelte.js";
+import { highlightTypeScript } from "./highlight/typescript.js";
+import { highlightYaml } from "./highlight/yaml.js";
 
 // Svelte's markup/script AST has no official types, and shares no common shape with the
 // ESTree nodes `estree-walker` expects — this loose record covers both.
@@ -19,33 +23,41 @@ const aliases: Record<string, string> = {
   yml: "yaml",
 };
 
-type LanguageLoader = () => Promise<unknown>;
+// Dispatches to this package's own hand-rolled highlighters (see `./highlight`); any
+// other language (there's no general-purpose fallback, e.g. no `jsx` support) throws,
+// so the caller's existing fallback-to-raw-text handling takes over.
+function highlightCode(source: string, langId: string): string {
+  switch (langId) {
+    case "typescript":
+    // Plain JS is valid TS, so the same AST-driven highlighter covers it — there's no
+    // TS-specific syntax to trip over, and it's the only highlighter registered that
+    // understands JS at all now that Prism is gone.
+    case "javascript":
+      return highlightTypeScript(source);
+    case "json":
+      return highlightJson(source);
+    case "yaml":
+      return highlightYaml(source);
+    case "bash":
+      return highlightBash(source);
+    default:
+      throw new Error(`no highlighter for language "${langId}"`);
+  }
+}
 
-// Grammars are loaded on demand (and cached on `Prism.languages` for the process)
-// instead of imported statically, so a README that never fences e.g. YAML never pays
-// to load that grammar. `javascript`/`markup`/`css`/`clike` ship in Prism's core, so
-// languages that extend them (typescript, jsx) don't need load-order handling here.
-const defaultLanguageLoaders: Record<string, LanguageLoader> = {
-  bash: () => import("prismjs/components/prism-bash.js"),
-  typescript: () => import("prismjs/components/prism-typescript.js"),
-  jsx: () => import("prismjs/components/prism-jsx.js"),
-  yaml: () => import("prismjs/components/prism-yaml.js"),
-  svelte: () => import("prism-svelte"),
-};
-
-function loadLanguage(
-  id: string,
-  loaders: Record<string, LanguageLoader>,
-): Promise<unknown> {
-  if (Prism.languages[id]) return Promise.resolve();
-
-  const loader = loaders[id];
-  if (!loader) return Promise.resolve();
-
-  // A failed load (unpublished package, network hiccup, etc.) just leaves the
-  // grammar unregistered; `highlight()` already falls back to raw output when
-  // `Prism.languages[id]` is missing.
-  return loader().catch(() => {});
+// Highlighted (or, on the fallback path, raw) fence content gets embedded in a
+// `` {@html `...`} `` template literal (see the `highlight`/`svelteCode` call sites
+// below), so any backslash/backtick/`${` that survived from the original source —
+// e.g. a JSDoc comment containing a backtick, or a `\n`/regex escape sequence — must
+// be neutralized first. Otherwise it either terminates that literal early (breaking
+// the Svelte compiler) or gets silently reinterpreted as an escape/interpolation by
+// it. Order matters: backslashes are escaped first so the backslashes the later
+// steps introduce aren't themselves re-escaped.
+function escapeForTemplateLiteral(text: string): string {
+  return text
+    .replace(/\\/g, "\\\\")
+    .replace(/`/g, "\\`")
+    .replace(/\$\{/g, "\\${");
 }
 
 interface PreprocessReadmeOptions {
@@ -54,9 +66,6 @@ interface PreprocessReadmeOptions {
   prefixUrl: string;
   homepage: string;
   repoUrl: string;
-  // Consumer-supplied grammar loaders, keyed by the alias-resolved language id
-  // (e.g. "python"). Merged over (and can override) the built-in loaders above.
-  languages: Record<string, LanguageLoader>;
   /**
    * Called with the source of each `svelte` code fence before it's highlighted for display,
    * so the consumer can pretty-print it with their own formatter (e.g. Prettier). The code
@@ -70,7 +79,6 @@ const URL_SCHEME = /^[a-zA-Z][a-zA-Z\d+\-.]*:/;
 const NO_EVAL_ATTR = /no-eval/;
 const NO_DISPLAY_ATTR = /no-display/;
 const NODE_MODULES_PATH = /node_modules/;
-const FENCE_INFO_WHITESPACE = /\s+/;
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -289,10 +297,6 @@ export function preprocessReadme(
     Partial<PreprocessReadmeOptions>,
 ): Pick<PreprocessorGroup, "markup"> {
   const prefixUrl = opts.prefixUrl || `${opts.homepage}/tree/master/`;
-  const languageLoaders: Record<string, LanguageLoader> = {
-    ...defaultLanguageLoaders,
-    ...opts.languages,
-  };
 
   let script_content: string[] = [];
   let pending_format: { placeholder: string; source: string }[] = [];
@@ -366,14 +370,13 @@ export function preprocessReadme(
 
       try {
         const alias_lang = aliases[lang] || lang;
-        return `<pre class="language-${alias_lang}">{@html \`${Prism.highlight(
-          source,
-          Prism.languages[alias_lang],
-          alias_lang,
-        )}\`}</pre>`;
+        const highlighted = escapeForTemplateLiteral(
+          highlightCode(source, alias_lang),
+        );
+        return `<pre class="language-${alias_lang}">{@html \`${highlighted}\`}</pre>`;
       } catch (_e) {
         console.error(`Could not highlight language "${lang}".`);
-        return `<pre class="language-${lang}">{@html \`${source}\`}</pre>`;
+        return `<pre class="language-${lang}">{@html \`${escapeForTemplateLiteral(source)}\`}</pre>`;
       }
     },
   });
@@ -414,22 +417,7 @@ export function preprocessReadme(
       `,
     );
 
-    // markdown-it's `highlight` callback is synchronous, so every grammar a fence
-    // needs must already be registered on `Prism.languages` before rendering runs.
-    // Scanning the parsed fence tokens up front lets each language load lazily
-    // (and only once per process) instead of every grammar being imported eagerly.
     const tokens = md.parse(content, {});
-    const fenceLanguages = new Set<string>();
-
-    for (const token of tokens) {
-      if (token.type !== "fence" || !token.info) continue;
-      const lang = token.info.trim().split(FENCE_INFO_WHITESPACE)[0];
-      if (lang) fenceLanguages.add(aliases[lang] || lang);
-    }
-
-    await Promise.all(
-      [...fenceLanguages].map((lang) => loadLanguage(lang, languageLoaders)),
-    );
 
     let style_content = "";
     let result = md.renderer.render(tokens, md.options, {});
@@ -555,12 +543,12 @@ export function preprocessReadme(
     );
 
     pending_format.forEach(({ placeholder }, i) => {
-      const svelteCode = Prism.highlight(
-        formattedBlocks[i],
-        Prism.languages.svelte,
-        "svelte",
+      const svelteCode = escapeForTemplateLiteral(
+        highlightSvelte(formattedBlocks[i]),
       );
-      result = result.replace(placeholder, svelteCode);
+      // A function replacer (rather than a string) so a `$&`/`$1`/etc.-shaped
+      // substring in the highlighted code isn't misread as a `replace()` pattern.
+      result = result.replace(placeholder, () => svelteCode);
     });
 
     return {

@@ -288,7 +288,7 @@ describe("preprocessReadme", () => {
     );
   });
 
-  test("highlights fenced code using Prism language aliases", async () => {
+  test("highlights fenced code using language aliases", async () => {
     const ts = await markup("```ts\nconst a: number = 1;\n```");
     expect(ts).toContain('<pre class="language-typescript">');
 
@@ -299,7 +299,7 @@ describe("preprocessReadme", () => {
     expect(yml).toContain('<pre class="language-yaml">');
   });
 
-  test("falls back to raw output for a language Prism does not support", async () => {
+  test("falls back to raw output for a language with no highlighter", async () => {
     const errorSpy = spyOn(console, "error").mockImplementation(() => {});
     const code = await markup("```made-up-lang\nplain text\n```");
 

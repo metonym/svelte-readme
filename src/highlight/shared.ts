@@ -1,0 +1,94 @@
+export type Claim = { start: number; end: number; className: string };
+export type GapFill = (text: string) => string;
+
+const ESCAPE_RE = /[&<>]/g;
+const ESCAPE_MAP: Record<string, string> = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+};
+
+export function escapeHtml(text: string): string {
+  return text.replace(ESCAPE_RE, (char) => ESCAPE_MAP[char]);
+}
+
+export function token(className: string, text: string): string {
+  return `<span class="token ${className}">${escapeHtml(text)}</span>`;
+}
+
+// Renders `claims` (absolute offsets into `source`) in order, filling every span
+// between/around them with `gapFill`. Claims are expected to be non-overlapping leaf
+// spans (e.g. a single string literal or keyword) rather than nested containers — a
+// later claim that starts before the previous one ended is dropped rather than nested.
+export function renderClaims(
+  source: string,
+  claims: Claim[],
+  gapFill: GapFill,
+): string {
+  const sorted = [...claims].sort((a, b) => a.start - b.start || b.end - a.end);
+  let html = "";
+  let cursor = 0;
+
+  for (const claim of sorted) {
+    if (claim.start < cursor) continue;
+    if (claim.start > cursor)
+      html += gapFill(source.slice(cursor, claim.start));
+    const text = source.slice(claim.start, claim.end);
+    // An empty `className` marks text that's deliberately exempted from `gapFill`
+    // (e.g. literal HTML text content) without actually being restyled.
+    html += claim.className ? token(claim.className, text) : escapeHtml(text);
+    cursor = claim.end;
+  }
+
+  if (cursor < source.length) html += gapFill(source.slice(cursor));
+
+  return html;
+}
+
+const PUNCTUATION_RE = /[{}()[\],;:."']/;
+const OPERATOR_RE = /[+\-*/%&|^!~<>=?]/;
+const WHITESPACE_RE = /\s/;
+
+// A generic fallback tokenizer for whatever an AST/line-based walk didn't already
+// classify: whitespace, punctuation, and operator runs. It never needs to reason about
+// strings/comments/identifiers because callers only ever hand it the leftover gaps
+// between claims that already covered those.
+export function gapFill(text: string): string {
+  let html = "";
+  let i = 0;
+
+  while (i < text.length) {
+    const char = text[i];
+
+    if (WHITESPACE_RE.test(char)) {
+      let j = i + 1;
+      while (j < text.length && WHITESPACE_RE.test(text[j])) j++;
+      html += escapeHtml(text.slice(i, j));
+      i = j;
+    } else if (char === "." && text[i + 1] === "." && text[i + 2] === ".") {
+      html += token("punctuation", "...");
+      i += 3;
+    } else if (PUNCTUATION_RE.test(char)) {
+      html += token("punctuation", char);
+      i++;
+    } else if (OPERATOR_RE.test(char)) {
+      let j = i + 1;
+      while (j < text.length && OPERATOR_RE.test(text[j])) j++;
+      html += token("operator", text.slice(i, j));
+      i = j;
+    } else {
+      let j = i + 1;
+      while (
+        j < text.length &&
+        !WHITESPACE_RE.test(text[j]) &&
+        !PUNCTUATION_RE.test(text[j]) &&
+        !OPERATOR_RE.test(text[j])
+      )
+        j++;
+      html += escapeHtml(text.slice(i, j));
+      i = j;
+    }
+  }
+
+  return html;
+}

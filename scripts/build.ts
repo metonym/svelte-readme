@@ -5,9 +5,7 @@ const isWatchMode =
   process.argv.includes("-w") || process.argv.includes("--watch");
 
 // `svelte`, `vite` must resolve to the consumer's own installed versions.
-// `prismjs`/`prism-svelte` are dynamically imported by language, so they must stay
-// resolvable at runtime rather than get inlined into this package's own bundle.
-const external = ["svelte", "vite", "prismjs", "prism-svelte"];
+const external = ["svelte", "vite"];
 
 await $`rm -rf dist`;
 
