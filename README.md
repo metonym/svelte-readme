@@ -37,10 +37,10 @@ npm install svelte-readme
 
 This library exports two methods:
 
-- `createConfig` (default export): creates a Vite configuration for you
+- `svelteReadme`: creates a Vite plugin for you
 - `preprocessReadme`: standalone Svelte markup preprocessor
 
-`createConfig` requires Svelte 5+ as a peer dependency. `preprocessReadme` has no such constraint. At a minimum, `package.json#svelte` and `package.json#name` are required.
+`svelteReadme` requires Svelte 5+ as a peer dependency. `preprocessReadme` has no such constraint. At a minimum, `package.json#svelte` and `package.json#name` are required.
 
 **package.json**
 
@@ -63,21 +63,27 @@ This library exports two methods:
 
 **vite.config.ts**
 
-The default export from "svelte-readme" creates a Vite configuration used to develop and generate the demo. Since it needs to know whether Vite is running in dev (`serve`) or build mode, it returns a config function - pass it directly as the default export, or call it yourself with the `env` Vite provides.
+`svelteReadme` is a standard Vite plugin factory: it returns `Plugin[]`, so it composes with the rest of your Vite config instead of replacing it.
 
 ```ts
-import svelteReadme from "svelte-readme";
+import { svelteReadme } from "svelte-readme";
 import { defineConfig } from "vite";
 
-export default defineConfig((env) => svelteReadme()(env));
+export default defineConfig({
+  plugins: [svelteReadme()],
+  server: { port: 3000 }, // passes through untouched
+});
 ```
 
 ## API
 
 All properties are optional.
 
+> [!NOTE]
+> `svelteReadme` owns `build.outDir` (set via the `outDir` option below, not `build.outDir`) and `build.rollupOptions.input`/`appType`. If you set your own `build.rollupOptions` in `vite.config.ts`, the outcome depends on Vite's plugin `config` hook merge order — this is composable for fields `svelteReadme` doesn't touch, but not fully composable for the fields it does.
+
 ```ts
-interface CreateConfigOptions {
+interface SvelteReadmeOptions {
   /**
    * set the folder to emit the files
    * @default "dist"
@@ -115,12 +121,6 @@ interface CreateConfigOptions {
    * @default {}
    */
   svelte?: VitePluginSvelteOptions;
-
-  /**
-   * Vite plugins
-   * @default {[]}
-   */
-  plugins?: Plugin[];
 
   /**
    * Append content to the `head` element in `index.html`

@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import fsPromises from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -5,12 +6,7 @@ import {
   svelte,
   type Options as VitePluginSvelteOptions,
 } from "@sveltejs/vite-plugin-svelte";
-import {
-  type ConfigEnv,
-  type Plugin,
-  type UserConfig,
-  build as viteBuild,
-} from "vite";
+import { type Plugin, build as viteBuild } from "vite";
 import { styles as bashStyles } from "./highlight/bash.js";
 import { styles as jsonStyles } from "./highlight/json.js";
 import { baseTokenStyles } from "./highlight/shared.js";
@@ -27,7 +23,7 @@ import {
 } from "./utils.js";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
-const github_styles: Promise<string> = fsPromises.readFile(
+const github_styles: string = fs.readFileSync(
   path.join(dirname, "style.css"),
   "utf-8",
 );
@@ -59,7 +55,7 @@ const custom_css = `
 
 `;
 
-interface CreateConfigOptions {
+interface SvelteReadmeOptions {
   /**
    * set the folder to emit the files
    * @default "dist"
@@ -97,12 +93,6 @@ interface CreateConfigOptions {
    * @default {}
    */
   svelte: VitePluginSvelteOptions;
-
-  /**
-   * Vite plugins
-   * @default {[]}
-   */
-  plugins: Plugin[];
 
   /**
    * Append content to the `head` element in `index.html`
@@ -162,43 +152,33 @@ const virtualEntriesPlugin: Plugin = {
   },
 };
 
-export default function createConfig(
-  opts: Partial<CreateConfigOptions> = {},
-): (env: ConfigEnv) => Promise<UserConfig> {
-  return async (env) => {
-    const DEV = env.command === "serve" && !env.isPreview;
-    const pkg = getPackageJSON();
-    const output_dir = opts.outDir || "dist";
-    const svelteOptions: Partial<VitePluginSvelteOptions> = {
-      emitCss: opts.svelte?.emitCss ?? false,
-      compilerOptions: {
-        hmr: false,
-        ...opts.svelte?.compilerOptions,
-      },
-      extensions: [".svelte", ".md", ...(opts.svelte?.extensions ?? [])],
-      preprocess: [
-        ...toArray(opts.svelte?.preprocess),
-        preprocessReadme({
-          ...pkg,
-          prefixUrl: opts.prefixUrl,
-          format: opts.format,
-        }),
-      ],
-    };
+export function svelteReadme(
+  opts: Partial<SvelteReadmeOptions> = {},
+): Plugin[] {
+  const pkg = getPackageJSON();
+  const output_dir = opts.outDir || "dist";
+  const svelteOptions: Partial<VitePluginSvelteOptions> = {
+    emitCss: opts.svelte?.emitCss ?? false,
+    compilerOptions: {
+      hmr: false,
+      ...opts.svelte?.compilerOptions,
+    },
+    extensions: [".svelte", ".md", ...(opts.svelte?.extensions ?? [])],
+    preprocess: [
+      ...toArray(opts.svelte?.preprocess),
+      preprocessReadme({
+        ...pkg,
+        prefixUrl: opts.prefixUrl,
+        format: opts.format,
+      }),
+    ],
+  };
 
-    console.log(
-      `[createConfig] Running in ${DEV ? "development" : "production"}`,
-    );
-    console.log("[createConfig] options:");
-    console.group();
-    console.log("outDir:", output_dir);
-    console.log("svelte:", svelteOptions);
-    console.groupEnd();
+  let DEV = false;
+  let css = github_styles;
 
-    let css = await github_styles;
-
-    if (!opts.disableDefaultCSS) {
-      css += `/**
+  if (!opts.disableDefaultCSS) {
+    css += `/**
       * GitHub Primer button CSS
       * https://primer.style/css/components/buttons
       **/
@@ -224,23 +204,23 @@ export default function createConfig(
       box-shadow: 0 1px 0 rgba(27,31,35,0.04), inset 0 1px 0 rgba(255,255,255,0.25);
       transition: background-color 0.2s cubic-bezier(0.3, 0, 0.5, 1);
     }`;
-    }
+  }
 
-    function renderTemplate(
-      scriptSrc: string,
-      ssr?: { head: string; body: string },
-    ) {
-      // Rules that can't match anything in the rendered README are dropped, so the served
-      // stylesheet only carries what this particular README actually uses. Only runs when SSR
-      // succeeded (real markup to check against); on SSR failure the unpurged CSS ships as-is,
-      // same fallback-to-safe behavior as the rest of this file's SSR handling. `opts.style` is
-      // left untouched — it's consumer-authored and may target markup that only exists after
-      // hydration (e.g. state toggled in `onMount`), which purging can't see.
-      const html = ssr ? `${ssr.head}${ssr.body}` : undefined;
-      const purge = (input: string) =>
-        html ? purgeUnusedCss(input, html) : input;
+  function renderTemplate(
+    scriptSrc: string,
+    ssr?: { head: string; body: string },
+  ) {
+    // Rules that can't match anything in the rendered README are dropped, so the served
+    // stylesheet only carries what this particular README actually uses. Only runs when SSR
+    // succeeded (real markup to check against); on SSR failure the unpurged CSS ships as-is,
+    // same fallback-to-safe behavior as the rest of this file's SSR handling. `opts.style` is
+    // left untouched — it's consumer-authored and may target markup that only exists after
+    // hydration (e.g. state toggled in `onMount`), which purging can't see.
+    const html = ssr ? `${ssr.head}${ssr.body}` : undefined;
+    const purge = (input: string) =>
+      html ? purgeUnusedCss(input, html) : input;
 
-      const template = `
+    const template = `
       <!DOCTYPE html>
       <html lang="en">
         <head>
@@ -264,129 +244,130 @@ export default function createConfig(
       </html>
     `;
 
-      return collapseWhitespace(template);
-    }
+    return collapseWhitespace(template);
+  }
 
-    async function renderSSR(): Promise<{ head: string; body: string }> {
-      const ssrOutDir = path.join(
-        process.cwd(),
-        output_dir,
-        ".svelte-readme-ssr",
+  async function renderSSR(): Promise<{ head: string; body: string }> {
+    const ssrOutDir = path.join(
+      process.cwd(),
+      output_dir,
+      ".svelte-readme-ssr",
+    );
+
+    await viteBuild({
+      configFile: false,
+      logLevel: "warn",
+      build: {
+        ssr: true,
+        outDir: ssrOutDir,
+        emptyOutDir: true,
+        rollupOptions: {
+          input: VIRTUAL_SSR_ENTRY_ID,
+          output: { entryFileNames: "entry-server.js" },
+        },
+      },
+      plugins: [...svelte(svelteOptions), virtualEntriesPlugin],
+    });
+
+    const entryPath = path.join(ssrOutDir, "entry-server.js");
+    const mod = await import(pathToFileURL(entryPath).href);
+
+    await fsPromises.rm(ssrOutDir, { recursive: true, force: true });
+
+    return mod.renderApp();
+  }
+
+  const htmlPlugin: Plugin = {
+    name: "svelte-readme-html",
+    config(_, env) {
+      DEV = env.command === "serve" && !env.isPreview;
+
+      console.log(
+        `[svelteReadme] Running in ${DEV ? "development" : "production"}`,
       );
+      console.log("[svelteReadme] options:");
+      console.group();
+      console.log("outDir:", output_dir);
+      console.log("svelte:", svelteOptions);
+      console.groupEnd();
 
-      await viteBuild({
-        configFile: false,
-        logLevel: "warn",
+      return {
+        appType: "custom",
         build: {
-          ssr: true,
-          outDir: ssrOutDir,
-          emptyOutDir: true,
+          outDir: output_dir,
           rollupOptions: {
-            input: VIRTUAL_SSR_ENTRY_ID,
-            output: { entryFileNames: "entry-server.js" },
+            input: VIRTUAL_HYDRATE_ENTRY_ID,
+            output: { entryFileNames: "s-[hash].js" },
           },
         },
-        plugins: [...svelte(svelteOptions), virtualEntriesPlugin],
-      });
-
-      const entryPath = path.join(ssrOutDir, "entry-server.js");
-      const mod = await import(pathToFileURL(entryPath).href);
-
-      await fsPromises.rm(ssrOutDir, { recursive: true, force: true });
-
-      return mod.renderApp();
-    }
-
-    const htmlPlugin: Plugin = {
-      name: "svelte-readme-html",
-      configureServer(server) {
-        server.middlewares.use(async (req, res, next) => {
-          if (
-            req.method !== "GET" ||
-            !req.headers.accept?.includes("text/html")
-          )
-            return next();
-
-          let ssr: { head: string; body: string } | undefined;
-
-          try {
-            const { renderApp } =
-              await server.ssrLoadModule(VIRTUAL_SSR_ENTRY_ID);
-            ssr = renderApp();
-          } catch (error) {
-            server.ssrFixStacktrace(error as Error);
-            logSSRFallback(error);
-          }
-
-          const html = await server.transformIndexHtml(
-            req.url ?? "/",
-            renderTemplate(`/@id/${VIRTUAL_HYDRATE_ENTRY_ID}`, ssr),
-          );
-          res.setHeader("Content-Type", "text/html");
-          res.end(html);
-        });
-      },
-      configurePreviewServer(server) {
-        // `vite preview` serves the already-built output_dir as static files and
-        // never runs `writeBundle`, so just hand back the index.html written there.
-        server.middlewares.use(async (req, res, next) => {
-          if (
-            req.method !== "GET" ||
-            !req.headers.accept?.includes("text/html")
-          )
-            return next();
-
-          try {
-            const html = await fsPromises.readFile(
-              path.join(output_dir, "index.html"),
-              "utf-8",
-            );
-            res.setHeader("Content-Type", "text/html");
-            res.end(html);
-          } catch {
-            next();
-          }
-        });
-      },
-      async writeBundle(_, bundle) {
-        const entryChunk = Object.values(bundle).find(
-          (chunk): chunk is typeof chunk & { fileName: string } =>
-            "isEntry" in chunk && chunk.isEntry,
-        );
-
-        if (!entryChunk) return;
+      };
+    },
+    configureServer(server) {
+      server.middlewares.use(async (req, res, next) => {
+        if (req.method !== "GET" || !req.headers.accept?.includes("text/html"))
+          return next();
 
         let ssr: { head: string; body: string } | undefined;
 
         try {
-          ssr = await renderSSR();
+          const { renderApp } =
+            await server.ssrLoadModule(VIRTUAL_SSR_ENTRY_ID);
+          ssr = renderApp();
         } catch (error) {
+          server.ssrFixStacktrace(error as Error);
           logSSRFallback(error);
         }
 
-        await fsPromises.mkdir(output_dir, { recursive: true });
-        await fsPromises.writeFile(
-          path.join(output_dir, "index.html"),
-          renderTemplate(`./${entryChunk.fileName}`, ssr),
+        const html = await server.transformIndexHtml(
+          req.url ?? "/",
+          renderTemplate(`/@id/${VIRTUAL_HYDRATE_ENTRY_ID}`, ssr),
         );
-      },
-    };
+        res.setHeader("Content-Type", "text/html");
+        res.end(html);
+      });
+    },
+    configurePreviewServer(server) {
+      // `vite preview` serves the already-built output_dir as static files and
+      // never runs `writeBundle`, so just hand back the index.html written there.
+      server.middlewares.use(async (req, res, next) => {
+        if (req.method !== "GET" || !req.headers.accept?.includes("text/html"))
+          return next();
 
-    return {
-      appType: "custom",
-      build: {
-        outDir: output_dir,
-        rollupOptions: {
-          input: VIRTUAL_HYDRATE_ENTRY_ID,
-          output: { entryFileNames: "s-[hash].js" },
-        },
-      },
-      plugins: [
-        ...svelte(svelteOptions),
-        virtualEntriesPlugin,
-        htmlPlugin,
-        ...(opts.plugins || []),
-      ].filter(Boolean),
-    };
+        try {
+          const html = await fsPromises.readFile(
+            path.join(output_dir, "index.html"),
+            "utf-8",
+          );
+          res.setHeader("Content-Type", "text/html");
+          res.end(html);
+        } catch {
+          next();
+        }
+      });
+    },
+    async writeBundle(_, bundle) {
+      const entryChunk = Object.values(bundle).find(
+        (chunk): chunk is typeof chunk & { fileName: string } =>
+          "isEntry" in chunk && chunk.isEntry,
+      );
+
+      if (!entryChunk) return;
+
+      let ssr: { head: string; body: string } | undefined;
+
+      try {
+        ssr = await renderSSR();
+      } catch (error) {
+        logSSRFallback(error);
+      }
+
+      await fsPromises.mkdir(output_dir, { recursive: true });
+      await fsPromises.writeFile(
+        path.join(output_dir, "index.html"),
+        renderTemplate(`./${entryChunk.fileName}`, ssr),
+      );
+    },
   };
+
+  return [...svelte(svelteOptions), virtualEntriesPlugin, htmlPlugin];
 }
