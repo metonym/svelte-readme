@@ -54,8 +54,14 @@
   },
   "homepage": "https://github.com/metonym/svelte-readme",
   "bugs": "https://github.com/metonym/svelte-readme/issues",
-  "keywords": ["svelte", "svelte-component", "documentation"],
-  "files": ["dist"],
+  "keywords": [
+    "svelte",
+    "svelte-component",
+    "documentation"
+  ],
+  "files": [
+    "dist"
+  ],
   "prettier": {
     "printWidth": 120
   }

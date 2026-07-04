@@ -17,7 +17,10 @@ function writeFixturePackageJson(pkg: Record<string, unknown>) {
 
 beforeEach(() => {
   fixtureDir = fs.mkdtempSync(path.join(os.tmpdir(), "svelte-readme-"));
-  writeFixturePackageJson({ name: "my-svelte-component", svelte: "./src/index.js" });
+  writeFixturePackageJson({
+    name: "my-svelte-component",
+    svelte: "./src/index.js",
+  });
   process.chdir(fixtureDir);
 
   // createConfig() logs its resolved options on every call, and writeBundle's SSR pass
@@ -35,14 +38,21 @@ afterEach(() => {
 });
 
 function getHtmlPlugin(config: ReturnType<ReturnType<typeof createConfig>>) {
-  const plugin = (config.plugins as Plugin[]).find((p) => p?.name === "svelte-readme-html");
+  const plugin = (config.plugins as Plugin[]).find(
+    (p) => p?.name === "svelte-readme-html",
+  );
   if (!plugin) throw new Error("svelte-readme-html plugin not found");
   return plugin as Required<Pick<Plugin, "writeBundle">>;
 }
 
-function getVirtualEntriesPlugin(config: ReturnType<ReturnType<typeof createConfig>>) {
-  const plugin = (config.plugins as Plugin[]).find((p) => p?.name === "svelte-readme-virtual-entries");
-  if (!plugin) throw new Error("svelte-readme-virtual-entries plugin not found");
+function getVirtualEntriesPlugin(
+  config: ReturnType<ReturnType<typeof createConfig>>,
+) {
+  const plugin = (config.plugins as Plugin[]).find(
+    (p) => p?.name === "svelte-readme-virtual-entries",
+  );
+  if (!plugin)
+    throw new Error("svelte-readme-virtual-entries plugin not found");
   return plugin as Required<Pick<Plugin, "resolveId" | "load">>;
 }
 
@@ -59,14 +69,19 @@ describe("createConfig", () => {
   });
 
   test("respects explicit minify and outDir overrides", () => {
-    const config = createConfig({ minify: true, outDir: "public" })({ command: "serve", mode: "development" });
+    const config = createConfig({ minify: true, outDir: "public" })({
+      command: "serve",
+      mode: "development",
+    });
     expect(config.build?.minify).toBe(true);
     expect(config.build?.outDir).toBe("public");
   });
 
   test("uses the hydrate entry module as the rollup input", () => {
     const config = createConfig()({ command: "build", mode: "production" });
-    expect(config.build?.rollupOptions?.input).toBe("virtual:svelte-readme-hydrate-entry");
+    expect(config.build?.rollupOptions?.input).toBe(
+      "virtual:svelte-readme-hydrate-entry",
+    );
   });
 
   test("resolves and loads the hydrate entry as a README-backed Svelte component", () => {
@@ -74,7 +89,9 @@ describe("createConfig", () => {
     const virtualEntriesPlugin = getVirtualEntriesPlugin(config);
 
     // biome-ignore lint/suspicious/noExplicitAny: Vite's hook types allow a plain function or a `{ handler }` object; createConfig defines these as plain functions, so cast past the union.
-    const resolved = (virtualEntriesPlugin.resolveId as any)("virtual:svelte-readme-hydrate-entry");
+    const resolved = (virtualEntriesPlugin.resolveId as any)(
+      "virtual:svelte-readme-hydrate-entry",
+    );
     expect(resolved).toBeTruthy();
 
     // biome-ignore lint/suspicious/noExplicitAny: see above
@@ -84,8 +101,15 @@ describe("createConfig", () => {
   });
 
   test("writeBundle emits an index.html using package name/description and the entry chunk", async () => {
-    writeFixturePackageJson({ name: "my-svelte-component", svelte: "./src/index.js", description: "A demo component" });
-    const config = createConfig({ outDir: "out" })({ command: "build", mode: "production" });
+    writeFixturePackageJson({
+      name: "my-svelte-component",
+      svelte: "./src/index.js",
+      description: "A demo component",
+    });
+    const config = createConfig({ outDir: "out" })({
+      command: "build",
+      mode: "production",
+    });
     const htmlPlugin = getHtmlPlugin(config);
 
     await htmlPlugin.writeBundle(
@@ -95,7 +119,10 @@ describe("createConfig", () => {
       } as never,
     );
 
-    const html = fs.readFileSync(path.join(fixtureDir, "out", "index.html"), "utf-8");
+    const html = fs.readFileSync(
+      path.join(fixtureDir, "out", "index.html"),
+      "utf-8",
+    );
     expect(html).toContain("<title>my-svelte-component</title>");
     expect(html).toContain('content="A demo component"');
     expect(html).toContain('<script type="module" src="./s-abc123.js">');
@@ -112,12 +139,18 @@ describe("createConfig", () => {
       } as never,
     );
 
-    const html = fs.readFileSync(path.join(fixtureDir, "dist", "index.html"), "utf-8");
+    const html = fs.readFileSync(
+      path.join(fixtureDir, "dist", "index.html"),
+      "utf-8",
+    );
     expect(html).toContain('content="my-svelte-component demo"');
   });
 
   test("disableDefaultCSS omits the bundled GitHub styles, custom style is still appended", async () => {
-    const config = createConfig({ disableDefaultCSS: true, style: ".custom { color: blue; }" })({
+    const config = createConfig({
+      disableDefaultCSS: true,
+      style: ".custom { color: blue; }",
+    })({
       command: "build",
       mode: "production",
     });
@@ -130,7 +163,10 @@ describe("createConfig", () => {
       } as never,
     );
 
-    const html = fs.readFileSync(path.join(fixtureDir, "dist", "index.html"), "utf-8");
+    const html = fs.readFileSync(
+      path.join(fixtureDir, "dist", "index.html"),
+      "utf-8",
+    );
     expect(html).not.toContain(".anchor{");
     expect(html).toContain(".custom{color:#00f}");
   });
@@ -145,7 +181,10 @@ describe("createConfig", () => {
       `import createConfig from ${JSON.stringify(createConfigSrc)};\ncreateConfig()({ command: "build", mode: "production" });\n`,
     );
 
-    const result = Bun.spawnSync({ cmd: ["bun", "run", runnerPath], cwd: fixtureDir });
+    const result = Bun.spawnSync({
+      cmd: ["bun", "run", runnerPath],
+      cwd: fixtureDir,
+    });
     expect(result.exitCode).toBe(1);
   });
 });

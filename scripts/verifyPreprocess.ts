@@ -26,12 +26,26 @@ const content = `
 ### Sub Section
 `;
 
-Promise.resolve(pre.markup({ content, filename: "README.md" })).then((result) => {
-  assert(result.code.includes("Table of Contents"), "table of contents missing");
-  assert(result.code.includes('class="code-fence"'), "code-fence markup missing");
-  assert(result.code.includes("$state(0)"), "extracted script content missing");
-  assert(/id="section-one"/.test(result.code), "h2 anchor id missing");
-  assert(/id="sub-section"/.test(result.code), "h3 anchor id missing");
+const H2_ANCHOR_ID = /id="section-one"/;
+const H3_ANCHOR_ID = /id="sub-section"/;
 
-  console.log(`[verifyPreprocess] OK against svelte@${svelteVersion}`);
-});
+Promise.resolve(pre.markup({ content, filename: "README.md" })).then(
+  (result) => {
+    assert(
+      result.code.includes("Table of Contents"),
+      "table of contents missing",
+    );
+    assert(
+      result.code.includes('class="code-fence"'),
+      "code-fence markup missing",
+    );
+    assert(
+      result.code.includes("$state(0)"),
+      "extracted script content missing",
+    );
+    assert(H2_ANCHOR_ID.test(result.code), "h2 anchor id missing");
+    assert(H3_ANCHOR_ID.test(result.code), "h3 anchor id missing");
+
+    console.log(`[verifyPreprocess] OK against svelte@${svelteVersion}`);
+  },
+);

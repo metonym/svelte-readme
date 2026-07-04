@@ -33,15 +33,23 @@ interface PreprocessReadmeOptions {
   repoUrl: string;
 }
 
+const WINDOWS_PATH = /^[a-zA-Z]:\\/;
+const URL_SCHEME = /^[a-zA-Z][a-zA-Z\d+\-.]*:/;
+const NO_EVAL_ATTR = /no-eval/;
+const NO_DISPLAY_ATTR = /no-display/;
+const NODE_MODULES_PATH = /node_modules/;
+
 function isRelativeUrl(url: string): boolean {
   // Windows paths (e.g. "c:\foo") aren't absolute URLs, so they're treated as relative.
-  if (/^[a-zA-Z]:\\/.test(url)) return true;
-  return !/^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(url);
+  if (WINDOWS_PATH.test(url)) return true;
+  return !URL_SCHEME.test(url);
 }
 
 const getChildNodeText = (node: Node) => {
   return node.children
-    .flatMap((child: Node) => (child.type === "Element" ? child.children : child))
+    .flatMap((child: Node) =>
+      child.type === "Element" ? child.children : child,
+    )
     .filter((child: Node) => child.type === "Text")
     .map((child: Node) => child.raw)
     .join("");
@@ -50,7 +58,10 @@ const getChildNodeText = (node: Node) => {
 type Declaration = { name: string; start: number; end: number };
 type IdentifierRange = { start: number; end: number; name: string };
 
-const collectPatternNames = (pattern: Node | undefined, names: string[]): void => {
+const collectPatternNames = (
+  pattern: Node | undefined,
+  names: string[],
+): void => {
   if (!pattern) return;
 
   switch (pattern.type) {
@@ -59,11 +70,15 @@ const collectPatternNames = (pattern: Node | undefined, names: string[]): void =
       break;
     case "ObjectPattern":
       for (const prop of pattern.properties) {
-        collectPatternNames(prop.type === "RestElement" ? prop.argument : prop.value, names);
+        collectPatternNames(
+          prop.type === "RestElement" ? prop.argument : prop.value,
+          names,
+        );
       }
       break;
     case "ArrayPattern":
-      for (const element of pattern.elements) collectPatternNames(element, names);
+      for (const element of pattern.elements)
+        collectPatternNames(element, names);
       break;
     case "AssignmentPattern":
       collectPatternNames(pattern.left, names);
@@ -90,10 +105,23 @@ const collectTopLevelDeclarations = (program: Node): Declaration[] => {
       for (const declarator of stmt.declarations) {
         const names: string[] = [];
         collectPatternNames(declarator.id, names);
-        for (const name of names) declarations.push({ name, start: declarator.start, end: declarator.end });
+        for (const name of names)
+          declarations.push({
+            name,
+            start: declarator.start,
+            end: declarator.end,
+          });
       }
-    } else if ((stmt.type === "FunctionDeclaration" || stmt.type === "ClassDeclaration") && stmt.id) {
-      declarations.push({ name: stmt.id.name, start: stmt.start, end: stmt.end });
+    } else if (
+      (stmt.type === "FunctionDeclaration" ||
+        stmt.type === "ClassDeclaration") &&
+      stmt.id
+    ) {
+      declarations.push({
+        name: stmt.id.name,
+        start: stmt.start,
+        end: stmt.end,
+      });
     }
   };
 
@@ -111,7 +139,9 @@ const computeRenameMap = (
   reservedNames: Set<string>,
 ): Map<string, string> => {
   const renameMap = new Map<string, string>();
-  const namesInBlock = new Set(declarations.map((declaration) => declaration.name));
+  const namesInBlock = new Set(
+    declarations.map((declaration) => declaration.name),
+  );
 
   for (const { name, start, end } of declarations) {
     const text = source.slice(start, end).replace(/\s+/g, " ").trim();
@@ -143,7 +173,10 @@ const computeRenameMap = (
 
 // Finds every reference to a renamed identifier within a script or markup AST, skipping
 // positions where the name is a property/member key rather than a variable reference.
-const collectIdentifierRanges = (root: Node, renameMap: Map<string, string>): IdentifierRange[] => {
+const collectIdentifierRanges = (
+  root: Node,
+  renameMap: Map<string, string>,
+): IdentifierRange[] => {
   const ranges: IdentifierRange[] = [];
 
   walk(
@@ -154,13 +187,39 @@ const collectIdentifierRanges = (root: Node, renameMap: Map<string, string>): Id
       enter(node: any, parent: any) {
         if (node.type !== "Identifier" || !renameMap.has(node.name)) return;
 
-      if (parent) {
-        if (parent.type === "MemberExpression" && parent.property === node && !parent.computed) return;
-        if (parent.type === "Property" && parent.key === node && !parent.shorthand && !parent.computed) return;
-        if (parent.type === "MethodDefinition" && parent.key === node && !parent.computed) return;
-        if (parent.type === "ImportSpecifier" && parent.imported === node && parent.imported !== parent.local) return;
-        if (parent.type === "ExportSpecifier" && parent.exported === node && parent.exported !== parent.local) return;
-      }
+        if (parent) {
+          if (
+            parent.type === "MemberExpression" &&
+            parent.property === node &&
+            !parent.computed
+          )
+            return;
+          if (
+            parent.type === "Property" &&
+            parent.key === node &&
+            !parent.shorthand &&
+            !parent.computed
+          )
+            return;
+          if (
+            parent.type === "MethodDefinition" &&
+            parent.key === node &&
+            !parent.computed
+          )
+            return;
+          if (
+            parent.type === "ImportSpecifier" &&
+            parent.imported === node &&
+            parent.imported !== parent.local
+          )
+            return;
+          if (
+            parent.type === "ExportSpecifier" &&
+            parent.exported === node &&
+            parent.exported !== parent.local
+          )
+            return;
+        }
 
         ranges.push({ start: node.start, end: node.end, name: node.name });
       },
@@ -170,12 +229,18 @@ const collectIdentifierRanges = (root: Node, renameMap: Map<string, string>): Id
   return ranges;
 };
 
-const applyRenames = (source: string, ranges: IdentifierRange[], renameMap: Map<string, string>): string => {
+const applyRenames = (
+  source: string,
+  ranges: IdentifierRange[],
+  renameMap: Map<string, string>,
+): string => {
   if (ranges.length === 0) return source;
 
   let result = source;
 
-  for (const { start, end, name } of [...ranges].sort((a, b) => b.start - a.start)) {
+  for (const { start, end, name } of [...ranges].sort(
+    (a, b) => b.start - a.start,
+  )) {
     result = result.slice(0, start) + renameMap.get(name) + result.slice(end);
   }
 
@@ -183,7 +248,8 @@ const applyRenames = (source: string, ranges: IdentifierRange[], renameMap: Map<
 };
 
 export function preprocessReadme(
-  opts: Pick<PreprocessReadmeOptions, "name" | "svelte"> & Partial<PreprocessReadmeOptions>,
+  opts: Pick<PreprocessReadmeOptions, "name" | "svelte"> &
+    Partial<PreprocessReadmeOptions>,
 ): Pick<PreprocessorGroup, "markup"> {
   const prefixUrl = opts.prefixUrl || `${opts.homepage}/tree/master/`;
 
@@ -197,8 +263,8 @@ export function preprocessReadme(
     typographer: true,
     highlight(source, lang, attrs) {
       if (lang === "svelte") {
-        const noEval = /no-eval/.test(attrs);
-        const noDisplay = /no-display/.test(attrs);
+        const noEval = NO_EVAL_ATTR.test(attrs);
+        const noDisplay = NO_DISPLAY_ATTR.test(attrs);
         const { instance, html } = parse(source);
 
         // Different code fences share a single merged `<script>` once rendered, so a variable
@@ -209,7 +275,12 @@ export function preprocessReadme(
 
         if (instance !== undefined && !noEval) {
           const declarations = collectTopLevelDeclarations(instance.content);
-          const renameMap = computeRenameMap(declarations, source, declared_variables, reserved_names);
+          const renameMap = computeRenameMap(
+            declarations,
+            source,
+            declared_variables,
+            reserved_names,
+          );
 
           if (renameMap.size > 0) {
             const ranges = [
@@ -220,7 +291,8 @@ export function preprocessReadme(
           }
         }
 
-        const renamedInstance = renamedSource === source ? instance : parse(renamedSource).instance;
+        const renamedInstance =
+          renamedSource === source ? instance : parse(renamedSource).instance;
 
         if (renamedInstance !== undefined && !noEval) {
           script_content = [
@@ -229,16 +301,24 @@ export function preprocessReadme(
               .slice(renamedInstance.start, renamedInstance.end)
               .split("\n")
               .slice(1, -1)
-              .map((line) => line.trim().replace(new RegExp(opts.name, "g"), opts.svelte)),
+              .map((line) =>
+                line.trim().replace(new RegExp(opts.name, "g"), opts.svelte),
+              ),
           ];
         }
 
         const regex = new RegExp(`"${opts.name}"`, "g");
-        const modifiedSource = encodeURI(renamedSource.replace(regex, `"${opts.svelte}"`));
+        const modifiedSource = encodeURI(
+          renamedSource.replace(regex, `"${opts.svelte}"`),
+        );
         const formattedCode = prettier.format(source, {
           parser: "svelte",
         });
-        const svelteCode = Prism.highlight(formattedCode, Prism.languages.svelte, "svelte");
+        const svelteCode = Prism.highlight(
+          formattedCode,
+          Prism.languages.svelte,
+          "svelte",
+        );
         return `<pre class="language-${lang}" ${
           noEval || noDisplay ? "" : `data-svelte="${modifiedSource}"`
         }>{@html \`${svelteCode}\`}</pre>`;
@@ -263,12 +343,19 @@ export function preprocessReadme(
   return {
     // @ts-expect-error
     markup: ({ content, filename }) => {
-      if (filename && (/node_modules/.test(filename) || !filename.endsWith(".md"))) return null;
+      if (
+        filename &&
+        (NODE_MODULES_PATH.test(filename) || !filename.endsWith(".md"))
+      )
+        return null;
 
       script_content = [];
 
       if (opts.repoUrl) {
-        content = content.replace("<!-- REPO_URL -->", `[GitHub repo](${opts.repoUrl})`);
+        content = content.replace(
+          "<!-- REPO_URL -->",
+          `[GitHub repo](${opts.repoUrl})`,
+        );
       }
 
       content = content.replace(
@@ -294,66 +381,88 @@ export function preprocessReadme(
           // biome-ignore lint/suspicious/noExplicitAny: estree-walker's real types don't match Svelte's AST (see `Node` above)
           enter(node: any, parent: any) {
             if (node.type === "Attribute" && node.name === "href") {
-            const value = node.value[0];
+              const value = node.value[0];
 
-            if (value && !value.raw.startsWith("#") && isRelativeUrl(value.raw)) {
-              const relative_path = new URL(value.raw, prefixUrl).href;
-              result = result.replace(value.raw, relative_path);
-              cursor += relative_path.length - value.raw.length;
-            }
-          }
-
-          if (node.type === "Style") {
-            style_content += result.slice(node.content.start, node.content.end);
-            const replace_style = result.slice(node.start + cursor, node.end + cursor);
-            result = result.replace(replace_style, "");
-            cursor -= replace_style.length;
-          }
-
-          if (node.type === "Element" && node.name === "h2") {
-            // @ts-expect-error
-            const id = node.attributes.find((attr) => attr.name === "id").value[0].raw;
-
-            if (id === "table-of-contents") return;
-
-            const text = getChildNodeText(node);
-
-            if (text !== undefined) {
-              if (prev === "h3") {
-                headings.push(`</ul><li><a href="#${id}">${text}</a></li>`);
-              } else {
-                headings.push(`<li><a href="#${id}">${text}</a></li>`);
+              if (
+                value &&
+                !value.raw.startsWith("#") &&
+                isRelativeUrl(value.raw)
+              ) {
+                const relative_path = new URL(value.raw, prefixUrl).href;
+                result = result.replace(value.raw, relative_path);
+                cursor += relative_path.length - value.raw.length;
               }
-
-              prev = "h2";
             }
-          }
 
-          if (node.type === "Element" && node.name === "h3") {
-            // @ts-expect-error
-            const id = node.attributes.find((attr) => attr.name === "id").value[0].raw;
-            const text = getChildNodeText(node);
+            if (node.type === "Style") {
+              style_content += result.slice(
+                node.content.start,
+                node.content.end,
+              );
+              const replace_style = result.slice(
+                node.start + cursor,
+                node.end + cursor,
+              );
+              result = result.replace(replace_style, "");
+              cursor -= replace_style.length;
+            }
 
-            if (text !== undefined) {
-              if (prev === "h2") {
-                headings.push(`<ul><li><a href="#${id}">${text}</a></li>`);
-              } else {
-                headings.push(`<li><a href="#${id}">${text}</a></li>`);
+            if (node.type === "Element" && node.name === "h2") {
+              // @ts-expect-error
+              const id = node.attributes.find((attr) => attr.name === "id")
+                .value[0].raw;
+
+              if (id === "table-of-contents") return;
+
+              const text = getChildNodeText(node);
+
+              if (text !== undefined) {
+                if (prev === "h3") {
+                  headings.push(`</ul><li><a href="#${id}">${text}</a></li>`);
+                } else {
+                  headings.push(`<li><a href="#${id}">${text}</a></li>`);
+                }
+
+                prev = "h2";
               }
-
-              prev = "h3";
             }
-          }
 
-          if (node.type === "Attribute" && node.name === "data-svelte" && parent) {
-            const raw_value = node.value[0].raw;
-            const value = decodeURI(raw_value);
-            const value_ast = parse(value) as unknown as Node;
-            const markup = `<div class="code-fence">${value.slice(value_ast.html.start, value_ast.html.end)}</div>`;
-            const replace = result.slice(parent.start + cursor, parent.end + cursor);
-            result = result.replace(replace, markup + replace.replace(raw_value, ""));
-            cursor += markup.length - raw_value.length;
-          }
+            if (node.type === "Element" && node.name === "h3") {
+              // @ts-expect-error
+              const id = node.attributes.find((attr) => attr.name === "id")
+                .value[0].raw;
+              const text = getChildNodeText(node);
+
+              if (text !== undefined) {
+                if (prev === "h2") {
+                  headings.push(`<ul><li><a href="#${id}">${text}</a></li>`);
+                } else {
+                  headings.push(`<li><a href="#${id}">${text}</a></li>`);
+                }
+
+                prev = "h3";
+              }
+            }
+
+            if (
+              node.type === "Attribute" &&
+              node.name === "data-svelte" &&
+              parent
+            ) {
+              const raw_value = node.value[0].raw;
+              const value = decodeURI(raw_value);
+              const value_ast = parse(value) as unknown as Node;
+              const markup = `<div class="code-fence">${value.slice(value_ast.html.start, value_ast.html.end)}</div>`;
+              const replace = result.slice(
+                parent.start + cursor,
+                parent.end + cursor,
+              );
+              result = result.replace(
+                replace,
+                markup + replace.replace(raw_value, ""),
+              );
+              cursor += markup.length - raw_value.length;
+            }
           },
         },
       );
