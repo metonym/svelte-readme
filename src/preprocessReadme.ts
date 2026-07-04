@@ -2,7 +2,6 @@ import { URL } from "node:url";
 import { walk } from "estree-walker";
 import Markdown from "markdown-it";
 import markdownItAnchor from "markdown-it-anchor";
-import prettier from "prettier";
 import Prism from "prismjs";
 import type { PreprocessorGroup } from "svelte/compiler";
 import { parse } from "svelte/compiler";
@@ -58,6 +57,12 @@ interface PreprocessReadmeOptions {
   // Consumer-supplied grammar loaders, keyed by the alias-resolved language id
   // (e.g. "python"). Merged over (and can override) the built-in loaders above.
   languages: Record<string, LanguageLoader>;
+  /**
+   * Called with the source of each `svelte` code fence before it's highlighted for display,
+   * so the consumer can pretty-print it with their own formatter (e.g. Prettier). The code
+   * fence is displayed unformatted if this is omitted or its result rejects/throws.
+   */
+  format: (source: string) => string | Promise<string>;
 }
 
 const WINDOWS_PATH = /^[a-zA-Z]:\\/;
@@ -290,6 +295,7 @@ export function preprocessReadme(
   };
 
   let script_content: string[] = [];
+  let pending_format: { placeholder: string; source: string }[] = [];
   const declared_variables = new Map<string, string>();
   const reserved_names = new Set<string>();
   const name_regex = new RegExp(escapeRegExp(opts.name), "g");
@@ -347,23 +353,15 @@ export function preprocessReadme(
           renamedSource.replace(quoted_name_regex, `"${opts.svelte}"`),
         );
 
-        let formattedCode = source;
-        try {
-          formattedCode = prettier.format(source, { parser: "svelte" });
-        } catch (_e) {
-          console.error(
-            "Could not format svelte code block; displaying it unformatted.",
-          );
-        }
+        // `opts.format` may be async, but markdown-it's `highlight` must return synchronously,
+        // so formatting is deferred: a placeholder is emitted here and swapped for the
+        // formatted+highlighted code once `md.render()` returns (see `markup` below).
+        const placeholder = `__SVELTE_README_FORMAT_${pending_format.length}__`;
+        pending_format.push({ placeholder, source });
 
-        const svelteCode = Prism.highlight(
-          formattedCode,
-          Prism.languages.svelte,
-          "svelte",
-        );
         return `<pre class="language-${lang}" ${
           noEval || noDisplay ? "" : `data-svelte="${modifiedSource}"`
-        }>{@html \`${svelteCode}\`}</pre>`;
+        }>{@html \`${placeholder}\`}</pre>`;
       }
 
       try {
@@ -398,6 +396,7 @@ export function preprocessReadme(
 
   async function processMarkup(content: string) {
     script_content = [];
+    pending_format = [];
 
     if (opts.repoUrl) {
       content = content.replaceAll(
@@ -538,6 +537,30 @@ export function preprocessReadme(
       `<p><strong>Table of Contents</strong></p><ul>${headings.join("\n")}</ul>`,
     );
 
+    const formattedBlocks = await Promise.all(
+      pending_format.map(async ({ source }) => {
+        if (!opts.format) return source;
+
+        try {
+          return await opts.format(source);
+        } catch (_e) {
+          console.error(
+            "Could not format svelte code block; displaying it unformatted.",
+          );
+          return source;
+        }
+      }),
+    );
+
+    pending_format.forEach(({ placeholder }, i) => {
+      const svelteCode = Prism.highlight(
+        formattedBlocks[i],
+        Prism.languages.svelte,
+        "svelte",
+      );
+      result = result.replace(placeholder, svelteCode);
+    });
+
     return {
       code: `<script>${[...new Set(script_content)].join("\n")}</script>
                <style>${style_content}</style>
@@ -547,7 +570,7 @@ export function preprocessReadme(
 
   return {
     // @ts-expect-error
-    markup: ({ content, filename }) => {
+    markup: async ({ content, filename }) => {
       if (
         filename &&
         (NODE_MODULES_PATH.test(filename) || !filename.endsWith(".md"))

@@ -1,5 +1,4 @@
 import { describe, expect, spyOn, test } from "bun:test";
-import prettier from "prettier";
 import { preprocessReadme } from "./preprocessReadme.js";
 
 const NAME = "my-svelte-component";
@@ -19,16 +18,16 @@ async function markup(content: string, filename = "README.md") {
 }
 
 describe("preprocessReadme", () => {
-  test("ignores files that are not markdown", () => {
-    const result = pre.markup({
+  test("ignores files that are not markdown", async () => {
+    const result = await pre.markup({
       content: "# Title",
       filename: "src/App.svelte",
     });
     expect(result).toBeNull();
   });
 
-  test("ignores markdown files inside node_modules", () => {
-    const result = pre.markup({
+  test("ignores markdown files inside node_modules", async () => {
+    const result = await pre.markup({
       content: "# Title",
       filename: "node_modules/some-pkg/README.md",
     });
@@ -239,23 +238,49 @@ describe("preprocessReadme", () => {
     expect(result?.code).toContain('console.log("aXb")');
   });
 
-  test("falls back to unformatted source when prettier.format() throws on a svelte fence", async () => {
+  test("falls back to unformatted source when the `format` callback throws on a svelte fence", async () => {
     const errorSpy = spyOn(console, "error").mockImplementation(() => {});
-    const formatSpy = spyOn(prettier, "format").mockImplementation(() => {
-      throw new Error("boom");
+    const withFailingFormat = preprocessReadme({
+      name: NAME,
+      svelte: SVELTE_ENTRY,
+      homepage: "https://github.com/metonym/svelte-readme",
+      format: () => {
+        throw new Error("boom");
+      },
     });
 
-    const code = await markup(
-      "```svelte\n<script>\n  let count = 0;\n</script>\n<button>{count}</button>\n```",
-    );
+    const result = await withFailingFormat.markup({
+      content:
+        "```svelte\n<script>\n  let count = 0;\n</script>\n<button>{count}</button>\n```",
+      filename: "README.md",
+    });
 
-    expect(code).toContain("<button>{count}</button>");
+    expect(result?.code).toContain("<button>{count}</button>");
     expect(errorSpy).toHaveBeenCalledWith(
       "Could not format svelte code block; displaying it unformatted.",
     );
 
-    formatSpy.mockRestore();
     errorSpy.mockRestore();
+  });
+
+  test("formats svelte code fences for display with a custom (possibly async) `format` callback", async () => {
+    const withFormat = preprocessReadme({
+      name: NAME,
+      svelte: SVELTE_ENTRY,
+      homepage: "https://github.com/metonym/svelte-readme",
+      format: async (source) => `${source}\n<!-- formatted-marker -->`,
+    });
+
+    const result = await withFormat.markup({
+      content: "```svelte\n<script>\n  let count = 0;\n</script>\n```",
+      filename: "README.md",
+    });
+
+    expect(result?.code).toContain("formatted-marker");
+    // the callback only affects the highlighted display output, not the extracted/evaluated script
+    expect(result?.code?.match(EXTRACTED_SCRIPT)?.[1]).not.toContain(
+      "formatted-marker",
+    );
   });
 
   test("highlights fenced code using Prism language aliases", async () => {
