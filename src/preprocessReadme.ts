@@ -314,9 +314,16 @@ export function preprocessReadme(
         const modifiedSource = encodeURI(
           renamedSource.replace(quoted_name_regex, `"${opts.svelte}"`),
         );
-        const formattedCode = prettier.format(source, {
-          parser: "svelte",
-        });
+
+        let formattedCode = source;
+        try {
+          formattedCode = prettier.format(source, { parser: "svelte" });
+        } catch (_e) {
+          console.error(
+            "Could not format svelte code block; displaying it unformatted.",
+          );
+        }
+
         const svelteCode = Prism.highlight(
           formattedCode,
           Prism.languages.svelte,
