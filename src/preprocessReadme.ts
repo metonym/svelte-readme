@@ -260,6 +260,8 @@ export function preprocessReadme(
   let script_content: string[] = [];
   const declared_variables = new Map<string, string>();
   const reserved_names = new Set<string>();
+  const name_regex = new RegExp(escapeRegExp(opts.name), "g");
+  const quoted_name_regex = new RegExp(`"${escapeRegExp(opts.name)}"`, "g");
 
   const md = new Markdown({
     html: true,
@@ -305,17 +307,12 @@ export function preprocessReadme(
               .slice(renamedInstance.start, renamedInstance.end)
               .split("\n")
               .slice(1, -1)
-              .map((line) =>
-                line
-                  .trim()
-                  .replace(new RegExp(escapeRegExp(opts.name), "g"), opts.svelte),
-              ),
+              .map((line) => line.trim().replace(name_regex, opts.svelte)),
           ];
         }
 
-        const regex = new RegExp(`"${escapeRegExp(opts.name)}"`, "g");
         const modifiedSource = encodeURI(
-          renamedSource.replace(regex, `"${opts.svelte}"`),
+          renamedSource.replace(quoted_name_regex, `"${opts.svelte}"`),
         );
         const formattedCode = prettier.format(source, {
           parser: "svelte",
