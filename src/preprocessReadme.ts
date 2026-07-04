@@ -39,6 +39,10 @@ const NO_EVAL_ATTR = /no-eval/;
 const NO_DISPLAY_ATTR = /no-display/;
 const NODE_MODULES_PATH = /node_modules/;
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function isRelativeUrl(url: string): boolean {
   // Windows paths (e.g. "c:\foo") aren't absolute URLs, so they're treated as relative.
   if (WINDOWS_PATH.test(url)) return true;
@@ -302,12 +306,14 @@ export function preprocessReadme(
               .split("\n")
               .slice(1, -1)
               .map((line) =>
-                line.trim().replace(new RegExp(opts.name, "g"), opts.svelte),
+                line
+                  .trim()
+                  .replace(new RegExp(escapeRegExp(opts.name), "g"), opts.svelte),
               ),
           ];
         }
 
-        const regex = new RegExp(`"${opts.name}"`, "g");
+        const regex = new RegExp(`"${escapeRegExp(opts.name)}"`, "g");
         const modifiedSource = encodeURI(
           renamedSource.replace(regex, `"${opts.svelte}"`),
         );
