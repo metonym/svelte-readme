@@ -46,10 +46,142 @@ const getChildNodeText = (node: any) => {
     .join("");
 };
 
+type Declaration = { name: string; start: number; end: number };
+type IdentifierRange = { start: number; end: number; name: string };
+
+const collectPatternNames = (pattern: any, names: string[]): void => {
+  if (!pattern) return;
+
+  switch (pattern.type) {
+    case "Identifier":
+      names.push(pattern.name);
+      break;
+    case "ObjectPattern":
+      for (const prop of pattern.properties) {
+        collectPatternNames(prop.type === "RestElement" ? prop.argument : prop.value, names);
+      }
+      break;
+    case "ArrayPattern":
+      for (const element of pattern.elements) collectPatternNames(element, names);
+      break;
+    case "AssignmentPattern":
+      collectPatternNames(pattern.left, names);
+      break;
+    case "RestElement":
+      collectPatternNames(pattern.argument, names);
+      break;
+  }
+};
+
+// Collects `let`/`const`/`var`, `function`, and `class` bindings declared at the top level of a
+// `<script>` block (including `export let ...` props), so duplicate names across separate code
+// fences can be detected and renamed before they're merged into a single shared `<script>`.
+const collectTopLevelDeclarations = (program: any): Declaration[] => {
+  const declarations: Declaration[] = [];
+
+  const visit = (stmt: any) => {
+    if (stmt.type === "ExportNamedDeclaration" && stmt.declaration) {
+      visit(stmt.declaration);
+      return;
+    }
+
+    if (stmt.type === "VariableDeclaration") {
+      for (const declarator of stmt.declarations) {
+        const names: string[] = [];
+        collectPatternNames(declarator.id, names);
+        for (const name of names) declarations.push({ name, start: declarator.start, end: declarator.end });
+      }
+    } else if ((stmt.type === "FunctionDeclaration" || stmt.type === "ClassDeclaration") && stmt.id) {
+      declarations.push({ name: stmt.id.name, start: stmt.start, end: stmt.end });
+    }
+  };
+
+  for (const stmt of program.body) visit(stmt);
+
+  return declarations;
+};
+
+// Determines which top-level names collide with a same-named (but differently defined) binding
+// from an earlier code fence, and assigns each a unique replacement name (e.g. `count` -> `count2`).
+const computeRenameMap = (
+  declarations: Declaration[],
+  source: string,
+  declaredVariables: Map<string, string>,
+  reservedNames: Set<string>,
+): Map<string, string> => {
+  const renameMap = new Map<string, string>();
+  const namesInBlock = new Set(declarations.map((declaration) => declaration.name));
+
+  for (const { name, start, end } of declarations) {
+    const text = source.slice(start, end).replace(/\s+/g, " ").trim();
+    const existingText = declaredVariables.get(name);
+
+    if (existingText === undefined) {
+      declaredVariables.set(name, text);
+      reservedNames.add(name);
+      continue;
+    }
+
+    if (existingText === text || renameMap.has(name)) continue;
+
+    let suffix = 2;
+    let candidate = `${name}${suffix}`;
+
+    while (reservedNames.has(candidate) || namesInBlock.has(candidate)) {
+      suffix += 1;
+      candidate = `${name}${suffix}`;
+    }
+
+    renameMap.set(name, candidate);
+    reservedNames.add(candidate);
+    declaredVariables.set(candidate, text);
+  }
+
+  return renameMap;
+};
+
+// Finds every reference to a renamed identifier within a script or markup AST, skipping
+// positions where the name is a property/member key rather than a variable reference.
+const collectIdentifierRanges = (root: any, renameMap: Map<string, string>): IdentifierRange[] => {
+  const ranges: IdentifierRange[] = [];
+
+  walk(root, {
+    enter(node: any, parent: any) {
+      if (node.type !== "Identifier" || !renameMap.has(node.name)) return;
+
+      if (parent) {
+        if (parent.type === "MemberExpression" && parent.property === node && !parent.computed) return;
+        if (parent.type === "Property" && parent.key === node && !parent.shorthand && !parent.computed) return;
+        if (parent.type === "MethodDefinition" && parent.key === node && !parent.computed) return;
+        if (parent.type === "ImportSpecifier" && parent.imported === node && parent.imported !== parent.local) return;
+        if (parent.type === "ExportSpecifier" && parent.exported === node && parent.exported !== parent.local) return;
+      }
+
+      ranges.push({ start: node.start, end: node.end, name: node.name });
+    },
+  });
+
+  return ranges;
+};
+
+const applyRenames = (source: string, ranges: IdentifierRange[], renameMap: Map<string, string>): string => {
+  if (ranges.length === 0) return source;
+
+  let result = source;
+
+  for (const { start, end, name } of [...ranges].sort((a, b) => b.start - a.start)) {
+    result = result.slice(0, start) + renameMap.get(name) + result.slice(end);
+  }
+
+  return result;
+};
+
 export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<PreprocessorGroup, "markup"> {
   const prefixUrl = opts.prefixUrl || `${opts.homepage}/tree/master/`;
 
   let script_content: string[] = [];
+  const declared_variables = new Map<string, string>();
+  const reserved_names = new Set<string>();
 
   if (!md) {
     md = new Markdown({
@@ -60,13 +192,34 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
         if (lang === "svelte") {
           const noEval = /no-eval/.test(attrs);
           const noDisplay = /no-display/.test(attrs);
-          const { instance } = parse(source);
+          const { instance, html } = parse(source);
+
+          // Different code fences share a single merged `<script>` once rendered, so a variable
+          // declared identically in two fences (e.g. `let count = 0;`) is fine, but a name reused
+          // for something different would collide. Detect that and rename the later occurrence
+          // (in both its script and markup) before it's merged in.
+          let renamedSource = source;
 
           if (instance !== undefined && !noEval) {
+            const declarations = collectTopLevelDeclarations(instance.content);
+            const renameMap = computeRenameMap(declarations, source, declared_variables, reserved_names);
+
+            if (renameMap.size > 0) {
+              const ranges = [
+                ...collectIdentifierRanges(instance.content, renameMap),
+                ...collectIdentifierRanges(html, renameMap),
+              ];
+              renamedSource = applyRenames(source, ranges, renameMap);
+            }
+          }
+
+          const renamedInstance = renamedSource === source ? instance : parse(renamedSource).instance;
+
+          if (renamedInstance !== undefined && !noEval) {
             script_content = [
               ...script_content,
-              ...source
-                .slice(instance.start, instance.end)
+              ...renamedSource
+                .slice(renamedInstance.start, renamedInstance.end)
                 .split("\n")
                 .slice(1, -1)
                 .map((line) => line.trim().replace(new RegExp(opts.name!, "g"), opts.svelte!)),
@@ -74,7 +227,7 @@ export function preprocessReadme(opts: Partial<PreprocessReadmeOptions>): Pick<P
           }
 
           const regex = new RegExp(`"${opts.name}"`, "g");
-          const modifiedSource = encodeURI(source.replace(regex, `"${opts.svelte}"`));
+          const modifiedSource = encodeURI(renamedSource.replace(regex, `"${opts.svelte}"`));
           const formattedCode = prettier.format(source, {
             parser: "svelte",
           });

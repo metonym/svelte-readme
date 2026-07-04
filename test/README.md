@@ -82,6 +82,16 @@ Second script block:
 {toggled}
 ```
 
+Duplicate variable name (`count`), auto-renamed internally so it doesn't collide with the block above:
+
+```svelte
+<script>
+  let count = "duplicate";
+</script>
+
+<p>{count}</p>
+```
+
 ```svelte eval
 <script>
   import { onMount } from "svelte";
