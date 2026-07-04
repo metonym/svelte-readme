@@ -190,7 +190,7 @@ describe("preprocessReadme", () => {
   // letting the second definition silently shadow/clobber the first.
   test("auto-renames a variable that collides with a differently-defined one from an earlier fence", async () => {
     const content = [
-      '```svelte\n<script>\n  let count = 0;\n</script>\n<p>{count}</p>\n```',
+      "```svelte\n<script>\n  let count = 0;\n</script>\n<p>{count}</p>\n```",
       '```svelte\n<script>\n  let count = "duplicate";\n</script>\n<p>{count}</p>\n```',
     ].join("\n\n");
     const code = await markup(content);
@@ -208,8 +208,8 @@ describe("preprocessReadme", () => {
 
   test("does not rename a variable declared identically across fences", async () => {
     const content = [
-      '```svelte\n<script>\n  let count = 0;\n</script>\n<p>{count}</p>\n```',
-      '```svelte\n<script>\n  let count = 0;\n</script>\n<p>{count}</p>\n```',
+      "```svelte\n<script>\n  let count = 0;\n</script>\n<p>{count}</p>\n```",
+      "```svelte\n<script>\n  let count = 0;\n</script>\n<p>{count}</p>\n```",
     ].join("\n\n");
     const code = await markup(content);
 
@@ -241,12 +241,10 @@ describe("preprocessReadme", () => {
       throw new Error("boom");
     });
 
-    const code = await markup('```svelte\n<script>\n  let count = 0;\n</script>\n<button>{count}</button>\n```');
+    const code = await markup("```svelte\n<script>\n  let count = 0;\n</script>\n<button>{count}</button>\n```");
 
     expect(code).toContain("<button>{count}</button>");
-    expect(errorSpy).toHaveBeenCalledWith(
-      "Could not format svelte code block; displaying it unformatted.",
-    );
+    expect(errorSpy).toHaveBeenCalledWith("Could not format svelte code block; displaying it unformatted.");
 
     formatSpy.mockRestore();
     errorSpy.mockRestore();
