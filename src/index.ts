@@ -1,2 +1,2 @@
-export { preprocessReadme } from "./preprocessReadme";
-export { default } from "./createConfig";
+export { preprocessReadme } from "./preprocessReadme.js";
+export { default } from "./createConfig.js";

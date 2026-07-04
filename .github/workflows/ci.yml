@@ -4,7 +4,6 @@ on:
   push:
     branches: [master]
   pull_request:
-    branches: [master]
 
 jobs:
   build:
@@ -15,16 +14,40 @@ jobs:
         svelte: [4, 5]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
 
-      - run: bun install --frozen-lockfile
+      - run: bun ci
 
       - run: bun add -D svelte@${{ matrix.svelte }}
 
       - run: bun run prepack
 
       - run: bun run verify
+
+  test-fixture:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun ci
+
+      - run: bun run prepack
+
+      - run: bun link
+
+      - run: bun ci
+        working-directory: test
+
+      - run: bun link svelte-readme
+        working-directory: test
+
+      - run: bun run build
+        working-directory: test
+
+      - run: BUNDLE=true bun run build
+        working-directory: test

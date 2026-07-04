@@ -1,6 +1,6 @@
-const fs = require("fs");
-const path = require("path");
-const postcss = require("postcss");
+import fs from "node:fs";
+import path from "node:path";
+import postcss from "postcss";
 
 const github_css = fs.readFileSync(
   path.join(process.cwd(), "./node_modules/github-markdown-css/github-markdown.css"),

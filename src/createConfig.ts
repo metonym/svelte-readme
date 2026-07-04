@@ -1,25 +1,18 @@
-import resolve from "@rollup/plugin-node-resolve";
-import rollupPluginSvelte, { Options as RollupPluginSvelteOptions } from "rollup-plugin-svelte";
-import virtual from "@rollup/plugin-virtual";
-import { terser } from "rollup-plugin-terser";
-import { preprocessReadme } from "./preprocessReadme";
+import { svelte, Options as VitePluginSvelteOptions } from "@sveltejs/vite-plugin-svelte";
+import { preprocessReadme } from "./preprocessReadme.js";
 import fs from "fs-extra";
 import path from "path";
-import { createHash } from "crypto";
+import { createRequire } from "module";
 import htmlminifier from "html-minifier";
-import { css as github_styles } from "./style";
-import { Plugin, OutputOptions, InputOptions } from "rollup";
+import { css as github_styles } from "./style.js";
+import { Plugin, UserConfig, ConfigEnv } from "vite";
 import { PreprocessorGroup } from "svelte/compiler";
 
-function hashREADME() {
-  try {
-    const path_readme = path.join(process.cwd(), "README.md");
-    const readme = fs.readFileSync(path_readme);
-    return "." + createHash("md5").update(readme).digest("hex").slice(0, 8);
-  } catch (error) {
-    console.log(error);
-    process.exit(1);
-  }
+const require = createRequire(import.meta.url);
+
+function getSvelteMajorVersion(): number {
+  const svelte_pkg = require("svelte/package.json");
+  return Number.parseInt(svelte_pkg.version.split(".")[0], 10);
 }
 
 function getPackageJSON() {
@@ -85,13 +78,13 @@ const custom_css = `
     main { padding: 15px; }
   }
 
-  
+
 `;
 
 interface CreateConfigOptions {
   /**
    * set to `true` to minify the HTML/JS
-   * @default false
+   * @default false in dev, true in build
    */
   minify: boolean;
 
@@ -120,22 +113,16 @@ interface CreateConfigOptions {
   prefixUrl: string;
 
   /**
-   * `rollup-plugin-svelte` options
+   * `@sveltejs/vite-plugin-svelte` options
    * @default {}
    */
-  svelte: RollupPluginSvelteOptions;
+  svelte: VitePluginSvelteOptions;
 
   /**
-   * Rollup plugins
+   * Vite plugins
    * @default {[]}
    */
   plugins: Plugin[];
-
-  /**
-   * Rollup output options
-   * @default {{}}
-   */
-  output: OutputOptions;
 
   /**
    * Append content to the `head` element in `index.html`
@@ -143,122 +130,163 @@ interface CreateConfigOptions {
   head: string;
 }
 
-export default function createConfig(opts: Partial<CreateConfigOptions> = {}): InputOptions {
-  const DEV = process.env.ROLLUP_WATCH === "true";
-  const minify = opts.minify === true || !DEV;
-  const pkg = getPackageJSON();
-  const hash = minify ? hashREADME() : "";
-  const output_dir = opts.outDir || "dist";
-  const svelte: Partial<RollupPluginSvelteOptions> = {
-    emitCss: opts.svelte?.emitCss ?? false,
-    compilerOptions: {
-      dev: DEV,
-      immutable: true,
-      ...opts.svelte?.compilerOptions,
-    },
-    extensions: [".svelte", ".md", ...(opts.svelte?.extensions ?? [])],
-    preprocess: [
-      ...((opts.svelte?.preprocess as PreprocessorGroup[]) ?? []),
-      preprocessReadme({ ...pkg, prefixUrl: opts.prefixUrl }),
-    ],
-  };
+const VIRTUAL_ENTRY_ID = "virtual:svelte-readme-entry";
+const RESOLVED_VIRTUAL_ENTRY_ID = "\0" + VIRTUAL_ENTRY_ID;
 
-  console.log(`[createConfig] Running in ${DEV ? "development" : "production"}`);
-  console.log("[createConfig] options:");
-  console.group();
-  console.log("minify:", minify);
-  console.log("outDir:", output_dir);
-  console.log("svelte:", svelte);
-  console.groupEnd();
+export default function createConfig(opts: Partial<CreateConfigOptions> = {}): (env: ConfigEnv) => UserConfig {
+  return (env) => {
+    const DEV = env.command === "serve" && !env.isPreview;
+    const minify = opts.minify === true || !DEV;
+    const pkg = getPackageJSON();
+    const output_dir = opts.outDir || "dist";
+    const svelteOptions: Partial<VitePluginSvelteOptions> = {
+      emitCss: opts.svelte?.emitCss ?? false,
+      compilerOptions: {
+        // Svelte 5 requires this to keep supporting the `new App({ target })`
+        // instantiation pattern used by the virtual entry below.
+        ...(getSvelteMajorVersion() >= 5 ? { compatibility: { componentApi: 4 }, hmr: false } : {}),
+        ...opts.svelte?.compilerOptions,
+      },
+      extensions: [".svelte", ".md", ...(opts.svelte?.extensions ?? [])],
+      preprocess: [
+        ...((opts.svelte?.preprocess as PreprocessorGroup[]) ?? []),
+        preprocessReadme({ ...pkg, prefixUrl: opts.prefixUrl }),
+      ],
+    };
 
-  let css = github_styles;
+    console.log(`[createConfig] Running in ${DEV ? "development" : "production"}`);
+    console.log("[createConfig] options:");
+    console.group();
+    console.log("minify:", minify);
+    console.log("outDir:", output_dir);
+    console.log("svelte:", svelteOptions);
+    console.groupEnd();
 
-  if (!opts.disableDefaultCSS) {
-    css += `/**
-    * GitHub Primer button CSS
-    * https://primer.style/css/components/buttons
-    **/
-  .code-fence button {
-    font-family: inherit;
-    text-transform: none;
-    position: relative;
-    display: inline-block;
-    padding: 5px 16px;
-    font-size: 14px;
-    font-weight: 500;
-    line-height: 20px;
-    white-space: nowrap;
-    vertical-align: middle;
-    cursor: pointer;
-    user-select: none;
-    border: 1px solid;
-    border-radius: 6px;
-    appearance: none;
-    color: #24292e;
-    background-color: #fafbfc;
-    border-color: rgba(27,31,35,0.15);
-    box-shadow: 0 1px 0 rgba(27,31,35,0.04), inset 0 1px 0 rgba(255,255,255,0.25);
-    transition: background-color 0.2s cubic-bezier(0.3, 0, 0.5, 1);
-  }`;
-  }
+    let css = github_styles;
 
-  const template = `
-  <!DOCTYPE html>
-  <html lang="en">
-    <head>
-      <meta charset="utf-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <meta name="description" content="${pkg.description || `${pkg.name} demo`}" />
-      <title>${pkg.name}</title>
-      <style>
-        ${!opts.disableDefaultCSS ? css : ""}
-        ${custom_css}
-        ${opts.style || ""}
-      </style>
-      ${opts?.head ?? ""}
-    </head>
-    <body>
-      <noscript>You need to enable JavaScript to run this app.</noscript>
-      <script src="s${hash}.js"></script>
-    </body>
-  </html>
-`;
+    if (!opts.disableDefaultCSS) {
+      css += `/**
+      * GitHub Primer button CSS
+      * https://primer.style/css/components/buttons
+      **/
+    .code-fence button {
+      font-family: inherit;
+      text-transform: none;
+      position: relative;
+      display: inline-block;
+      padding: 5px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 20px;
+      white-space: nowrap;
+      vertical-align: middle;
+      cursor: pointer;
+      user-select: none;
+      border: 1px solid;
+      border-radius: 6px;
+      appearance: none;
+      color: #24292e;
+      background-color: #fafbfc;
+      border-color: rgba(27,31,35,0.15);
+      box-shadow: 0 1px 0 rgba(27,31,35,0.04), inset 0 1px 0 rgba(255,255,255,0.25);
+      transition: background-color 0.2s cubic-bezier(0.3, 0, 0.5, 1);
+    }`;
+    }
 
-  if (minify) fs.removeSync(output_dir);
+    function renderTemplate(scriptSrc: string) {
+      const template = `
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charset="utf-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <meta name="description" content="${pkg.description || `${pkg.name} demo`}" />
+          <title>${pkg.name}</title>
+          <style>
+            ${!opts.disableDefaultCSS ? css : ""}
+            ${custom_css}
+            ${opts.style || ""}
+          </style>
+          ${opts?.head ?? ""}
+        </head>
+        <body>
+          <noscript>You need to enable JavaScript to run this app.</noscript>
+          <script type="module" src="${scriptSrc}"></script>
+        </body>
+      </html>
+    `;
 
-  fs.ensureFileSync(`${output_dir}/index.html`);
-  fs.writeFileSync(
-    `${output_dir}/index.html`,
-    minify
-      ? htmlminifier.minify(template, {
-          collapseWhitespace: true,
-          conservativeCollapse: true,
-          minifyCSS: true,
-          removeEmptyAttributes: true,
-        })
-      : template,
-  );
+      return minify
+        ? htmlminifier.minify(template, {
+            collapseWhitespace: true,
+            conservativeCollapse: true,
+            minifyCSS: true,
+            removeEmptyAttributes: true,
+          })
+        : template;
+    }
 
-  return {
-    watch: { clearScreen: false },
-    input: "entry",
-    // @ts-ignore
-    output: {
-      format: "iife",
-      name: "app",
-      file: `${output_dir}/s${hash}.js`,
-      ...(opts.output || {}),
-    },
-    plugins: [
-      virtual({
-        entry: `import App from "./README.md";
-                const app = new App({ target: document.body });
-                export default app;`,
-      }),
-      rollupPluginSvelte(svelte),
-      resolve(),
-      ...(opts.plugins || []),
-      minify && terser(),
-    ].filter(Boolean) as Plugin[],
+    const htmlPlugin: Plugin = {
+      name: "svelte-readme-html",
+      resolveId(id) {
+        if (id === VIRTUAL_ENTRY_ID) return RESOLVED_VIRTUAL_ENTRY_ID;
+      },
+      load(id) {
+        if (id === RESOLVED_VIRTUAL_ENTRY_ID) {
+          return `import App from "./README.md";
+                  const app = new App({ target: document.body });
+                  export default app;`;
+        }
+      },
+      configureServer(server) {
+        server.middlewares.use(async (req, res, next) => {
+          if (req.method !== "GET" || !req.headers.accept?.includes("text/html")) return next();
+
+          const html = await server.transformIndexHtml(req.url ?? "/", renderTemplate(`/@id/${VIRTUAL_ENTRY_ID}`));
+          res.setHeader("Content-Type", "text/html");
+          res.end(html);
+        });
+      },
+      configurePreviewServer(server) {
+        // `vite preview` serves the already-built output_dir as static files and
+        // never runs `writeBundle`, so just hand back the index.html written there.
+        server.middlewares.use(async (req, res, next) => {
+          if (req.method !== "GET" || !req.headers.accept?.includes("text/html")) return next();
+
+          try {
+            const html = await fs.readFile(path.join(output_dir, "index.html"), "utf-8");
+            res.setHeader("Content-Type", "text/html");
+            res.end(html);
+          } catch {
+            next();
+          }
+        });
+      },
+      async writeBundle(_, bundle) {
+        const entryChunk = Object.values(bundle).find(
+          (chunk): chunk is typeof chunk & { fileName: string } => "isEntry" in chunk && chunk.isEntry,
+        );
+
+        if (!entryChunk) return;
+
+        await fs.ensureFile(path.join(output_dir, "index.html"));
+        await fs.writeFile(path.join(output_dir, "index.html"), renderTemplate(`./${entryChunk.fileName}`));
+      },
+    };
+
+    return {
+      appType: "custom",
+      build: {
+        outDir: output_dir,
+        minify: minify ? "esbuild" : false,
+        rollupOptions: {
+          input: VIRTUAL_ENTRY_ID,
+          output: { entryFileNames: "s-[hash].js" },
+        },
+      },
+      plugins: [...svelte(svelteOptions as VitePluginSvelteOptions), htmlPlugin, ...(opts.plugins || [])].filter(
+        Boolean,
+      ) as Plugin[],
+    };
   };
 }
