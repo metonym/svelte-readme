@@ -18,6 +18,7 @@
     "preprocess": "bun scripts/preprocessStyles.ts",
     "dev": "bun run preprocess && bun scripts/build.ts -w",
     "build": "bun run preprocess && bun scripts/build.ts",
+    "build:demo": "bun run build && bun link && cd test && bun ci && bun link svelte-readme && bun run build",
     "lint": "biome check --write .",
     "lint:changed": "biome check --write --changed --since=master --no-errors-on-unmatched .",
     "test": "bun test"

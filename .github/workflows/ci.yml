@@ -25,20 +25,5 @@ jobs:
       - name: Run unit tests
         run: bun test
 
-      - name: Build package
-        run: bun run build
-
-      - name: Link package
-        run: bun link
-
-      - name: Install test fixture dependencies
-        run: bun ci
-        working-directory: test
-
-      - name: Link package into test fixture
-        run: bun link svelte-readme
-        working-directory: test
-
-      - name: Build demo
-        run: bun run build
-        working-directory: test
+      - name: Build package and demo
+        run: bun run build:demo
