@@ -41,6 +41,7 @@ async function buildProject() {
   }
 
   await emitTypeDeclarations();
+  await $`cp src/style.css dist/style.css`;
   console.log("✓ Build completed");
 }
 
