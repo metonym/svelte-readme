@@ -73,9 +73,11 @@ describe("createConfig", () => {
     const config = createConfig()({ command: "build", mode: "production" });
     const virtualEntriesPlugin = getVirtualEntriesPlugin(config);
 
+    // biome-ignore lint/suspicious/noExplicitAny: Vite's hook types allow a plain function or a `{ handler }` object; createConfig defines these as plain functions, so cast past the union.
     const resolved = (virtualEntriesPlugin.resolveId as any)("virtual:svelte-readme-hydrate-entry");
     expect(resolved).toBeTruthy();
 
+    // biome-ignore lint/suspicious/noExplicitAny: see above
     const loaded = (virtualEntriesPlugin.load as any)(resolved) as string;
     expect(loaded).toContain('import App from "./README.md"');
     expect(loaded).toContain("hydrate(App, { target: document.body })");
