@@ -4,17 +4,12 @@ import { fileURLToPath } from "node:url";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
-export const githubStyles: string = fs.readFileSync(
+export const defaultStyles: string = fs.readFileSync(
   path.join(dirname, "style.css"),
   "utf-8",
 );
 
 export const layoutStyles: string = fs.readFileSync(
   path.join(dirname, "layout.css"),
-  "utf-8",
-);
-
-export const buttonStyles: string = fs.readFileSync(
-  path.join(dirname, "button.css"),
   "utf-8",
 );
