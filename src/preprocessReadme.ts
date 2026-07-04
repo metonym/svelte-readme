@@ -378,7 +378,9 @@ export function preprocessReadme(
     },
   });
 
-  md.use(markdownItAnchor);
+  // markdown-it-anchor 9.x adds `tabindex="-1"` to headings by default (for a11y
+  // focus-jump support); keep output markup unchanged from pre-upgrade behavior.
+  md.use(markdownItAnchor, { tabIndex: false });
 
   // Prose and inline/indented code are rendered as literal text and later re-parsed as Svelte
   // markup, so a stray `{`/`}` (e.g. `` `{ color: "red" }` ``) would be misread as a mustache
