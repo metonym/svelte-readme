@@ -2,10 +2,11 @@ import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import type { Plugin } from "vite";
-import createConfig from "./createConfig.js";
+import type { ConfigEnv, Plugin, UserConfig } from "vite";
+import { resolveConfig } from "vite";
+import { svelteReadme } from "./svelteReadme.js";
 
-// `createConfig` reads `package.json` from `process.cwd()`, so each test runs
+// `svelteReadme` reads `package.json` from `process.cwd()`, so each test runs
 // against a throwaway fixture directory rather than this package's own package.json
 // (which has no `svelte` entry).
 const originalCwd = process.cwd();
@@ -23,9 +24,9 @@ beforeEach(() => {
   });
   process.chdir(fixtureDir);
 
-  // createConfig() logs its resolved options on every call, and writeBundle's SSR pass
-  // warns when it falls back to CSR (expected here — fixtures have no real README.md
-  // to server-render). Keep test output focused.
+  // svelteReadme()'s `config` hook logs its resolved options every time it's invoked, and
+  // writeBundle's SSR pass warns when it falls back to CSR (expected here — fixtures have
+  // no real README.md to server-render). Keep test output focused.
   spyOn(console, "log").mockImplementation(() => {});
   spyOn(console, "group").mockImplementation(() => {});
   spyOn(console, "groupEnd").mockImplementation(() => {});
@@ -37,66 +38,57 @@ afterEach(() => {
   fs.rmSync(fixtureDir, { recursive: true, force: true });
 });
 
-function isPlugin(value: unknown): value is Plugin {
-  return typeof value === "object" && value !== null && "name" in value;
-}
+const buildEnv: ConfigEnv = { command: "build", mode: "production" };
 
-function getHtmlPlugin(
-  config: Awaited<ReturnType<ReturnType<typeof createConfig>>>,
-) {
-  const plugin = config.plugins
-    ?.filter(isPlugin)
-    .find((p) => p.name === "svelte-readme-html");
+function getHtmlPlugin(plugins: Plugin[]) {
+  const plugin = plugins.find((p) => p.name === "svelte-readme-html");
   if (!plugin) throw new Error("svelte-readme-html plugin not found");
-  return plugin as Required<Pick<Plugin, "writeBundle">>;
+  return plugin as Required<Pick<Plugin, "config" | "writeBundle">>;
 }
 
-function getVirtualEntriesPlugin(
-  config: Awaited<ReturnType<ReturnType<typeof createConfig>>>,
-) {
-  const plugin = config.plugins
-    ?.filter(isPlugin)
-    .find((p) => p.name === "svelte-readme-virtual-entries");
+function getVirtualEntriesPlugin(plugins: Plugin[]) {
+  const plugin = plugins.find(
+    (p) => p.name === "svelte-readme-virtual-entries",
+  );
   if (!plugin)
     throw new Error("svelte-readme-virtual-entries plugin not found");
   return plugin as Required<Pick<Plugin, "resolveId" | "load">>;
 }
 
-describe("createConfig", () => {
-  test("defaults to a dist output dir", async () => {
-    const config = await createConfig()({
-      command: "build",
-      mode: "production",
-    });
+describe("svelteReadme", () => {
+  test("defaults to a dist output dir", () => {
+    const htmlPlugin = getHtmlPlugin(svelteReadme());
+
+    // biome-ignore lint/suspicious/noExplicitAny: Vite's hook types allow a plain function or a `{ handler }` object; svelteReadme defines these as plain functions, so cast past the union.
+    const config = (htmlPlugin.config as any)({}, buildEnv) as UserConfig;
     expect(config.build?.outDir).toBe("dist");
   });
 
-  test("respects an explicit outDir override", async () => {
-    const config = await createConfig({ outDir: "public" })({
-      command: "serve",
-      mode: "development",
-    });
+  test("respects an explicit outDir override", () => {
+    const htmlPlugin = getHtmlPlugin(svelteReadme({ outDir: "public" }));
+
+    // biome-ignore lint/suspicious/noExplicitAny: see above
+    const config = (htmlPlugin.config as any)(
+      {},
+      { command: "serve", mode: "development" },
+    ) as UserConfig;
     expect(config.build?.outDir).toBe("public");
   });
 
-  test("uses the hydrate entry module as the rollup input", async () => {
-    const config = await createConfig()({
-      command: "build",
-      mode: "production",
-    });
+  test("uses the hydrate entry module as the rollup input", () => {
+    const htmlPlugin = getHtmlPlugin(svelteReadme());
+
+    // biome-ignore lint/suspicious/noExplicitAny: see above
+    const config = (htmlPlugin.config as any)({}, buildEnv) as UserConfig;
     expect(config.build?.rollupOptions?.input).toBe(
       "virtual:svelte-readme-hydrate-entry",
     );
   });
 
-  test("resolves and loads the hydrate entry as a README-backed Svelte component", async () => {
-    const config = await createConfig()({
-      command: "build",
-      mode: "production",
-    });
-    const virtualEntriesPlugin = getVirtualEntriesPlugin(config);
+  test("resolves and loads the hydrate entry as a README-backed Svelte component", () => {
+    const virtualEntriesPlugin = getVirtualEntriesPlugin(svelteReadme());
 
-    // biome-ignore lint/suspicious/noExplicitAny: Vite's hook types allow a plain function or a `{ handler }` object; createConfig defines these as plain functions, so cast past the union.
+    // biome-ignore lint/suspicious/noExplicitAny: see above
     const resolved = (virtualEntriesPlugin.resolveId as any)(
       "virtual:svelte-readme-hydrate-entry",
     );
@@ -114,11 +106,10 @@ describe("createConfig", () => {
       svelte: "./src/index.js",
       description: "A demo component",
     });
-    const config = await createConfig({ outDir: "out" })({
-      command: "build",
-      mode: "production",
-    });
-    const htmlPlugin = getHtmlPlugin(config);
+    const htmlPlugin = getHtmlPlugin(svelteReadme({ outDir: "out" }));
+
+    // biome-ignore lint/suspicious/noExplicitAny: see above
+    (htmlPlugin.config as any)({}, buildEnv);
 
     await htmlPlugin.writeBundle(
       undefined as never,
@@ -137,11 +128,10 @@ describe("createConfig", () => {
   });
 
   test("falls back to a generic meta description when package.json has none", async () => {
-    const config = await createConfig()({
-      command: "build",
-      mode: "production",
-    });
-    const htmlPlugin = getHtmlPlugin(config);
+    const htmlPlugin = getHtmlPlugin(svelteReadme());
+
+    // biome-ignore lint/suspicious/noExplicitAny: see above
+    (htmlPlugin.config as any)({}, buildEnv);
 
     await htmlPlugin.writeBundle(
       undefined as never,
@@ -158,14 +148,15 @@ describe("createConfig", () => {
   });
 
   test("disableDefaultCSS omits the bundled GitHub styles, custom style is still appended", async () => {
-    const config = await createConfig({
-      disableDefaultCSS: true,
-      style: ".custom { color: blue; }",
-    })({
-      command: "build",
-      mode: "production",
-    });
-    const htmlPlugin = getHtmlPlugin(config);
+    const htmlPlugin = getHtmlPlugin(
+      svelteReadme({
+        disableDefaultCSS: true,
+        style: ".custom { color: blue; }",
+      }),
+    );
+
+    // biome-ignore lint/suspicious/noExplicitAny: see above
+    (htmlPlugin.config as any)({}, buildEnv);
 
     await htmlPlugin.writeBundle(
       undefined as never,
@@ -186,10 +177,10 @@ describe("createConfig", () => {
     writeFixturePackageJson({ name: "my-svelte-component" }); // missing required `svelte` entry
 
     const runnerPath = path.join(fixtureDir, "run.ts");
-    const createConfigSrc = path.join(originalCwd, "src", "createConfig.ts");
+    const svelteReadmeSrc = path.join(originalCwd, "src", "svelteReadme.ts");
     fs.writeFileSync(
       runnerPath,
-      `import createConfig from ${JSON.stringify(createConfigSrc)};\ncreateConfig()({ command: "build", mode: "production" });\n`,
+      `import { svelteReadme } from ${JSON.stringify(svelteReadmeSrc)};\nsvelteReadme();\n`,
     );
 
     const result = Bun.spawnSync({
@@ -197,5 +188,16 @@ describe("createConfig", () => {
       cwd: fixtureDir,
     });
     expect(result.exitCode).toBe(1);
+  });
+
+  test("composes with arbitrary Vite config instead of replacing it", async () => {
+    const resolved = await resolveConfig(
+      { configFile: false, plugins: svelteReadme(), server: { port: 4321 } },
+      "build",
+    );
+    expect(resolved.server.port).toBe(4321);
+    expect(resolved.build.rollupOptions.input).toBe(
+      "virtual:svelte-readme-hydrate-entry",
+    );
   });
 });

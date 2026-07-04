@@ -304,7 +304,7 @@ Yes — import the component the same way you would in any Svelte 5 project.
 <details>
 <summary>Can I disable the default styles?</summary>
 
-Yes, pass `disableDefaultCSS: true` to `createConfig`.
+Yes, pass `disableDefaultCSS: true` to `svelteReadme`.
 
 </details>
 
