@@ -169,6 +169,21 @@ describe("preprocessReadme", () => {
     expect(after).toContain('console.log("after edit")');
   });
 
+  test("treats a package name containing regex metacharacters as a literal string", async () => {
+    // "a.b" is a valid (if unusual) npm name; "." is also a regex wildcard, so an
+    // unescaped pattern would incorrectly also match "aXb" below.
+    const withDottedName = preprocessReadme({
+      name: "a.b",
+      svelte: SVELTE_ENTRY,
+      homepage: "https://github.com/metonym/svelte-readme",
+    });
+    const content = '```svelte\n<script>\n  import x from "a.b";\n  console.log("aXb");\n</script>\n```';
+    const result = await withDottedName.markup({ content, filename: "README.md" });
+
+    expect(result?.code).toContain(`import x from "${SVELTE_ENTRY}"`);
+    expect(result?.code).toContain('console.log("aXb")');
+  });
+
   test("highlights fenced code using Prism language aliases", async () => {
     const ts = await markup("```ts\nconst a: number = 1;\n```");
     expect(ts).toContain('<pre class="language-typescript">');
