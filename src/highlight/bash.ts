@@ -1,5 +1,10 @@
 import { type Claim, gapFill, renderClaims } from "./shared.js";
 
+// `keyword`/`string`/`function`/`comment` are already styled in `./shared.js`; `variable`
+// and `parameter` have no dedicated color of their own. Exported for parity with the
+// other grammar modules — see `./shared.js`'s `baseTokenStyles` doc comment.
+export const styles = "";
+
 // True shell reserved words (control-flow syntax), not just common builtin commands —
 // `export`/`cd`/`echo`/etc. are ordinary commands and get `function` styling instead,
 // via `atCommandStart` below, the same way any other command name would.

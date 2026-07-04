@@ -1,5 +1,10 @@
 import { type Claim, gapFill, renderClaims } from "./shared.js";
 
+// Every class this module claims (string/boolean/keyword/number) is already styled in
+// `./shared.js`; `property` (object keys) has no dedicated color of its own. Exported for
+// parity with the other grammar modules — see `./shared.js`'s `baseTokenStyles` doc comment.
+export const styles = "";
+
 const JSON_TOKEN_RE =
   /"(?:\\.|[^"\\])*"|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|\btrue\b|\bfalse\b|\bnull\b/g;
 const KEY_LOOKAHEAD_RE = /^\s*:/;

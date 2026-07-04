@@ -1,5 +1,13 @@
 import { type Claim, gapFill, renderClaims } from "./shared.js";
 
+// Falls back to this default text color for unclaimed scalars (e.g. a bare `key:` with
+// no recognized value type) and keys (`atrule`), which have no dedicated color of their
+// own — everything else this module claims (string/number/boolean/comment) is styled
+// in `./shared.js`.
+export const styles = `
+  .language-yaml { color: #0550ae; }
+`;
+
 const KEY_RE = /^(\s*(?:-\s+)?)([^\s:#][^:]*?)(:)(\s|$)/;
 const QUOTED_RE = /^["'][\s\S]*["']$/;
 const SCALAR_KEYWORD_RE = /^(true|false|null|~|yes|no)$/i;

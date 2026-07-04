@@ -16,6 +16,23 @@ export function token(className: string, text: string): string {
   return `<span class="token ${className}">${escapeHtml(text)}</span>`;
 }
 
+// Styling for the token classes emitted from this file (`gapFill`'s punctuation/operator
+// fallback) plus the classes every grammar-specific highlighter claims for the same
+// meaning (keyword/comment/function/string/number/boolean) — colocated here, rather than
+// duplicated per grammar, because their meaning doesn't change across grammars. A grammar
+// module only needs its own `styles` export for classes unique to (or recolored for) that
+// grammar; see e.g. `./typescript.js`'s `.language-typescript` overrides.
+export const baseTokenStyles = `
+  .token.keyword { color: #d73a49; }
+  .token.punctuation { color: #24292e; }
+  .token.operator { color: #d73a49; }
+  .token.comment { color: #6a737d; }
+  .token.function { color: #6f42c1; }
+  .token.string { color: #032f62; }
+  .token.number { color: #005cc5; }
+  .token.boolean { color: #005cc5; }
+`;
+
 // Renders `claims` (absolute offsets into `source`) in order, filling every span
 // between/around them with `gapFill`. Claims are expected to be non-overlapping leaf
 // spans (e.g. a single string literal or keyword) rather than nested containers — a
