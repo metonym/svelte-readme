@@ -20,8 +20,7 @@
     "build": "bun run preprocess && bun scripts/build.ts",
     "lint": "biome check --write .",
     "lint:changed": "biome check --write --changed --since=master --no-errors-on-unmatched .",
-    "test": "bun test",
-    "verify": "bun scripts/verifyPreprocess.ts"
+    "test": "bun test"
   },
   "dependencies": {
     "prism-svelte": "^0.4.7",

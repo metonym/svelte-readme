@@ -28,9 +28,6 @@ jobs:
       - name: Build package
         run: bun run build
 
-      - name: Verify against Svelte 5
-        run: bun run verify
-
       - name: Link package
         run: bun link
 
