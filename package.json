@@ -17,7 +17,7 @@
   "scripts": {
     "preprocess": "bun scripts/preprocessStyles.ts",
     "dev": "bun run preprocess && bun scripts/build.ts -w",
-    "prepack": "bun run preprocess && bun scripts/build.ts",
+    "build": "bun run preprocess && bun scripts/build.ts",
     "lint": "biome check --write .",
     "lint:changed": "biome check --write --changed --since=master --no-errors-on-unmatched .",
     "test": "bun test",
