@@ -32,8 +32,21 @@ const custom_css = `
   pre { margin-bottom: 48px; }
 `;
 
+// Hand-rolled instead of pulling in a CSS minifier dependency: this only ever
+// runs on the well-formed, comment-free stylesheets built here, so a simple
+// comment strip + whitespace collapse is enough (no need to handle url()
+// strings, escapes, etc. that a general-purpose minifier would).
+function minifyCss(css: string): string {
+  return css
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/\s+/g, " ")
+    .replace(/\s*([{}:;,])\s*/g, "$1")
+    .replace(/;}/g, "}")
+    .trim();
+}
+
 postcss([plugin])
   .process(github_css, { from: undefined })
   .then((result) => {
-    fs.writeFileSync("src/style.css", `${result.css}${custom_css}`);
+    fs.writeFileSync("src/style.css", minifyCss(`${result.css}${custom_css}`));
   });
