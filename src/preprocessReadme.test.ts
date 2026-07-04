@@ -192,4 +192,29 @@ describe("preprocessReadme", () => {
     );
     errorSpy.mockRestore();
   });
+
+  test("escapes curly braces in prose so they aren't parsed as Svelte mustache tags", async () => {
+    const code = await markup("This uses {foo} syntax in plain text.");
+    expect(code).toContain(
+      "This uses &lbrace;foo&rbrace; syntax in plain text.",
+    );
+  });
+
+  test("escapes curly braces in inline code, including object-literal-shaped content that would otherwise fail to compile", async () => {
+    const code = await markup("Use `background: { color: 'red' }` config.");
+    expect(code).toContain(
+      "<code>background: &lbrace; color: 'red' &rbrace;</code>",
+    );
+  });
+
+  test("escapes curly braces in indented code blocks", async () => {
+    const code = await markup("    const x = { a: 1 };\n");
+    expect(code).toContain("const x = &lbrace; a: 1 &rbrace;;");
+  });
+
+  test("leaves curly braces inside fenced code blocks untouched (they're wrapped in a template literal, not parsed as markup)", async () => {
+    const code = await markup("```js\nconst x = { a: 1 };\n```");
+    expect(code).toContain('<span class="token punctuation">{</span>');
+    expect(code).toContain('<span class="token punctuation">}</span>');
+  });
 });

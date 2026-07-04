@@ -340,6 +340,20 @@ export function preprocessReadme(
 
   md.use(markdownItAnchor);
 
+  // Prose and inline/indented code are rendered as literal text and later re-parsed as Svelte
+  // markup, so a stray `{`/`}` (e.g. `` `{ color: "red" }` ``) would be misread as a mustache
+  // tag. Code fences aren't affected: their highlighted output is wrapped in a `{@html \`...\`}`
+  // template literal, where curly braces are just template-string content.
+  const escapeCurlyBraces = (html: string) =>
+    html.replace(/{/g, "&lbrace;").replace(/}/g, "&rbrace;");
+
+  for (const ruleName of ["text", "code_inline", "code_block"] as const) {
+    const defaultRule = md.renderer.rules[ruleName];
+    if (!defaultRule) continue;
+    md.renderer.rules[ruleName] = (tokens, idx, options, env, self) =>
+      escapeCurlyBraces(defaultRule(tokens, idx, options, env, self));
+  }
+
   return {
     // @ts-expect-error
     markup: ({ content, filename }) => {
