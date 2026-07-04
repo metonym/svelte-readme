@@ -1,6 +1,18 @@
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import postcss, { type Plugin } from "postcss";
+
+const OUTPUT_PATH = "src/style.css";
+
+// Lives inside node_modules so it self-invalidates for free whenever dependencies
+// are reinstalled — a bumped `github-markdown-css` version changes `github_css`'s
+// content anyway, but this also means a fresh `npm install` doesn't linger on a
+// hash computed against a node_modules tree that no longer exists.
+const CACHE_PATH = path.join(
+  process.cwd(),
+  "node_modules/.cache/svelte-readme/style-hash",
+);
 
 const github_css = fs.readFileSync(
   path.join(
@@ -45,8 +57,29 @@ function minifyCss(css: string): string {
     .trim();
 }
 
-postcss([plugin])
-  .process(github_css, { from: undefined })
-  .then((result) => {
-    fs.writeFileSync("src/style.css", minifyCss(`${result.css}${custom_css}`));
-  });
+// Hashes the raw upstream CSS plus this script's own source, so either a
+// `github-markdown-css` version bump or an edit to the selector-stripping/minify
+// logic here invalidates the cache — not just a change to the CSS bytes.
+function hashInputs(): string {
+  const hasher = new Bun.CryptoHasher("sha256");
+  hasher.update(github_css);
+  hasher.update(fs.readFileSync(fileURLToPath(import.meta.url), "utf-8"));
+  return hasher.digest("hex");
+}
+
+const hash = hashInputs();
+const cachedHash = fs.existsSync(CACHE_PATH)
+  ? fs.readFileSync(CACHE_PATH, "utf-8")
+  : null;
+
+if (cachedHash === hash && fs.existsSync(OUTPUT_PATH)) {
+  console.log("✓ Style preprocessing skipped (github-markdown-css unchanged)");
+} else {
+  postcss([plugin])
+    .process(github_css, { from: undefined })
+    .then((result) => {
+      fs.writeFileSync(OUTPUT_PATH, minifyCss(`${result.css}${custom_css}`));
+      fs.mkdirSync(path.dirname(CACHE_PATH), { recursive: true });
+      fs.writeFileSync(CACHE_PATH, hash);
+    });
+}

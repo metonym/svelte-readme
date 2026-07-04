@@ -1,7 +1,6 @@
 import { URL } from "node:url";
 import { walk } from "estree-walker";
 import Markdown from "markdown-it";
-import markdownItAnchor from "markdown-it-anchor";
 import type { PreprocessorGroup } from "svelte/compiler";
 import { parse } from "svelte/compiler";
 import { highlightBash } from "./highlight/bash.js";
@@ -307,8 +306,6 @@ export function preprocessReadme(
 
   const md = new Markdown({
     html: true,
-    linkify: true,
-    typographer: true,
     highlight(source, lang, attrs) {
       if (lang === "svelte") {
         const noEval = NO_EVAL_ATTR.test(attrs);
@@ -381,9 +378,38 @@ export function preprocessReadme(
     },
   });
 
-  // markdown-it-anchor 9.x adds `tabindex="-1"` to headings by default (for a11y
-  // focus-jump support); keep output markup unchanged from pre-upgrade behavior.
-  md.use(markdownItAnchor, { tabIndex: false });
+  // Assigns each heading an `id` slug, mirroring markdown-it-anchor's default `slugify`
+  // (`encodeURIComponent(text.trim().toLowerCase().replace(/\s+/g, "-"))`) and its dedupe
+  // scheme (repeat headings get `-1`, `-2`, ... suffixes).
+  md.core.ruler.push("heading_id", (state) => {
+    const seen = new Set<string>();
+
+    for (let i = 0; i < state.tokens.length; i++) {
+      const token = state.tokens[i];
+      if (token.type !== "heading_open") continue;
+
+      const text = (state.tokens[i + 1].children ?? [])
+        .filter(
+          (child) => child.type === "text" || child.type === "code_inline",
+        )
+        .map((child) => child.content)
+        .join("");
+
+      const slug = encodeURIComponent(
+        text.trim().toLowerCase().replace(/\s+/g, "-"),
+      );
+
+      let id = slug;
+      let suffix = 1;
+      while (seen.has(id)) {
+        id = `${slug}-${suffix}`;
+        suffix += 1;
+      }
+      seen.add(id);
+
+      token.attrSet("id", id);
+    }
+  });
 
   // Prose and inline/indented code are rendered as literal text and later re-parsed as Svelte
   // markup, so a stray `{`/`}` (e.g. `` `{ color: "red" }` ``) would be misread as a mustache

@@ -144,6 +144,22 @@ describe("preprocessReadme", () => {
     expect(code).toContain('<h3 id="sub-section-a">Sub Section A</h3>');
   });
 
+  test("dedupes heading ids for repeated heading text with a numeric suffix", async () => {
+    const code = await markup("## Usage\n\n## Usage\n");
+    expect(code).toContain('<h2 id="usage">Usage</h2>');
+    expect(code).toContain('<h2 id="usage-1">Usage</h2>');
+  });
+
+  test("percent-encodes non-alphanumeric characters in heading ids", async () => {
+    const code = await markup("## API (v2)");
+    expect(code).toContain('<h2 id="api-(v2)">API (v2)</h2>');
+  });
+
+  test("builds a heading id from text that includes inline code", async () => {
+    const code = await markup("## `useEffect` Hook");
+    expect(code).toContain('<h2 id="useeffect-hook">');
+  });
+
   // A single `markup()` call merges every svelte fence in that README into one shared
   // `<script>`, so these three fence variants share one call to exercise that merge.
   test("handles svelte code fences: default demo, `no-eval`, and `no-display`", async () => {

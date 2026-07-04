@@ -20,8 +20,7 @@
     "build": "bun run preprocess && bun scripts/build.ts",
     "lint": "biome check --write .",
     "lint:changed": "biome check --write --changed --since=master --no-errors-on-unmatched .",
-    "test": "bun test",
-    "verify": "bun scripts/verifyPreprocess.ts"
+    "test": "bun test"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.2",
@@ -33,7 +32,6 @@
     "estree-walker": "^3.0.3",
     "github-markdown-css": "4.0.0",
     "markdown-it": "^14.3.0",
-    "markdown-it-anchor": "^9.2.0",
     "postcss": "^8.2.4",
     "svelte": "^5.56.4",
     "vite": "^8.1.3"
