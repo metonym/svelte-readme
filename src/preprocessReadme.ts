@@ -36,6 +36,31 @@ const NO_EVAL_ATTR = /no-eval/;
 const NO_DISPLAY_ATTR = /no-display/;
 const NODE_MODULES_PATH = /node_modules/;
 
+// Appends a heading's TOC entry, opening/closing the nested `<ul>` when transitioning
+// between h2 and h3 siblings (h3s nest under the preceding h2; h2s close it back out).
+function pushHeadingToToc(
+  level: "h2" | "h3",
+  node: Node,
+  prev: "h2" | "h3" | undefined,
+  headings: string[],
+): "h2" | "h3" | undefined {
+  // @ts-expect-error — Svelte's markup AST has no official types (see `Node` above)
+  const id = node.attributes.find((attr) => attr.name === "id").value[0].raw;
+  const text = getChildNodeText(node);
+
+  if (text === undefined) return prev;
+
+  const prefix =
+    level === "h2" && prev === "h3"
+      ? "</ul>"
+      : level === "h3" && prev === "h2"
+        ? "<ul>"
+        : "";
+  headings.push(`${prefix}<li><a href="#${id}">${text}</a></li>`);
+
+  return level;
+}
+
 // Underlines whichever `.sr-toc-sidebar` link points at the heading currently
 // scrolled into the top portion of the viewport (the `.sr-toc-inline` copy shown
 // on mobile has no sticky position to track against, so it's excluded).
@@ -270,7 +295,7 @@ export function preprocessReadme(
 
     const ast = parse(result) as unknown as Node;
 
-    const headings = [];
+    const headings: string[] = [];
     let prev: undefined | "h2" | "h3";
 
     walk(
@@ -303,38 +328,11 @@ export function preprocessReadme(
             cursor -= replace_style.length;
           }
 
-          if (node.type === "Element" && node.name === "h2") {
-            // @ts-expect-error
-            const id = node.attributes.find((attr) => attr.name === "id")
-              .value[0].raw;
-            const text = getChildNodeText(node);
-
-            if (text !== undefined) {
-              if (prev === "h3") {
-                headings.push(`</ul><li><a href="#${id}">${text}</a></li>`);
-              } else {
-                headings.push(`<li><a href="#${id}">${text}</a></li>`);
-              }
-
-              prev = "h2";
-            }
-          }
-
-          if (node.type === "Element" && node.name === "h3") {
-            // @ts-expect-error
-            const id = node.attributes.find((attr) => attr.name === "id")
-              .value[0].raw;
-            const text = getChildNodeText(node);
-
-            if (text !== undefined) {
-              if (prev === "h2") {
-                headings.push(`<ul><li><a href="#${id}">${text}</a></li>`);
-              } else {
-                headings.push(`<li><a href="#${id}">${text}</a></li>`);
-              }
-
-              prev = "h3";
-            }
+          if (
+            node.type === "Element" &&
+            (node.name === "h2" || node.name === "h3")
+          ) {
+            prev = pushHeadingToToc(node.name, node, prev, headings);
           }
 
           if (
