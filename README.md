@@ -1,10 +1,10 @@
 # svelte-readme
 
-> Develop and demo your Svelte components in your README.md.
+> A Vite plugin and Svelte preprocessor for developing and demoing your Svelte components in your README.md.
 
 ## Readme Driven Development
 
-This project embraces the concept of [Readme Driven Development](https://tom.preston-werner.com/2010/08/23/readme-driven-development.html) (RDD) – or more generally, documentation driven development.
+This project embraces the concept of [Readme Driven Development](https://tom.preston-werner.com/2010/08/23/readme-driven-development.html) (RDD), or more generally, documentation driven development.
 
 This module enables the `README.md` to be used for:
 
@@ -24,15 +24,14 @@ At its core, this library is a simple Svelte preprocessor.
 1. Use the `svelte` entry defined in your project `package.json`
 2. Use `README.md` as the Svelte source code
 3. Parse Markdown using [Markdown It](https://github.com/markdown-it/markdown-it)
-4. Run code within `svelte` code fence blocks so that demos are juxtaposed with code
+4. Highlight code with [PrismJS](https://github.com/PrismJS/prism) and run `svelte` code fence blocks so that demos are juxtaposed with code
+5. Style the result with [GitHub Markdown CSS](https://github.com/sindresorhus/github-markdown-css) to maintain a consistent look with [github.com](https://github.com/)
 
-[GitHub Markdown CSS](https://github.com/sindresorhus/github-markdown-css) is used for styling to maintain a consistent style with [github.com](https://github.com/).
+## Installation
 
-### Libraries
-
-- [Markdown It](https://github.com/markdown-it/markdown-it)
-- [PrismJS](https://github.com/PrismJS/prism)
-- [GitHub Markdown CSS](https://github.com/sindresorhus/github-markdown-css)
+```sh
+npm install svelte-readme
+```
 
 ## Usage
 
@@ -41,7 +40,7 @@ This library exports two methods:
 - `createConfig` (default export): creates a Vite configuration for you
 - `preprocessReadme`: standalone Svelte markup preprocessor
 
-`createConfig` is tightly coupled with Vite, and requires `svelte` (5.46.4+) and `vite` (8+) as peer dependencies. `preprocessReadme` has no such constraint. At a minimum, `package.json#svelte` and `package.json#name` are required.
+`createConfig` requires Svelte 5+ as a peer dependency. `preprocessReadme` has no such constraint. At a minimum, `package.json#svelte` and `package.json#name` are required.
 
 **package.json**
 
@@ -73,7 +72,9 @@ import { defineConfig } from "vite";
 export default defineConfig((env) => svelteReadme()(env));
 ```
 
-### API
+## API
+
+All properties are optional.
 
 ```ts
 interface CreateConfigOptions {
@@ -81,25 +82,25 @@ interface CreateConfigOptions {
    * set the folder to emit the files
    * @default "dist"
    */
-  outDir: string;
+  outDir?: string;
 
   /**
    * custom CSS appended to the <style> block
    * @default ""
    */
-  style: string;
+  style?: string;
 
   /**
    * set to `true` to omit the default GitHub styles
    * @default false
    */
-  disableDefaultCSS: boolean;
+  disableDefaultCSS?: boolean;
 
   /**
    * value to prepend to relative URLs (i.e. GitHub repo URL)
    * @default undefined
    */
-  prefixUrl: string;
+  prefixUrl?: string;
 
   /**
    * Called with the source of each `svelte` code fence before it's highlighted for display,
@@ -107,30 +108,27 @@ interface CreateConfigOptions {
    * displayed unformatted if this is omitted or its result rejects/throws.
    * @default undefined
    */
-  format: (source: string) => string | Promise<string>;
+  format?: (source: string) => string | Promise<string>;
 
   /**
    * `@sveltejs/vite-plugin-svelte` options
    * @default {}
    */
-  svelte: VitePluginSvelteOptions;
+  svelte?: VitePluginSvelteOptions;
 
   /**
    * Vite plugins
    * @default {[]}
    */
-  plugins: Plugin[];
+  plugins?: Plugin[];
 
   /**
    * Append content to the `head` element in `index.html`
+   * @default undefined
    */
-  head: string;
+  head?: string;
 }
 ```
-
-## Prior art
-
-This project is inspired by [MDsveX](https://github.com/pngwn/mdsvex).
 
 ## Changelog
 
