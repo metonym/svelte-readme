@@ -1,4 +1,12 @@
-import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from "bun:test";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -36,6 +44,10 @@ beforeEach(() => {
 afterEach(() => {
   process.chdir(originalCwd);
   fs.rmSync(fixtureDir, { recursive: true, force: true });
+
+  // Restore the console spies so a leftover mock (and its accumulated call count)
+  // doesn't leak into whichever test file bun runs next.
+  mock.restore();
 });
 
 const buildEnv: ConfigEnv = { command: "build", mode: "production" };
