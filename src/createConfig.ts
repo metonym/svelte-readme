@@ -1,7 +1,8 @@
+import fs from "node:fs";
+import fsPromises from "node:fs/promises";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { svelte, type Options as VitePluginSvelteOptions } from "@sveltejs/vite-plugin-svelte";
-import fs from "fs-extra";
 import htmlminifier from "html-minifier";
 import type { PreprocessorGroup } from "svelte/compiler";
 import type { ConfigEnv, Plugin, UserConfig } from "vite";
@@ -254,7 +255,7 @@ export default function createConfig(opts: Partial<CreateConfigOptions> = {}): (
           if (req.method !== "GET" || !req.headers.accept?.includes("text/html")) return next();
 
           try {
-            const html = await fs.readFile(path.join(output_dir, "index.html"), "utf-8");
+            const html = await fsPromises.readFile(path.join(output_dir, "index.html"), "utf-8");
             res.setHeader("Content-Type", "text/html");
             res.end(html);
           } catch {
@@ -269,8 +270,8 @@ export default function createConfig(opts: Partial<CreateConfigOptions> = {}): (
 
         if (!entryChunk) return;
 
-        await fs.ensureFile(path.join(output_dir, "index.html"));
-        await fs.writeFile(path.join(output_dir, "index.html"), renderTemplate(`./${entryChunk.fileName}`));
+        await fsPromises.mkdir(output_dir, { recursive: true });
+        await fsPromises.writeFile(path.join(output_dir, "index.html"), renderTemplate(`./${entryChunk.fileName}`));
       },
     };
 
