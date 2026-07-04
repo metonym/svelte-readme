@@ -1,3 +1,4 @@
+// biome-ignore lint/style/noRestrictedImports: spyOn isn't a bun:test global, and importing it disables Bun's implicit test globals for the rest of this file
 import { describe, expect, spyOn, test } from "bun:test";
 import { preprocessReadme } from "./preprocessReadme.js";
 
@@ -13,13 +14,13 @@ const pre = preprocessReadme({
 });
 
 async function markup(content: string, filename = "README.md") {
-  const result = await pre.markup({ content, filename });
+  const result = await pre.markup?.({ content, filename });
   return result?.code;
 }
 
 describe("preprocessReadme", () => {
   test("ignores files that are not markdown", async () => {
-    const result = await pre.markup({
+    const result = await pre.markup?.({
       content: "# Title",
       filename: "src/App.svelte",
     });
@@ -27,7 +28,7 @@ describe("preprocessReadme", () => {
   });
 
   test("ignores markdown files inside node_modules", async () => {
-    const result = await pre.markup({
+    const result = await pre.markup?.({
       content: "# Title",
       filename: "node_modules/some-pkg/README.md",
     });
@@ -45,7 +46,7 @@ describe("preprocessReadme", () => {
       svelte: SVELTE_ENTRY,
       repoUrl: "https://github.com/metonym/svelte-readme",
     });
-    const result = await withRepoUrl.markup({
+    const result = await withRepoUrl.markup?.({
       content: "<!-- REPO_URL -->",
       filename: "README.md",
     });
@@ -65,7 +66,7 @@ describe("preprocessReadme", () => {
       svelte: SVELTE_ENTRY,
       repoUrl: "https://github.com/metonym/svelte-readme",
     });
-    const result = await withRepoUrl.markup({
+    const result = await withRepoUrl.markup?.({
       content: "<!-- REPO_URL -->\n\n<!-- REPO_URL -->",
       filename: "README.md",
     });
@@ -86,7 +87,7 @@ describe("preprocessReadme", () => {
       svelte: SVELTE_ENTRY,
       prefixUrl: "https://example.com/base/",
     });
-    const result = await withPrefix.markup({
+    const result = await withPrefix.markup?.({
       content: "[rel](./foo.md)",
       filename: "README.md",
     });
@@ -250,7 +251,7 @@ describe("preprocessReadme", () => {
     });
     const content =
       '```svelte\n<script>\n  import x from "a.b";\n  console.log("aXb");\n</script>\n```';
-    const result = await withDottedName.markup({
+    const result = await withDottedName.markup?.({
       content,
       filename: "README.md",
     });
@@ -270,7 +271,7 @@ describe("preprocessReadme", () => {
       },
     });
 
-    const result = await withFailingFormat.markup({
+    const result = await withFailingFormat.markup?.({
       content:
         "```svelte\n<script>\n  let count = 0;\n</script>\n<button>{count}</button>\n```",
       filename: "README.md",
@@ -292,7 +293,7 @@ describe("preprocessReadme", () => {
       format: async (source) => `${source}\n<!-- formatted-marker -->`,
     });
 
-    const result = await withFormat.markup({
+    const result = await withFormat.markup?.({
       content: "```svelte\n<script>\n  let count = 0;\n</script>\n```",
       filename: "README.md",
     });

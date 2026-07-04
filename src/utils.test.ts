@@ -1,3 +1,4 @@
+// biome-ignore lint/style/noRestrictedImports: spyOn isn't a bun:test global, and importing it disables Bun's implicit test globals for the rest of this file
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import fs from "node:fs";
 import os from "node:os";

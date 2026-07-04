@@ -44,9 +44,16 @@ function distIsComplete(): boolean {
   return OUTPUT_FILES.every((file) => fs.existsSync(path.join("dist", file)));
 }
 
+// tsconfig.json's `include` also covers `scripts` (so its type errors surface too),
+// which means tsgo can't scope `rootDir` to `src` alone — it infers the repo root
+// instead, emitting declarations under `dist/src` and `dist/scripts`. Flatten `dist/src`
+// back to `dist` (matching the bundler's flat `dist/index.js`) and drop the rest.
 async function emitTypeDeclarations(): Promise<boolean> {
   try {
     await $`tsgo -p tsconfig.json`;
+    await $`cp -r dist/src/. dist/`;
+    await $`rm -rf dist/src dist/scripts`;
+    await $`rm -f dist/*.test.d.ts`;
     return true;
   } catch {
     if (!isWatchMode) process.exit(1);

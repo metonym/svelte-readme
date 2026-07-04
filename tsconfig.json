@@ -7,14 +7,13 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "lib": ["ESNext"],
-    "rootDir": "src",
     "outDir": "dist",
     "strict": true,
     "skipLibCheck": true,
     "verbatimModuleSyntax": true,
     "noEmitOnError": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "types": ["jest"]
   },
-  "include": ["src"],
-  "exclude": ["src/**/*.test.ts"]
+  "include": ["src", "scripts"]
 }

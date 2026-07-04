@@ -32,6 +32,18 @@
       },
       "suspicious": {
         "noImportCycles": "error"
+      },
+      "style": {
+        "noRestrictedImports": {
+          "level": "error",
+          "options": {
+            "paths": {
+              "bun:test": {
+                "message": "bun:test imports are unnecessary."
+              }
+            }
+          }
+        }
       }
     }
   },

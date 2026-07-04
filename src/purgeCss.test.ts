@@ -1,4 +1,3 @@
-import { describe, expect, test } from "bun:test";
 import { purgeUnusedCss } from "./purgeCss.js";
 
 describe("purgeUnusedCss", () => {

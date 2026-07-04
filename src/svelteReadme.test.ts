@@ -6,6 +6,7 @@ import {
   mock,
   spyOn,
   test,
+  // biome-ignore lint/style/noRestrictedImports: mock/spyOn aren't bun:test globals, and importing them disables Bun's implicit test globals for the rest of this file
 } from "bun:test";
 import fs from "node:fs";
 import os from "node:os";
@@ -123,7 +124,8 @@ describe("svelteReadme", () => {
     // biome-ignore lint/suspicious/noExplicitAny: see above
     (htmlPlugin.config as any)({}, buildEnv);
 
-    await htmlPlugin.writeBundle(
+    // biome-ignore lint/suspicious/noExplicitAny: see above
+    await (htmlPlugin.writeBundle as any)(
       undefined as never,
       {
         "s-abc123.js": { isEntry: true, fileName: "s-abc123.js" },
@@ -145,7 +147,8 @@ describe("svelteReadme", () => {
     // biome-ignore lint/suspicious/noExplicitAny: see above
     (htmlPlugin.config as any)({}, buildEnv);
 
-    await htmlPlugin.writeBundle(
+    // biome-ignore lint/suspicious/noExplicitAny: see above
+    await (htmlPlugin.writeBundle as any)(
       undefined as never,
       {
         "s-abc123.js": { isEntry: true, fileName: "s-abc123.js" },
@@ -170,7 +173,8 @@ describe("svelteReadme", () => {
     // biome-ignore lint/suspicious/noExplicitAny: see above
     (htmlPlugin.config as any)({}, buildEnv);
 
-    await htmlPlugin.writeBundle(
+    // biome-ignore lint/suspicious/noExplicitAny: see above
+    await (htmlPlugin.writeBundle as any)(
       undefined as never,
       {
         "s-abc123.js": { isEntry: true, fileName: "s-abc123.js" },
