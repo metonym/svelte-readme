@@ -2,11 +2,13 @@
 
 [![NPM][npm]][npm-url] [![License][license]][license-url] [![Downloads][downloads]][downloads-url]
 
-> Accessible, dependency-free button components for Svelte 5 — no runtime CSS-in-JS, no global reset required.
+> Accessible, dependency-free button components for Svelte 5. No runtime CSS-in-JS, no global reset required.
 
 <!-- REPO_URL -->
 
-This package ships a single `Button` component. Every demo below uses that real component — nothing here is a mockup.
+This package ships a single `Button` component, built to cover the handful of interaction patterns most UIs actually need: a plain click handler, a toggled/pressed state for things like accordions and menu triggers, and a few visual variants for different contexts.
+
+Every demo on this page renders that real component, not a mockup or a screenshot. If you change the component's source and rebuild, what you see here changes with it, which makes this README a live reference instead of documentation that quietly drifts out of sync with the code.
 
 Relative URL: [Readme](./)
 
@@ -37,6 +39,8 @@ npm i my-svelte-component
 ```
 
 ## Usage
+
+The examples below cover the common cases: a plain click handler, a toggled state wired up with `bind:toggled`, and a few edge cases worth calling out explicitly, like name collisions between demos and code that should never run in the browser.
 
 ### Basic
 
@@ -92,7 +96,7 @@ Second script block, binding `toggled` to drive an accordion:
 
 ### Handling name collisions
 
-Every `svelte` code fence on this page is merged into a single `<script>` block when the demo renders, so duplicate variable names have to be reconciled. A variable declared identically in two fences (e.g. `let count = 0;` above) is left alone, but a name reused for something different — like `count` below, now a string — is automatically renamed internally so it doesn't collide with the block above:
+Every `svelte` code fence on this page is merged into a single `<script>` block when the demo renders, so duplicate variable names have to be reconciled. A variable declared identically in two fences (e.g. `let count = 0;` above) is left alone, but a name reused for something different (like `count` below, now a string) is automatically renamed internally so it doesn't collide with the block above:
 
 ```svelte
 <script>
@@ -116,7 +120,7 @@ Evaluated on mount, alongside every other live demo on this page:
 </script>
 ```
 
-Server-only code shown for reference — never evaluated in the browser:
+Server-only code shown for reference, never evaluated in the browser:
 
 ```svelte no-eval
 <script>
@@ -135,7 +139,7 @@ Runs on mount, but produces no visible output:
   import { onMount } from "svelte";
 
   onMount(() => {
-    document.title = "my-svelte-component — Kitchen Sink";
+    document.title = "my-svelte-component: Kitchen Sink";
   });
 </script>
 ```
@@ -187,7 +191,7 @@ Pair the component with a small action when its label needs to fit a fixed-width
 ### Options
 
 | Option    | Type                              | Default   | Description               |
-| --------- | --------------------------------- | --------- | -------------------------- |
+| :-------- | :--------------------------------- | :-------- | :-------------------------- |
 | `variant` | `"solid" \| "outline" \| "ghost"` | `"solid"` | Visual style                |
 | `size`    | `"sm" \| "md" \| "lg"`             | `"md"`    | Padding and font scale      |
 | `toggled` | `boolean`                          | `false`   | Bindable pressed state      |
@@ -206,9 +210,17 @@ Every heading level renders distinctly, down to:
 
 ###### Level six
 
+### Paragraphs
+
+Body copy renders at the library's base font size, with a line height tuned for long-form reading rather than dense UI labels. This paragraph exists mainly to show what two or three sentences of real prose look like at that size, instead of a single short line that never wraps and never reveals how the line height actually feels.
+
+A second paragraph follows directly below the first, separated by the block spacing unit rather than a full blank line's worth of margin stacked on both sides. Only bottom margin is set on paragraphs, so consecutive ones stack with even, predictable gaps no matter how many appear in a row.
+
+A short closing paragraph, just to confirm the rhythm holds up even when the last block in a run is brief.
+
 ### Emphasis
 
-Plain text, *italic*, **bold**, ***bold italic***, ~~strikethrough~~, and `inline code`.
+This sentence mixes plain text with *italic emphasis*, **bold emphasis**, ***bold italic emphasis***, ~~a strikethrough for a superseded value~~, and `inline code` for a literal identifier.
 
 ### Keyboard shortcuts
 
@@ -216,9 +228,9 @@ Press <kbd>Ctrl</kbd> + <kbd>K</kbd> (<kbd>⌘</kbd> + <kbd>K</kbd> on macOS) to
 
 ### Blockquotes
 
-> A single-level quote about the component.
+> `Button` accepts every standard HTML button attribute in addition to its own props, so an existing `onclick`, `disabled`, or `aria-label` keeps working exactly as expected.
 >
-> > A nested quote — useful for quoting a reply inside a quote.
+> > Nesting renders the same way GitHub does it: a reply quoted inside the quote it's replying to.
 
 ### Lists
 
@@ -240,7 +252,7 @@ Ordered, unordered, and mixed nesting:
 ### Tables
 
 | Browser | Minimum version |
-| ------- | ---------------- |
+| :------ | :--------------- |
 | Chrome  | 90                |
 | Firefox | 88                |
 | Safari  | 14                |
@@ -274,17 +286,19 @@ Content below a rule.
 ### Options
 
 | Flag        | Type      | Default   |
-| ----------- | --------- | --------- |
+| :---------- | :-------- | :-------- |
 | `--watch`   | `boolean` | `false`   |
 | `--outDir`  | `string`  | `"dist"`  |
 
 ## Persisting a user preference
 
-**Note**
+**Note:** the component itself is stateless and holds no opinion about persistence. If a toggled state should survive a page reload, read and write it yourself, typically from the parent component's `onMount`.
 
 ```js
 localStorage.getItem("custom-theme-key");
 ```
+
+Typed consumers can describe the shape of whatever gets stored:
 
 ```ts
 interface Interface {
@@ -297,7 +311,7 @@ interface Interface {
 <details>
 <summary>Does this work with SvelteKit?</summary>
 
-Yes — import the component the same way you would in any Svelte 5 project.
+Yes. Import the component the same way you would in any Svelte 5 project; SvelteKit doesn't require any special handling.
 
 </details>
 
