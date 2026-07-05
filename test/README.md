@@ -242,6 +242,8 @@ Ordered, unordered, and mixed nesting:
    2. Default export
 3. Render it
 
+A list sitting directly below the paragraph that introduces it (like this one) gets a tighter gap than the standard block spacing, since the pairing reads as one continuous thought rather than two independent blocks:
+
 - Buttons
   - Primary
   - Secondary
