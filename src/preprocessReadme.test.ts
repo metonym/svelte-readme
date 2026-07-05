@@ -6,6 +6,7 @@ const NAME = "my-svelte-component";
 const SVELTE_ENTRY = "./src/index.js";
 const EXTRACTED_STYLE = /<style>\s*h1 \{ color: red; \}\s*<\/style>/;
 const EXTRACTED_SCRIPT = /^<script>([\s\S]*?)<\/script>/;
+const BARE_NEW_INTERSECTION_OBSERVER = /[^.]\bnew IntersectionObserver\(/;
 
 const pre = preprocessReadme({
   name: NAME,
@@ -182,6 +183,14 @@ describe("preprocessReadme", () => {
     expect(code).toContain(
       'aria-label="Toggle table of contents" aria-expanded="false" aria-controls="sr-toc-drawer"',
     );
+  });
+
+  test("references globalThis.IntersectionObserver so a demo's own top-level `IntersectionObserver` import/binding can't shadow it", async () => {
+    const code = await markup(
+      '## Section One\n\n```svelte\n<script>\n  import IntersectionObserver from "svelte-intersection-observer";\n</script>\n```\n',
+    );
+    expect(code).toContain("new globalThis.IntersectionObserver(");
+    expect(code).not.toMatch(BARE_NEW_INTERSECTION_OBSERVER);
   });
 
   test("renders the overlay and drawer for the off-canvas mobile TOC", async () => {

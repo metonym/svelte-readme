@@ -274,7 +274,7 @@ const MOBILE_TITLE_SCRIPT = `__svelteReadmeOnMount(() => {
 
   if (!__svelteReadmeTitle || !__svelteReadmeH1) return;
 
-  const __svelteReadmeObserver = new IntersectionObserver(
+  const __svelteReadmeObserver = new globalThis.IntersectionObserver(
     ([entry]) => {
       __svelteReadmeTitle.classList.toggle(
         "sr-mobile-header-title-visible",
