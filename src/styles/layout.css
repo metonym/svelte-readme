@@ -10,7 +10,7 @@
 .sr-layout {
   display: grid;
   grid-template-columns: 11.25rem minmax(0, 60rem) 11.25rem;
-  column-gap: 3.125rem;
+  column-gap: 4.5rem;
   max-width: 87.5rem;
   margin: 0 auto;
   padding: 2.8125rem;
