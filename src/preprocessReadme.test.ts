@@ -1,4 +1,5 @@
 import { describe, expect, spyOn, test } from "bun:test";
+import { parse } from "svelte/compiler";
 import { preprocessReadme } from "./preprocessReadme.js";
 
 const NAME = "my-svelte-component";
@@ -285,9 +286,31 @@ describe("preprocessReadme", () => {
 
     const extractedScript = code?.match(EXTRACTED_SCRIPT)?.[1];
 
-    // identical declarations are deduplicated via the Set in the final script assembly
+    // identical declarations are deduplicated (as whole statements) via the Set in the
+    // final script assembly
     expect(extractedScript?.match(/let count = 0;/g)).toHaveLength(1);
     expect(extractedScript).not.toContain("count2");
+  });
+
+  // Regression test: two unrelated multi-line statements that happen to share one
+  // byte-identical interior line (e.g. the same `id: i + 1,` property in two separate
+  // `Array.from(...)` calls) must not have that line dropped from either one. A
+  // line-based (rather than statement-based) dedup would truncate the second
+  // statement, leaving a dangling `({` with no matching close.
+  test("does not corrupt an unrelated multi-line statement that shares a line of text with another fence", async () => {
+    const content = [
+      '```svelte\n<script>\n  let a = Array.from({ length: 3 }, (_, i) => ({\n    id: i + 1,\n    label: "hello",\n  }));\n</script>\n<p>{a.length}</p>\n```',
+      '```svelte\n<script>\n  let b = Array.from({ length: 5 }, (_, i) => ({\n    id: i + 1,\n    label: "world",\n  }));\n</script>\n<p>{b.length}</p>\n```',
+    ].join("\n\n");
+    const code = await markup(content);
+
+    const extractedScript = code?.match(EXTRACTED_SCRIPT)?.[1] ?? "";
+    expect(extractedScript.match(/id: i \+ 1,/g)).toHaveLength(2);
+    expect(extractedScript).toContain('label: "hello",');
+    expect(extractedScript).toContain('label: "world",');
+
+    // the merged script must still be syntactically valid
+    expect(() => parse(`<script>${extractedScript}</script>`)).not.toThrow();
   });
 
   test("treats a package name containing regex metacharacters as a literal string", async () => {

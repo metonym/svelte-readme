@@ -9,6 +9,7 @@ import {
   applyRenames,
   collectIdentifierRanges,
   collectTopLevelDeclarations,
+  collectTopLevelStatementTexts,
   computeRenameMap,
   escapeForTemplateLiteral,
   escapeRegExp,
@@ -74,7 +75,7 @@ function pushHeadingToToc(
 
 // Shared by every snippet below that needs `onMount` (TOC scroll-spy, theme toggle,
 // copy-button wiring): each snippet is concatenated directly into the final <script> tag rather
-// than merged through `script_content`'s line-level Set dedup, so importing `onMount`
+// than merged through `script_content`'s statement-level Set dedup, so importing `onMount`
 // separately in each one would double-declare the binding when more than one snippet
 // is present on the same page. Aliased so it can't collide with a demo's own import
 // of the same name either.
@@ -422,11 +423,10 @@ export function preprocessReadme(
         if (renamedInstance !== undefined && !noEval) {
           script_content = [
             ...script_content,
-            ...renamedSource
-              .slice(renamedInstance.start, renamedInstance.end)
-              .split("\n")
-              .slice(1, -1)
-              .map((line) => line.trim().replace(name_regex, opts.svelte)),
+            ...collectTopLevelStatementTexts(
+              renamedInstance.content,
+              renamedSource,
+            ).map((statement) => statement.replace(name_regex, opts.svelte)),
           ];
         }
 
