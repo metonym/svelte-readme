@@ -62,6 +62,7 @@ main.markdown-body {
 /* Rendered as the first child of both `.sr-toc` variants (sidebar and inline),
    so it always sits directly above whichever TOC copy is visible at the current
    viewport width. */
+/* Same raised-knob treatment as `.sr-code-lang-thumb`/`.sr-copy-button` in `style.css`. */
 .sr-theme-toggle {
   display: inline-flex;
   align-items: center;
@@ -73,9 +74,25 @@ main.markdown-body {
   color: var(--sr-color-fg-muted);
   cursor: pointer;
   appearance: none;
-  background-color: var(--sr-color-canvas);
+  background: linear-gradient(
+    180deg,
+    var(--sr-color-kbd-bg),
+    var(--sr-color-canvas-subtle)
+  );
   border: 1px solid var(--sr-color-border);
   border-radius: 0.375rem;
+  box-shadow:
+    0 1px 0 rgba(24, 24, 27, 0.04),
+    inset 0 1px 0 var(--sr-color-bevel-highlight);
+}
+
+/* Same dark-palette swap as `.sr-code-lang-thumb`'s in `style.css`. */
+:root[data-sr-theme="dark"] .sr-theme-toggle {
+  background: linear-gradient(
+    180deg,
+    var(--sr-color-border),
+    var(--sr-color-border-muted)
+  );
 }
 
 .sr-theme-toggle:hover {
