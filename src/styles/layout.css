@@ -54,6 +54,10 @@ main.markdown-body {
   margin-bottom: 0.875rem;
 }
 
+.sr-toc > ul > ul > li {
+  margin-bottom: 0.25rem;
+}
+
 .sr-toc a.sr-toc-active {
   color: var(--sr-color-link);
   text-decoration: underline;
