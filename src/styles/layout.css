@@ -99,27 +99,27 @@ main.markdown-body {
   color: var(--sr-color-fg);
 }
 
-/* Same specificity trick as `.sr-copy-icon`/`.sr-copy-check` in `style.css`: one
-   class each, so source order (not selector specificity) decides which icon shows
-   before `data-sr-theme` flips it. */
-.sr-theme-icon-moon {
-  display: none;
-}
-
-/* The moon's crescent is carved out by painting this second circle in the button's own
-   background color over the first (see `THEME_TOGGLE_MARKUP` in `preprocessReadme.ts`);
-   overridden here since the inline fill is plain canvas but the background above is now
-   a gradient — a CSS rule beats the inline presentation attribute either way. */
-:root[data-sr-theme="dark"] .sr-theme-icon-moon circle:last-child {
-  fill: var(--sr-color-border-muted);
-}
-
-:root[data-sr-theme="dark"] .sr-theme-icon-sun {
+/* The icon shown is the theme a click switches *to*, not the one currently active —
+   e.g. while light, the button shows the moon as an invitation to go dark. Same
+   one-class-each specificity trick as `.sr-copy-icon`/`.sr-copy-check` in `style.css`. */
+.sr-theme-icon-sun {
   display: none;
 }
 
 :root[data-sr-theme="dark"] .sr-theme-icon-moon {
+  display: none;
+}
+
+:root[data-sr-theme="dark"] .sr-theme-icon-sun {
   display: block;
+}
+
+/* The moon's crescent is carved out by painting this second circle in the button's own
+   background color over the first (see `THEME_TOGGLE_MARKUP` in `preprocessReadme.ts`);
+   overridden here since the inline fill is pure white but the background above is an
+   off-white gradient. */
+.sr-theme-icon-moon circle:last-child {
+  fill: var(--sr-color-canvas-subtle);
 }
 
 .sr-toc-sidebar {
