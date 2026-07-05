@@ -29,6 +29,7 @@
   --sr-color-canvas-subtle: #f4f4f5;
   --sr-color-kbd-bg: #fafafa;
   --sr-color-code-bg: rgba(24, 24, 27, 0.06);
+  --sr-color-code-link-bg: rgba(79, 70, 229, 0.1);
 
   --sr-color-border: #e4e4e7;
   --sr-color-border-muted: #ececef;
@@ -103,6 +104,7 @@
   --sr-color-canvas-subtle: #27272a;
   --sr-color-kbd-bg: #26262b;
   --sr-color-code-bg: rgba(255, 255, 255, 0.08);
+  --sr-color-code-link-bg: rgba(165, 180, 252, 0.14);
 
   --sr-color-border: #3f3f46;
   --sr-color-border-muted: #313136;
@@ -560,10 +562,22 @@ img[align="left"] {
 }
 
 code {
-  padding: 0.2em 0.4em;
+  padding: 0.15em 0.3em;
   margin: 0;
   font-size: 85%;
   background-color: var(--sr-color-code-bg);
+  border-radius: 0.25rem;
+  /* Recessed groove, same shadow language as `.sr-code-lang-toggle`'s track — reads as
+     a shallow well the text sits in, rather than the raised-button bevel used
+     elsewhere (`.code-fence button`, `kbd`). */
+  box-shadow: inset 0 1px 2px rgba(24, 24, 27, 0.08);
+}
+
+/* Markdown renders a linked inline code span (`` [`code`](url) ``) as `a > code` —
+   tint its background toward the link color so it reads as part of the link rather
+   than a plain code span that happens to sit inside one. */
+a code {
+  background-color: var(--sr-color-code-link-bg);
 }
 
 pre {
@@ -578,6 +592,8 @@ pre > code {
   white-space: pre;
   background: transparent;
   border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .highlight {
@@ -610,6 +626,8 @@ pre code {
   word-wrap: normal;
   background-color: initial;
   border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 /* Overrides to keep spacing consistent with our own layout. */
