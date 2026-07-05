@@ -159,6 +159,76 @@ describe("svelteReadme", () => {
     expect(html).toContain('content="my-svelte-component demo"');
   });
 
+  test("defaults to the svelte-readme logo favicon", async () => {
+    const htmlPlugin = getHtmlPlugin(svelteReadme());
+
+    // biome-ignore lint/suspicious/noExplicitAny: see above
+    (htmlPlugin.config as any)({}, buildEnv);
+
+    await htmlPlugin.writeBundle(
+      undefined as never,
+      {
+        "s-abc123.js": { isEntry: true, fileName: "s-abc123.js" },
+      } as never,
+    );
+
+    const html = fs.readFileSync(
+      path.join(fixtureDir, "dist", "index.html"),
+      "utf-8",
+    );
+    expect(html).toContain('<link rel="icon" href="data:image/svg+xml,');
+    expect(html).toContain(encodeURIComponent('viewBox="0 0 99 118"'));
+  });
+
+  test("respects a custom favicon override given as inline SVG markup", async () => {
+    const htmlPlugin = getHtmlPlugin(
+      svelteReadme({ favicon: '<svg><circle r="1"/></svg>' }),
+    );
+
+    // biome-ignore lint/suspicious/noExplicitAny: see above
+    (htmlPlugin.config as any)({}, buildEnv);
+
+    await htmlPlugin.writeBundle(
+      undefined as never,
+      {
+        "s-abc123.js": { isEntry: true, fileName: "s-abc123.js" },
+      } as never,
+    );
+
+    const html = fs.readFileSync(
+      path.join(fixtureDir, "dist", "index.html"),
+      "utf-8",
+    );
+    expect(html).toContain(
+      `<link rel="icon" href="data:image/svg+xml,${encodeURIComponent('<svg><circle r="1"/></svg>')}" />`,
+    );
+  });
+
+  test.each([
+    "/favicon.ico",
+    "./favicon.png",
+    "https://example.com/favicon.svg",
+    "data:image/png;base64,aGVsbG8=",
+  ])("passes a favicon href through unchanged instead of re-encoding it: %s", async (favicon) => {
+    const htmlPlugin = getHtmlPlugin(svelteReadme({ favicon }));
+
+    // biome-ignore lint/suspicious/noExplicitAny: see above
+    (htmlPlugin.config as any)({}, buildEnv);
+
+    await htmlPlugin.writeBundle(
+      undefined as never,
+      {
+        "s-abc123.js": { isEntry: true, fileName: "s-abc123.js" },
+      } as never,
+    );
+
+    const html = fs.readFileSync(
+      path.join(fixtureDir, "dist", "index.html"),
+      "utf-8",
+    );
+    expect(html).toContain(`<link rel="icon" href="${favicon}" />`);
+  });
+
   test("disableDefaultCSS omits the bundled GitHub styles, custom style is still appended", async () => {
     const htmlPlugin = getHtmlPlugin(
       svelteReadme({

@@ -127,6 +127,13 @@ interface SvelteReadmeOptions {
    * @default undefined
    */
   head?: string;
+
+  /**
+   * Favicon to use: either inline `<svg>` markup, or an href (absolute/relative path,
+   * `http(s)://` URL, or `data:` URI) pointing at an existing icon file
+   * @default the svelte-readme logo
+   */
+  favicon?: string;
 }
 ```
 
