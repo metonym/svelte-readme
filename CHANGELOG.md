@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.5.0](https://github.com/metonym/svelte-readme/releases/tag/v4.5.0) - 2026-07-05
+
+- add default favicon, with `favicon` prop
+- replace inline mobile TOC with sticky header and sidebar
+- revise heading tracking, widen TOC gap
+- strip TS generics from markup
+
 ## [4.4.0](https://github.com/metonym/svelte-readme/releases/tag/v4.4.0) - 2026-07-04
 
 - support TypeScript/JavaScript toggle for Svelte code blocks
