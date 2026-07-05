@@ -402,4 +402,69 @@ describe("preprocessReadme", () => {
     expect(code).toContain('<span class="token punctuation">{</span>');
     expect(code).toContain('<span class="token punctuation">}</span>');
   });
+
+  describe("TypeScript svelte fences", () => {
+    test('renders a TS/JS toggle and both highlighted variants for a `<script lang="ts">` fence', async () => {
+      const code = await markup(
+        '```svelte\n<script lang="ts">\n  export let count: number = 0;\n</script>\n<button>{count}</button>\n```',
+      );
+
+      expect(code).toContain('<span class="sr-code-variant-ts">');
+      expect(code).toContain('<span class="sr-code-variant-js">');
+      expect(code).toContain('class="sr-code-lang-toggle"');
+      // the TS-authored display keeps the annotation, unhighlighted-content-wise
+      expect(code).toContain("count");
+    });
+
+    test("evaluates the type-stripped source, not the original TypeScript", async () => {
+      const code = await markup(
+        '```svelte\n<script lang="ts">\n  interface Props { label?: string; }\n  export let count: number = 0;\n</script>\n<button>{count}</button>\n```',
+      );
+      const extractedScript = code?.match(EXTRACTED_SCRIPT)?.[1];
+
+      expect(extractedScript).toContain("export let count = 0;");
+      expect(extractedScript).not.toContain("interface");
+      expect(extractedScript).not.toContain(": number");
+    });
+
+    test("still renders the live demo markup using the original (unrenamed) identifiers", async () => {
+      const code = await markup(
+        '```svelte\n<script lang="ts">\n  export let count: number = 0;\n</script>\n<button on:click={() => count++}>{count}</button>\n```',
+      );
+      expect(code).toContain(
+        '<div class="code-fence"><button on:click={() => count++}>{count}</button></div>',
+      );
+    });
+
+    test("does not render a toggle for a plain (non-TS) svelte fence", async () => {
+      const code = await markup(
+        "```svelte\n<script>\n  let count = 0;\n</script>\n<button>{count}</button>\n```",
+      );
+      expect(code).not.toContain("sr-code-lang-toggle");
+      expect(code).not.toContain('class="sr-code-variant');
+    });
+
+    test("falls back to single-variant (TS-as-authored) display when a construct can't be erased", async () => {
+      const code = await markup(
+        '```svelte\n<script lang="ts">\n  enum Color { Red, Green }\n  export let c = Color.Red;\n</script>\n<p>{c}</p>\n```',
+      );
+      const extractedScript = code?.match(EXTRACTED_SCRIPT)?.[1];
+
+      expect(code).not.toContain("sr-code-lang-toggle");
+      expect(code).not.toContain('class="sr-code-variant');
+      // no stripping happened, so the raw (still TypeScript) fence is what's merged in
+      expect(extractedScript).toContain("enum Color");
+    });
+
+    test("respects no-eval on a TS fence: displayed and stripped for the toggle, but never merged into the shared script", async () => {
+      const code = await markup(
+        '```svelte no-eval\n<script lang="ts">\n  const secret: string = "shh";\n</script>\n```',
+      );
+      const extractedScript = code?.match(EXTRACTED_SCRIPT)?.[1];
+
+      expect(code).toContain('<span class="sr-code-variant-ts">');
+      expect(code).toContain('<span class="sr-code-variant-js">');
+      expect(extractedScript ?? "").not.toContain("secret");
+    });
+  });
 });
