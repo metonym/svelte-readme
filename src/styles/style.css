@@ -1042,3 +1042,27 @@ details code {
   border-radius: 0;
   box-shadow: none;
 }
+
+/* A code block already draws its own background/border — bleeding it flush
+   against `summary`'s border instead of adding the standard `summary + *` gap
+   on top makes it read as one continuous box rather than a box floating
+   inside a box. */
+summary + .sr-code-block,
+summary + pre {
+  margin-top: 0;
+}
+
+/* `pre`'s page-level `margin-bottom: var(--sr-spacing-xl)` override further up
+   (meant to clear the *next heading* after a top-level snippet) has no heading
+   to clear in here — left alone, it stacks on top of `details[open]`'s own
+   `padding-bottom`, ballooning into a gap over twice the size intended. Scaled
+   back to the standard block spacing, and dropped entirely when the code
+   block is the last thing revealed since `padding-bottom` already covers it. */
+details pre {
+  margin-bottom: var(--sr-spacing);
+}
+
+details > .sr-code-block:last-child pre,
+details > pre:last-child {
+  margin-bottom: 0;
+}
