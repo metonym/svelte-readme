@@ -73,6 +73,31 @@ describe("preprocessReadme", () => {
     expect(result?.code?.match(/GitHub repo/g)).toHaveLength(2);
   });
 
+  test("strips content between HIDE_START and HIDE_END markers", async () => {
+    const code = await markup(
+      "before\n\n<!-- HIDE_START -->\n![badge](https://example.com/badge.svg)\n<!-- HIDE_END -->\n\nafter",
+    );
+    expect(code).not.toContain("badge");
+    expect(code).toContain("before");
+    expect(code).toContain("after");
+  });
+
+  test("removes the HIDE markers themselves", async () => {
+    const code = await markup("<!-- HIDE_START -->hidden<!-- HIDE_END -->");
+    expect(code).not.toContain("HIDE_START");
+    expect(code).not.toContain("HIDE_END");
+    expect(code).not.toContain("hidden");
+  });
+
+  test("strips multiple non-overlapping HIDE blocks independently", async () => {
+    const code = await markup(
+      "<!-- HIDE_START -->one<!-- HIDE_END -->keep<!-- HIDE_START -->two<!-- HIDE_END -->",
+    );
+    expect(code).not.toContain("one");
+    expect(code).not.toContain("two");
+    expect(code).toContain("keep");
+  });
+
   test("rewrites relative links against the default prefix URL (homepage/tree/master)", async () => {
     const code = await markup("[rel](./foo.md)");
     expect(code).toContain(

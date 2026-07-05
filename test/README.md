@@ -1,6 +1,8 @@
 # my-svelte-component
 
+<!-- HIDE_START -->
 [![NPM][npm]][npm-url] [![License][license]][license-url] [![Downloads][downloads]][downloads-url]
+<!-- HIDE_END -->
 
 > Accessible, dependency-free button components for Svelte 5. No runtime CSS-in-JS, no global reset required.
 
