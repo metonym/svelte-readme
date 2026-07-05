@@ -202,24 +202,27 @@ export function svelteReadme(
     // succeeded (real markup to check against); on SSR failure the unpurged CSS ships as-is,
     // same fallback-to-safe behavior as the rest of this file's SSR handling. `opts.style` is
     // left untouched — it's consumer-authored and may target markup that only exists after
-    // hydration (e.g. state toggled in `onMount`), which purging can't see. `sr-toc-active` and
-    // `sr-copy-copied` are our own such classes (toggled by the TOC scroll-spy and copy-button
-    // scripts, respectively), `open` is the attribute a native `<details>` only gains once a
-    // user expands it, `data-sr-theme` and `data-sr-code-lang` are set on `<html>` itself
-    // — outside the `ssr.body`/`ssr.head` this purge checks against — by
-    // `THEME_INIT_SCRIPT`/`CODE_LANG_INIT_SCRIPT` below, and `data-sr-overflow-left`/
-    // `-right` are toggled on each `.sr-table-wrapper` by `TABLE_SCROLL_SHADOW_SCRIPT`
-    // as its table is scrolled, so all seven are explicitly allowlisted rather than
-    // silently stripped.
+    // hydration (e.g. state toggled in `onMount`), which purging can't see. `sr-toc-active`,
+    // `sr-copy-copied`, and `sr-mobile-header-title-visible` are our own such classes (toggled
+    // by the TOC scroll-spy, copy-button, and mobile-header-title scripts, respectively), `open`
+    // is the attribute a native `<details>` only gains once a user expands it, `data-sr-theme`,
+    // `data-sr-code-lang`, and `data-sr-toc-open` are set on `<html>` itself — outside the
+    // `ssr.body`/`ssr.head` this purge checks against — by `THEME_INIT_SCRIPT`/
+    // `CODE_LANG_INIT_SCRIPT` below and `TOC_DRAWER_SCRIPT` in `preprocessReadme.ts`, and
+    // `data-sr-overflow-left`/`-right` are toggled on each `.sr-table-wrapper` by
+    // `TABLE_SCROLL_SHADOW_SCRIPT` as its table is scrolled, so all nine are explicitly
+    // allowlisted rather than silently stripped.
     const html = ssr ? `${ssr.head}${ssr.body}` : undefined;
     const purge = (input: string) =>
       html
         ? purgeUnusedCss(input, html, [
             "sr-toc-active",
             "sr-copy-copied",
+            "sr-mobile-header-title-visible",
             "open",
             "data-sr-theme",
             "data-sr-code-lang",
+            "data-sr-toc-open",
             "data-sr-overflow-left",
             "data-sr-overflow-right",
           ])

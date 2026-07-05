@@ -68,6 +68,24 @@
      isn't styled by the rules below — form controls, the scrollbar, `<select>`
      dropdowns — switches to match instead of rendering a light widget on a dark page. */
   color-scheme: light;
+
+  /* Reserves the vertical scrollbar's width whether or not one is currently showing,
+     so toggling `overflow: hidden` on `<html>` while the mobile TOC drawer is open
+     (layout.css) doesn't shift the page's content over by the scrollbar's width. */
+  scrollbar-gutter: stable;
+}
+
+/* Same purge-survival trick as `:root[data-sr-theme="dark"]` above relies on for
+   `:root` itself, extended to `body`: `:where()`'s contents are stripped out entirely
+   before `purgeUnusedCss` extracts tokens (the same carve-out that lets `:not(...)`/
+   `:nth-child(...)` survive), so this selector resolves to zero tokens and is always
+   kept — unlike a plain `body { ... }` rule, which purging would drop (see the
+   `background-color` comment above: `body` never literally appears in the SSR
+   snapshot it checks against). Without this, the default 8px UA stylesheet margin
+   insets `.sr-layout` from the true viewport edges, most visibly breaking the mobile
+   sticky header's edge-to-edge bleed in layout.css. */
+:where(body) {
+  margin: 0;
 }
 
 /* Set on `<html>` before first paint by the inline script in the HTML template
