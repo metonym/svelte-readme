@@ -36,6 +36,12 @@
   --sr-color-border-table: #d4d4d8;
   --sr-color-hr: #e4e4e7;
 
+  /* Glossy top-edge highlight on the code-fence/copy button and `summary`'s bevel
+     (see `.code-fence button`/`summary` below) — a fixed white reads as a subtle sheen
+     on the light canvas but as a harsh glowing line once the surface behind it goes
+     dark, so it's a variable rather than a literal `rgba(255, 255, 255, 0.6)`. */
+  --sr-color-bevel-highlight: rgba(255, 255, 255, 0.6);
+
   --sr-spacing: 1.5rem;
   --sr-spacing-lg: 2.5rem;
   --sr-spacing-xl: 4rem;
@@ -49,6 +55,44 @@
   --sr-text-xl: 1.375rem;
   --sr-text-2xl: 1.75rem;
   --sr-text-3xl: 2.5rem;
+
+  /* Declared here (rather than on `body`) so `purgeUnusedCss` — which only checks
+     tags/classes/attrs actually present in the server-rendered markup — has no reason
+     to strip it: `:root` has no selector to verify and is always kept, while `body`
+     never literally appears in Svelte's SSR output (which renders only what's inside
+     it). `<html>`'s background still paints the full viewport per the CSS spec's
+     canvas-background propagation, same as if this were set on `body`. */
+  background-color: var(--sr-color-canvas);
+
+  /* Tells the browser which palette this page actually uses, so native chrome that
+     isn't styled by the rules below — form controls, the scrollbar, `<select>`
+     dropdowns — switches to match instead of rendering a light widget on a dark page. */
+  color-scheme: light;
+}
+
+/* Set on `<html>` before first paint by the inline script in the HTML template
+   (see `THEME_INIT_SCRIPT` in `svelteReadme.ts`), so this never flashes the light
+   palette before switching to dark. */
+:root[data-sr-theme="dark"] {
+  --sr-color-fg: #e4e4e7;
+  --sr-color-fg-muted: #a1a1aa;
+  --sr-color-fg-subtle: #d4d4d8;
+  --sr-color-link: #a5b4fc;
+
+  --sr-color-canvas: #18181b;
+  --sr-color-canvas-subtle: #27272a;
+  --sr-color-kbd-bg: #26262b;
+  --sr-color-code-bg: rgba(255, 255, 255, 0.08);
+
+  --sr-color-border: #3f3f46;
+  --sr-color-border-muted: #313136;
+  --sr-color-border-kbd: #52525b;
+  --sr-color-border-table: #52525b;
+  --sr-color-hr: #3f3f46;
+
+  --sr-color-bevel-highlight: rgba(255, 255, 255, 0.06);
+
+  color-scheme: dark;
 }
 
 .anchor {
@@ -533,7 +577,7 @@ pre {
   );
   box-shadow:
     0 1px 0 rgba(24, 24, 27, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    inset 0 1px 0 var(--sr-color-bevel-highlight);
   transition:
     background 0.2s cubic-bezier(0.3, 0, 0.5, 1),
     box-shadow 0.15s;
@@ -662,7 +706,7 @@ summary {
   );
   box-shadow:
     0 1px 0 rgba(24, 24, 27, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    inset 0 1px 0 var(--sr-color-bevel-highlight);
   transition:
     background 0.2s cubic-bezier(0.3, 0, 0.5, 1),
     box-shadow 0.15s;

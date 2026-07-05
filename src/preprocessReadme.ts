@@ -61,8 +61,8 @@ function pushHeadingToToc(
   return level;
 }
 
-// Shared by every snippet below that needs `onMount` (TOC scroll-spy, copy-button
-// wiring): each snippet is concatenated directly into the final <script> tag rather
+// Shared by every snippet below that needs `onMount` (TOC scroll-spy, theme toggle,
+// copy-button wiring): each snippet is concatenated directly into the final <script> tag rather
 // than merged through `script_content`'s line-level Set dedup, so importing `onMount`
 // separately in each one would double-declare the binding when more than one snippet
 // is present on the same page. Aliased so it can't collide with a demo's own import
@@ -140,6 +140,48 @@ const TOC_SCROLL_SPY_SCRIPT = `__svelteReadmeOnMount(() => {
   );
   __svelteReadmeSyncScrollSpy();
 });`;
+
+// Toggles `data-sr-theme` on `<html>` between "light" and "dark", persisting the choice
+// to `localStorage` under the same key the synchronous head script (`THEME_INIT_SCRIPT`
+// in `svelteReadme.ts`) reads on the next load. Rendered once per TOC variant (sidebar
+// and inline — see `THEME_TOGGLE_MARKUP` below), so every button on the page is wired
+// and kept in sync here rather than just the first one found.
+const THEME_TOGGLE_SCRIPT = `__svelteReadmeOnMount(() => {
+  const __svelteReadmeThemeKey = "sr-theme";
+  const __svelteReadmeThemeButtons = document.querySelectorAll(".sr-theme-toggle");
+
+  const __svelteReadmeApplyTheme = (theme) => {
+    document.documentElement.setAttribute("data-sr-theme", theme);
+    for (const button of __svelteReadmeThemeButtons) {
+      button.setAttribute("aria-pressed", String(theme === "dark"));
+    }
+  };
+
+  __svelteReadmeApplyTheme(
+    document.documentElement.getAttribute("data-sr-theme") || "light",
+  );
+
+  for (const button of __svelteReadmeThemeButtons) {
+    button.addEventListener("click", () => {
+      const __svelteReadmeNextTheme =
+        document.documentElement.getAttribute("data-sr-theme") === "dark"
+          ? "light"
+          : "dark";
+      try {
+        localStorage.setItem(__svelteReadmeThemeKey, __svelteReadmeNextTheme);
+      } catch (_e) {}
+      __svelteReadmeApplyTheme(__svelteReadmeNextTheme);
+    });
+  }
+});`;
+
+// Rendered as the first child of each `.sr-toc` nav (see `tocSidebar`/`tocInline` below),
+// so it sits directly above the TOC content in both the sticky sidebar (desktop) and
+// inline (mobile) variants. Sun/moon icons are drawn with basic shapes rather than path
+// data so there's no risk of a mis-transcribed curve; the moon's crescent is carved out
+// by painting a second circle in `--sr-color-canvas` (the toggle's own background) over
+// the first, offset just enough to leave a sliver showing.
+const THEME_TOGGLE_MARKUP = `<button type="button" class="sr-theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode" aria-pressed="false"><svg class="sr-theme-icon-sun" aria-hidden="true" viewBox="0 0 16 16" width="14" height="14" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"><circle cx="8" cy="8" r="3.25" fill="currentColor" stroke="none"></circle><line x1="8" y1="0.5" x2="8" y2="2.25"></line><line x1="8" y1="13.75" x2="8" y2="15.5"></line><line x1="0.5" y1="8" x2="2.25" y2="8"></line><line x1="13.75" y1="8" x2="15.5" y2="8"></line><line x1="2.34" y1="2.34" x2="3.58" y2="3.58"></line><line x1="12.42" y1="12.42" x2="13.66" y2="13.66"></line><line x1="2.34" y1="13.66" x2="3.58" y2="12.42"></line><line x1="12.42" y1="3.58" x2="13.66" y2="2.34"></line></svg><svg class="sr-theme-icon-moon" aria-hidden="true" viewBox="0 0 16 16" width="14" height="14"><circle cx="8" cy="8" r="6" fill="currentColor"></circle><circle cx="11" cy="6" r="5" fill="var(--sr-color-canvas)"></circle></svg></button>`;
 
 // Rendered as the last child of the `<pre>` it copies (see the two `highlight()` return
 // templates below) so it visually overlays that `<pre>`'s corner via `position: absolute`
@@ -490,11 +532,11 @@ export function preprocessReadme(
     // wherever the README author placed the `<!-- TOC -->` marker, falling back to
     // right after the content when no marker is present.
     const tocSidebar = tocContent
-      ? `<nav class="sr-toc sr-toc-sidebar">${tocContent}</nav>`
+      ? `<nav class="sr-toc sr-toc-sidebar">${THEME_TOGGLE_MARKUP}${tocContent}</nav>`
       : "";
 
     if (tocContent) {
-      const tocInline = `<nav class="sr-toc sr-toc-inline">${tocContent}</nav>`;
+      const tocInline = `<nav class="sr-toc sr-toc-inline">${THEME_TOGGLE_MARKUP}${tocContent}</nav>`;
       result = result.includes("<!-- TOC -->")
         ? result.replaceAll("<!-- TOC -->", tocInline)
         : `${result}${tocInline}`;
@@ -504,6 +546,7 @@ export function preprocessReadme(
       code: `<script>${[...new Set(script_content)].join("\n")}
                ${headings.length || hasCodeBlock ? SVELTE_README_ON_MOUNT_IMPORT : ""}
                ${headings.length ? TOC_SCROLL_SPY_SCRIPT : ""}
+               ${headings.length ? THEME_TOGGLE_SCRIPT : ""}
                ${hasCodeBlock ? COPY_BUTTON_SCRIPT : ""}</script>
                ${style_content.trim() ? `<style>${style_content}</style>` : ""}
                <div class="sr-layout"><main class="markdown-body">${result}</main>${tocSidebar}</div>`,

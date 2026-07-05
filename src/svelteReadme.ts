@@ -109,6 +109,29 @@ if (typeof globalThis.window === "undefined") globalThis.window = __svelteReadme
 if (typeof globalThis.localStorage === "undefined") globalThis.localStorage = __svelteReadmeStub();
 if (typeof globalThis.navigator === "undefined") globalThis.navigator = __svelteReadmeStub();`;
 
+// Runs synchronously, before the `<style>` block below is parsed, so `data-sr-theme` is
+// already set on `<html>` by the time anything paints — deferring this to the hydrated
+// Svelte component (like the rest of the theme toggle's wiring in `preprocessReadme.ts`)
+// would flash the light theme first. Reads an explicit choice from `localStorage` if the
+// toggle button has ever been used; otherwise follows the OS-level preference live, so a
+// system theme change is reflected immediately without a reload.
+const THEME_INIT_SCRIPT = `<script>(function () {
+        try {
+          var storageKey = "sr-theme";
+          var stored = localStorage.getItem(storageKey);
+          var media = window.matchMedia("(prefers-color-scheme: dark)");
+          var apply = function (theme) {
+            document.documentElement.setAttribute("data-sr-theme", theme);
+          };
+          apply(stored || (media.matches ? "dark" : "light"));
+          if (!stored) {
+            media.addEventListener("change", function (event) {
+              apply(event.matches ? "dark" : "light");
+            });
+          }
+        } catch (_e) {}
+      })();</script>`;
+
 const virtualEntriesPlugin: Plugin = {
   name: "svelte-readme-virtual-entries",
   resolveId(id) {
@@ -165,8 +188,10 @@ export function svelteReadme(
     // left untouched — it's consumer-authored and may target markup that only exists after
     // hydration (e.g. state toggled in `onMount`), which purging can't see. `sr-toc-active` and
     // `sr-copy-copied` are our own such classes (toggled by the TOC scroll-spy and copy-button
-    // scripts, respectively), and `open` is the attribute a native `<details>` only gains once a
-    // user expands it, so all three are explicitly allowlisted rather than silently stripped.
+    // scripts, respectively), `open` is the attribute a native `<details>` only gains once a
+    // user expands it, and `data-sr-theme` is set on `<html>` itself — outside the `ssr.body`/
+    // `ssr.head` this purge checks against — by `THEME_INIT_SCRIPT` below, so all four are
+    // explicitly allowlisted rather than silently stripped.
     const html = ssr ? `${ssr.head}${ssr.body}` : undefined;
     const purge = (input: string) =>
       html
@@ -174,6 +199,7 @@ export function svelteReadme(
             "sr-toc-active",
             "sr-copy-copied",
             "open",
+            "data-sr-theme",
           ])
         : input;
 
@@ -182,6 +208,7 @@ export function svelteReadme(
       <html lang="en">
         <head>
           <meta charset="utf-8" />
+          ${THEME_INIT_SCRIPT}
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
           <meta name="description" content="${pkg.description || `${pkg.name} demo`}" />
           <title>${pkg.name}</title>

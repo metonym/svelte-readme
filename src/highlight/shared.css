@@ -22,3 +22,24 @@
 .token.boolean {
   color: #005cc5;
 }
+
+:root[data-sr-theme="dark"] .token.keyword,
+:root[data-sr-theme="dark"] .token.operator {
+  color: #ff7b72;
+}
+:root[data-sr-theme="dark"] .token.punctuation {
+  color: #c9d1d9;
+}
+:root[data-sr-theme="dark"] .token.comment {
+  color: #8b949e;
+}
+:root[data-sr-theme="dark"] .token.function {
+  color: #d2a8ff;
+}
+:root[data-sr-theme="dark"] .token.string {
+  color: #a5d6ff;
+}
+:root[data-sr-theme="dark"] .token.number,
+:root[data-sr-theme="dark"] .token.boolean {
+  color: #79c0ff;
+}

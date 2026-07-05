@@ -59,6 +59,44 @@ main.markdown-body {
   text-decoration: underline;
 }
 
+/* Rendered as the first child of both `.sr-toc` variants (sidebar and inline),
+   so it always sits directly above whichever TOC copy is visible at the current
+   viewport width. */
+.sr-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-bottom: 0.75rem;
+  padding: 0;
+  color: var(--sr-color-fg-muted);
+  cursor: pointer;
+  appearance: none;
+  background-color: var(--sr-color-canvas);
+  border: 1px solid var(--sr-color-border);
+  border-radius: 0.375rem;
+}
+
+.sr-theme-toggle:hover {
+  color: var(--sr-color-fg);
+}
+
+/* Same specificity trick as `.sr-copy-icon`/`.sr-copy-check` in `style.css`: one
+   class each, so source order (not selector specificity) decides which icon shows
+   before `data-sr-theme` flips it. */
+.sr-theme-icon-moon {
+  display: none;
+}
+
+:root[data-sr-theme="dark"] .sr-theme-icon-sun {
+  display: none;
+}
+
+:root[data-sr-theme="dark"] .sr-theme-icon-moon {
+  display: block;
+}
+
 .sr-toc-sidebar {
   grid-column: 3;
   min-width: 0;
