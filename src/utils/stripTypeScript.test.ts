@@ -10,6 +10,10 @@ function parseFence(source: string) {
   return instance;
 }
 
+function parseFenceHtml(source: string) {
+  return parse(source).html;
+}
+
 describe("hasTypeScriptLang", () => {
   test('detects a double-quoted lang="ts" attribute', () => {
     const source = '<script lang="ts">let a = 1;</script>';
@@ -39,7 +43,7 @@ describe("hasTypeScriptLang", () => {
 
 describe("stripTypeScript", () => {
   function strip(source: string) {
-    return stripTypeScript(source, parseFence(source));
+    return stripTypeScript(source, parseFence(source), parseFenceHtml(source));
   }
 
   // Every case below is expected to produce source that re-parses as plain (non-TS)
@@ -263,5 +267,21 @@ describe("stripTypeScript", () => {
   test("leaves a plain (non-TS) script untouched aside from its own text", () => {
     const source = "<script>let count = 0;</script>";
     expect(strip(source)).toBe(source);
+  });
+
+  test("strips a generic type argument from an inline arrow function's parameter in markup", () => {
+    const stripped = strip(
+      '<script lang="ts">let count = 0;</script>\n<div onclick={(e: CustomEvent<string>) => console.log(e)}>Click</div>',
+    );
+    expect(stripped).toContain("onclick={(e) => console.log(e)}");
+    expectValid(stripped);
+  });
+
+  test("strips a colon type annotation from an inline arrow function's parameter in markup", () => {
+    const stripped = strip(
+      '<script lang="ts">let count = 0;</script>\n<div onclick={(e: MouseEvent) => console.log(e)}>Click</div>',
+    );
+    expect(stripped).toContain("onclick={(e) => console.log(e)}");
+    expectValid(stripped);
   });
 });

@@ -382,7 +382,11 @@ export function preprocessReadme(
           hasTypeScriptLang(source, parsedSource.instance)
         ) {
           try {
-            const stripped = stripTypeScript(source, parsedSource.instance);
+            const stripped = stripTypeScript(
+              source,
+              parsedSource.instance,
+              parsedSource.html,
+            );
             parse(stripped);
             evalSource = stripped;
             jsDisplaySource = stripped;
