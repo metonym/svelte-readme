@@ -675,7 +675,9 @@ pre {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.25rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
   color: var(--sr-color-fg-muted);
   cursor: pointer;
   appearance: none;
@@ -746,15 +748,15 @@ pre {
 
 /* Rendered only for a `svelte` fence authored with `<script lang="ts">` (see
    `LANG_TOGGLE_MARKUP`/`hasCodeLangToggle` in `preprocessReadme.ts`), sized to match
-   `.sr-copy-button` but twice as wide, sitting just to its left. A content switch:
-   `.sr-code-lang-thumb` slides between the always-visible TS/JS labels. */
+   `.sr-copy-button` (1.5rem) but twice as wide, sitting just to its left. A content
+   switch: `.sr-code-lang-thumb` slides between the always-visible TS/JS labels. */
 .sr-code-lang-toggle {
   position: absolute;
   top: 0.5rem;
-  right: 2.125rem;
+  right: 2.25rem;
   display: flex;
-  width: 2.75rem;
-  height: 1.375rem;
+  width: 3rem;
+  height: 1.5rem;
   padding: 0;
   background-color: var(--sr-color-canvas-subtle);
   border: 1px solid var(--sr-color-border);
