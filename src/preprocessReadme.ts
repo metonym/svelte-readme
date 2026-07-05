@@ -81,14 +81,17 @@ function pushHeadingToToc(
 // of the same name either.
 const SVELTE_README_ON_MOUNT_IMPORT = `import { onMount as __svelteReadmeOnMount } from "svelte";`;
 
-// Underlines whichever `.sr-toc-sidebar` link points at the heading currently
-// scrolled into the top portion of the viewport (the `.sr-toc-inline` copy shown
-// on mobile has no sticky position to track against, so it's excluded).
+// Underlines whichever link(s) point at the heading currently scrolled into the top
+// portion of the viewport — both the sticky sidebar (desktop) copy and the off-canvas
+// drawer (mobile) copy share the same hrefs, so a heading's entry lights up in
+// whichever one is currently visible (and both, if a reader somehow sees both at once).
 const TOC_SCROLL_SPY_SCRIPT = `__svelteReadmeOnMount(() => {
   // \`href\` and the heading's \`id\` are both the same slug produced by the
   // preprocessor, so this looks it up verbatim (no decode/encode step).
   const __svelteReadmeTocEntries = Array.from(
-    document.querySelectorAll(".sr-toc-sidebar a[href^='#']"),
+    document.querySelectorAll(
+      ".sr-toc-sidebar a[href^='#'], .sr-toc-drawer a[href^='#']",
+    ),
   )
     .map((link) => ({
       link,
@@ -100,11 +103,14 @@ const TOC_SCROLL_SPY_SCRIPT = `__svelteReadmeOnMount(() => {
 
   const __svelteReadmeUpdateActive = () => {
     const __svelteReadmeOffset = 96;
-    let __svelteReadmeCurrent = null;
+    let __svelteReadmeCurrentHref = null;
 
+    // Sidebar entries are listed before drawer entries and both share the same
+    // heading order, so this can safely break as soon as one entry fails the
+    // check — everything after it (in either copy) is further down the page.
     for (const entry of __svelteReadmeTocEntries) {
       if (entry.target.getBoundingClientRect().top - __svelteReadmeOffset <= 0) {
-        __svelteReadmeCurrent = entry;
+        __svelteReadmeCurrentHref = entry.link.getAttribute("href");
       } else {
         break;
       }
@@ -113,7 +119,7 @@ const TOC_SCROLL_SPY_SCRIPT = `__svelteReadmeOnMount(() => {
     for (const entry of __svelteReadmeTocEntries) {
       entry.link.classList.toggle(
         "sr-toc-active",
-        entry === __svelteReadmeCurrent,
+        entry.link.getAttribute("href") === __svelteReadmeCurrentHref,
       );
     }
   };
@@ -128,29 +134,8 @@ const TOC_SCROLL_SPY_SCRIPT = `__svelteReadmeOnMount(() => {
     });
   };
 
-  // The TOC isn't sticky below the layout's 900px mobile breakpoint (it's a
-  // static block after the content instead), so scroll-spy only runs above it —
-  // and re-syncs on resize/orientation change in case that crosses the breakpoint.
-  const __svelteReadmeMobileQuery = window.matchMedia("(max-width: 900px)");
-  const __svelteReadmeSyncScrollSpy = () => {
-    window.removeEventListener("scroll", __svelteReadmeOnScroll);
-    if (__svelteReadmeMobileQuery.matches) {
-      for (const entry of __svelteReadmeTocEntries) {
-        entry.link.classList.remove("sr-toc-active");
-      }
-    } else {
-      window.addEventListener("scroll", __svelteReadmeOnScroll, {
-        passive: true,
-      });
-      __svelteReadmeUpdateActive();
-    }
-  };
-
-  __svelteReadmeMobileQuery.addEventListener(
-    "change",
-    __svelteReadmeSyncScrollSpy,
-  );
-  __svelteReadmeSyncScrollSpy();
+  window.addEventListener("scroll", __svelteReadmeOnScroll, { passive: true });
+  __svelteReadmeUpdateActive();
 });`;
 
 // Toggles `data-sr-theme` on `<html>` between "light" and "dark", persisting the choice
@@ -230,6 +215,83 @@ const CODE_LANG_TOGGLE_SCRIPT = `__svelteReadmeOnMount(() => {
 // by painting a second circle in `--sr-color-canvas` (the toggle's own background) over
 // the first, offset just enough to leave a sliver showing.
 const THEME_TOGGLE_MARKUP = `<button type="button" class="sr-theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode" aria-pressed="false"><svg class="sr-theme-icon-sun" aria-hidden="true" viewBox="0 0 16 16" width="14" height="14" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"><circle cx="8" cy="8" r="3.25" fill="currentColor" stroke="none"></circle><line x1="8" y1="0.5" x2="8" y2="2.25"></line><line x1="8" y1="13.75" x2="8" y2="15.5"></line><line x1="0.5" y1="8" x2="2.25" y2="8"></line><line x1="13.75" y1="8" x2="15.5" y2="8"></line><line x1="2.34" y1="2.34" x2="3.58" y2="3.58"></line><line x1="12.42" y1="12.42" x2="13.66" y2="13.66"></line><line x1="2.34" y1="13.66" x2="3.58" y2="12.42"></line><line x1="12.42" y1="3.58" x2="13.66" y2="2.34"></line></svg><svg class="sr-theme-icon-moon" aria-hidden="true" viewBox="0 0 16 16" width="14" height="14"><circle cx="8" cy="8" r="6" fill="currentColor"></circle><circle cx="11" cy="6" r="5" fill="var(--sr-color-canvas)"></circle></svg></button>`;
+
+// Opens/closes the off-canvas mobile TOC (see `mobileHeaderMarkup`/`.sr-toc-drawer`
+// below). Icon swaps from three lines to an X while open — same one-class-each
+// trick as `.sr-theme-icon-sun`/`-moon` above, both driven off the single
+// `aria-expanded` this button owns.
+const HAMBURGER_MARKUP = `<button type="button" class="sr-hamburger" aria-label="Toggle table of contents" aria-expanded="false" aria-controls="sr-toc-drawer"><svg class="sr-hamburger-icon-open" aria-hidden="true" viewBox="0 0 16 16" width="14" height="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="1" y1="4" x2="15" y2="4"></line><line x1="1" y1="8" x2="15" y2="8"></line><line x1="1" y1="12" x2="15" y2="12"></line></svg><svg class="sr-hamburger-icon-close" aria-hidden="true" viewBox="0 0 16 16" width="14" height="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="2" y1="2" x2="14" y2="14"></line><line x1="14" y1="2" x2="2" y2="14"></line></svg></button>`;
+
+// Wires `.sr-hamburger` to the off-canvas `.sr-toc-drawer`: toggles a
+// `data-sr-toc-open` attribute on \`<html>\` that layout.css reads to slide the
+// drawer in and fade in \`.sr-toc-overlay\` behind it. Closing is wired from every
+// place a reader would expect it to work — the overlay, Escape, and clicking a TOC
+// link (which is about to navigate away from the drawer anyway) — in addition to
+// the hamburger toggling it directly. \`inert\` (rather than just hiding it visually)
+// keeps the closed drawer's links out of tab order and screen-reader navigation.
+const TOC_DRAWER_SCRIPT = `__svelteReadmeOnMount(() => {
+  const __svelteReadmeHamburger = document.querySelector(".sr-hamburger");
+  const __svelteReadmeOverlay = document.querySelector(".sr-toc-overlay");
+  const __svelteReadmeDrawer = document.querySelector(".sr-toc-drawer");
+
+  if (!__svelteReadmeHamburger || !__svelteReadmeOverlay || !__svelteReadmeDrawer)
+    return;
+
+  const __svelteReadmeSetOpen = (open) => {
+    document.documentElement.setAttribute("data-sr-toc-open", String(open));
+    __svelteReadmeHamburger.setAttribute("aria-expanded", String(open));
+    __svelteReadmeDrawer.toggleAttribute("inert", !open);
+  };
+
+  __svelteReadmeHamburger.addEventListener("click", () => {
+    __svelteReadmeSetOpen(
+      document.documentElement.getAttribute("data-sr-toc-open") !== "true",
+    );
+  });
+
+  __svelteReadmeOverlay.addEventListener("click", () =>
+    __svelteReadmeSetOpen(false),
+  );
+
+  __svelteReadmeDrawer.addEventListener("click", (event) => {
+    if (event.target.closest("a[href^='#']")) __svelteReadmeSetOpen(false);
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") __svelteReadmeSetOpen(false);
+  });
+});`;
+
+// Shows \`.sr-mobile-header-title\` (hidden by default — see its rule in layout.css)
+// only once the README's own h1 has scrolled out of view, so the shrunk title
+// doesn't sit redundantly next to its own full-size original right after load. The
+// negative \`rootMargin\` approximates the sticky header's height, treating the h1 as
+// "gone" as soon as it's scrolled behind where the header covers it, rather than only
+// once it's fully offscreen. A no-op if the README has no h1 (nothing to observe).
+const MOBILE_TITLE_SCRIPT = `__svelteReadmeOnMount(() => {
+  const __svelteReadmeTitle = document.querySelector(".sr-mobile-header-title");
+  const __svelteReadmeH1 = document.querySelector("main.markdown-body h1");
+
+  if (!__svelteReadmeTitle || !__svelteReadmeH1) return;
+
+  const __svelteReadmeObserver = new IntersectionObserver(
+    ([entry]) => {
+      __svelteReadmeTitle.classList.toggle(
+        "sr-mobile-header-title-visible",
+        !entry.isIntersecting,
+      );
+    },
+    { rootMargin: "-52px 0px 0px 0px" },
+  );
+  __svelteReadmeObserver.observe(__svelteReadmeH1);
+});`;
+
+// Rendered once as the mobile sticky header (see the \`sr-layout\` template below),
+// sitting above the content at the 900px breakpoint where there's no room for the
+// sidebar TOC. Shows a shrunk copy of the page's h1 alongside the dark-mode toggle
+// and the hamburger that opens \`.sr-toc-drawer\`.
+const mobileHeaderMarkup = (pageTitle: string | undefined) =>
+  `<header class="sr-mobile-header"><span class="sr-mobile-header-title">${pageTitle ?? ""}</span><div class="sr-mobile-header-actions">${THEME_TOGGLE_MARKUP}${HAMBURGER_MARKUP}</div></header>`;
 
 // Rendered as the last child of the `<pre>` it copies (see the two `highlight()` return
 // templates below) so it visually overlays that `<pre>`'s corner via `position: absolute`
@@ -563,6 +625,7 @@ export function preprocessReadme(
 
     const headings: string[] = [];
     let prev: undefined | "h2" | "h3";
+    let pageTitle: string | undefined;
 
     walk(
       // biome-ignore lint/suspicious/noExplicitAny: estree-walker's real types don't match Svelte's AST (see `Node` above)
@@ -599,6 +662,17 @@ export function preprocessReadme(
             (node.name === "h2" || node.name === "h3")
           ) {
             prev = pushHeadingToToc(node.name, node, prev, headings);
+          }
+
+          // First (README authors are expected to have exactly one) h1 becomes the
+          // shrunk title shown in the mobile sticky header — see `mobileHeaderMarkup`
+          // below.
+          if (
+            node.type === "Element" &&
+            node.name === "h1" &&
+            pageTitle === undefined
+          ) {
+            pageTitle = getChildNodeText(node);
           }
 
           if (
@@ -731,31 +805,38 @@ export function preprocessReadme(
       ? `<p><strong>On this page</strong></p><ul>${headings.join("\n")}</ul>`
       : "";
 
-    // The sidebar (desktop) copy is always a fixed sibling of `<main>`. The inline
-    // copy (shown on mobile, where there's no sidebar column to stick it in) goes
-    // wherever the README author placed the `<!-- TOC -->` marker, falling back to
-    // right after the content when no marker is present.
+    // The `<!-- TOC -->` marker used to choose where an inline mobile TOC copy
+    // rendered in the content flow. The mobile TOC is now a fixed-position drawer
+    // (`.sr-toc-drawer` below) whose DOM position doesn't affect where it's shown,
+    // so the marker is just stripped as inert leftover syntax.
+    result = result.replaceAll("<!-- TOC -->", "");
+
+    // The sidebar (desktop) copy is a fixed sibling of `<main>`. The drawer (mobile)
+    // copy is an off-canvas panel opened via the sticky header's hamburger button
+    // (see `mobileHeaderMarkup`/`TOC_DRAWER_SCRIPT` above) — both rendered once,
+    // unconditionally, whenever there are headings to show.
     const tocSidebar = tocContent
       ? `<nav class="sr-toc sr-toc-sidebar">${THEME_TOGGLE_MARKUP}${tocContent}</nav>`
       : "";
 
-    if (tocContent) {
-      const tocInline = `<nav class="sr-toc sr-toc-inline">${THEME_TOGGLE_MARKUP}${tocContent}</nav>`;
-      result = result.includes("<!-- TOC -->")
-        ? result.replaceAll("<!-- TOC -->", tocInline)
-        : `${result}${tocInline}`;
-    }
+    const mobileHeader = tocContent ? mobileHeaderMarkup(pageTitle) : "";
+
+    const tocDrawer = tocContent
+      ? `<div class="sr-toc-overlay"></div><nav class="sr-toc sr-toc-drawer" id="sr-toc-drawer" inert>${tocContent}</nav>`
+      : "";
 
     return {
       code: `<script>${[...new Set(script_content)].join("\n")}
                ${headings.length || hasCodeBlock || hasTable ? SVELTE_README_ON_MOUNT_IMPORT : ""}
                ${headings.length ? TOC_SCROLL_SPY_SCRIPT : ""}
                ${headings.length ? THEME_TOGGLE_SCRIPT : ""}
+               ${headings.length ? TOC_DRAWER_SCRIPT : ""}
+               ${headings.length ? MOBILE_TITLE_SCRIPT : ""}
                ${hasCodeBlock ? COPY_BUTTON_SCRIPT : ""}
                ${hasCodeLangToggle ? CODE_LANG_TOGGLE_SCRIPT : ""}
                ${hasTable ? TABLE_SCROLL_SHADOW_SCRIPT : ""}</script>
                ${style_content.trim() ? `<style>${style_content}</style>` : ""}
-               <div class="sr-layout"><main class="markdown-body">${result}</main>${tocSidebar}</div>`,
+               <div class="sr-layout">${mobileHeader}<main class="markdown-body">${result}</main>${tocSidebar}${tocDrawer}</div>`,
     };
   }
 

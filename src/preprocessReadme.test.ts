@@ -156,7 +156,9 @@ describe("preprocessReadme", () => {
 `;
     const code = await markup(content);
     expect(code).toContain('<nav class="sr-toc sr-toc-sidebar">');
-    expect(code).toContain('<nav class="sr-toc sr-toc-inline">');
+    expect(code).toContain(
+      '<nav class="sr-toc sr-toc-drawer" id="sr-toc-drawer" inert>',
+    );
     expect(code).toContain("<p><strong>On this page</strong></p>");
     expect(code).toContain('<li><a href="#section-one">Section One</a></li>');
     expect(code).toContain(
@@ -168,6 +170,38 @@ describe("preprocessReadme", () => {
     expect(code).toContain('<li><a href="#section-two">Section Two</a></li>');
     expect(code).toContain('<h2 id="section-one">Section One</h2>');
     expect(code).toContain('<h3 id="sub-section-a">Sub Section A</h3>');
+  });
+
+  test("renders a mobile sticky header with the page's h1 as its title, alongside the theme toggle and hamburger", async () => {
+    const code = await markup("# My Package\n\n## Section One\n");
+    expect(code).toContain('<header class="sr-mobile-header">');
+    expect(code).toContain(
+      '<span class="sr-mobile-header-title">My Package</span>',
+    );
+    expect(code).toContain('<div class="sr-mobile-header-actions">');
+    expect(code).toContain(
+      'aria-label="Toggle table of contents" aria-expanded="false" aria-controls="sr-toc-drawer"',
+    );
+  });
+
+  test("renders the overlay and drawer for the off-canvas mobile TOC", async () => {
+    const code = await markup("## Section One\n");
+    expect(code).toContain('<div class="sr-toc-overlay"></div>');
+    expect(code).toContain(
+      '<nav class="sr-toc sr-toc-drawer" id="sr-toc-drawer" inert>',
+    );
+  });
+
+  test("omits the mobile header, overlay, and drawer entirely when there are no headings", async () => {
+    const code = await markup("# My Package\n\nJust a paragraph.\n");
+    expect(code).not.toContain("sr-mobile-header");
+    expect(code).not.toContain("sr-toc-overlay");
+    expect(code).not.toContain("sr-toc-drawer");
+  });
+
+  test("strips a `<!-- TOC -->` marker instead of placing an inline copy there", async () => {
+    const code = await markup("<!-- TOC -->\n\n## Section One\n");
+    expect(code).not.toContain("<!-- TOC -->");
   });
 
   test("dedupes heading ids for repeated heading text with a numeric suffix", async () => {
