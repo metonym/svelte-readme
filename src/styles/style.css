@@ -946,13 +946,6 @@ details {
   border: 1px solid var(--sr-color-border-muted);
 }
 
-/* Bottom padding only applies once there's revealed content to pad — otherwise
-   (closed, just the summary bar) it'd reserve empty space below the summary,
-   showing as a hollow gap before the box's own bottom border. */
-details[open] {
-  padding-bottom: var(--sr-spacing);
-}
-
 summary {
   display: flex;
   align-items: center;
@@ -1054,10 +1047,10 @@ summary + pre {
 
 /* `pre`'s page-level `margin-bottom: var(--sr-spacing-xl)` override further up
    (meant to clear the *next heading* after a top-level snippet) has no heading
-   to clear in here — left alone, it stacks on top of `details[open]`'s own
-   `padding-bottom`, ballooning into a gap over twice the size intended. Scaled
+   to clear in here, ballooning into a gap over twice the size intended. Scaled
    back to the standard block spacing, and dropped entirely when the code
-   block is the last thing revealed since `padding-bottom` already covers it. */
+   block is the last thing revealed so it sits flush against `details`'s own
+   bottom border. */
 details pre {
   margin-bottom: var(--sr-spacing);
 }
