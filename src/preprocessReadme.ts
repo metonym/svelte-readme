@@ -189,17 +189,22 @@ const THEME_TOGGLE_SCRIPT = `__svelteReadmeOnMount(() => {
 
 // Toggles `data-sr-code-lang` on `<html>` between "ts" and "js", persisting the choice to
 // `localStorage` under the same key the synchronous head script (`CODE_LANG_INIT_SCRIPT`
-// in `svelteReadme.ts`) reads on the next load. One button is rendered per TS-authored
-// `svelte` fence (see `LANG_TOGGLE_MARKUP`), all sharing this single page-wide preference —
-// same pattern as `THEME_TOGGLE_SCRIPT` above.
+// in `svelteReadme.ts`) reads on the next load. One content-switch pair of TS/JS option
+// buttons is rendered per TS-authored `svelte` fence (see `LANG_TOGGLE_MARKUP`), all
+// sharing this single page-wide preference — same pattern as `THEME_TOGGLE_SCRIPT` above,
+// but each click sets the language its own button names rather than flipping to whatever
+// the current one isn't.
 const CODE_LANG_TOGGLE_SCRIPT = `__svelteReadmeOnMount(() => {
   const __svelteReadmeCodeLangKey = "sr-code-lang";
-  const __svelteReadmeCodeLangButtons = document.querySelectorAll(".sr-code-lang-toggle");
+  const __svelteReadmeCodeLangOptions = document.querySelectorAll(".sr-code-lang-option");
 
   const __svelteReadmeApplyCodeLang = (lang) => {
     document.documentElement.setAttribute("data-sr-code-lang", lang);
-    for (const button of __svelteReadmeCodeLangButtons) {
-      button.setAttribute("aria-pressed", String(lang === "js"));
+    for (const option of __svelteReadmeCodeLangOptions) {
+      option.setAttribute(
+        "aria-pressed",
+        String(option.dataset.srCodeLangOption === lang),
+      );
     }
   };
 
@@ -207,12 +212,9 @@ const CODE_LANG_TOGGLE_SCRIPT = `__svelteReadmeOnMount(() => {
     document.documentElement.getAttribute("data-sr-code-lang") === "js" ? "js" : "ts",
   );
 
-  for (const button of __svelteReadmeCodeLangButtons) {
-    button.addEventListener("click", () => {
-      const __svelteReadmeNextCodeLang =
-        document.documentElement.getAttribute("data-sr-code-lang") === "js"
-          ? "ts"
-          : "js";
+  for (const option of __svelteReadmeCodeLangOptions) {
+    option.addEventListener("click", () => {
+      const __svelteReadmeNextCodeLang = option.dataset.srCodeLangOption;
       try {
         localStorage.setItem(__svelteReadmeCodeLangKey, __svelteReadmeNextCodeLang);
       } catch (_e) {}
@@ -237,10 +239,11 @@ const COPY_BUTTON_MARKUP = `<button type="button" class="sr-copy-button" aria-la
 
 // Rendered only for a `svelte` fence authored with `<script lang="ts">` that was
 // successfully type-stripped (see `hasCodeLangToggle` in `preprocessReadme`), as a
-// sibling of `COPY_BUTTON_MARKUP` inside the same `<pre>`. Visibility of the "TS"/"JS"
-// label follows `data-sr-code-lang` on `<html>` exactly like the theme toggle's sun/moon
-// icons follow `data-sr-theme` — see `.sr-code-lang-icon-ts`/`-js` in `style.css`.
-const LANG_TOGGLE_MARKUP = `<button type="button" class="sr-code-lang-toggle" aria-label="Toggle TypeScript/JavaScript" title="Toggle TypeScript/JavaScript" aria-pressed="false"><span class="sr-code-lang-icon-ts" aria-hidden="true">TS</span><span class="sr-code-lang-icon-js" aria-hidden="true">JS</span></button>`;
+// sibling of `COPY_BUTTON_MARKUP` inside the same `<pre>`. A content switch rather than a
+// single toggle button: both "TS" and "JS" are always visible, and a sliding highlight
+// (`.sr-code-lang-thumb`) animates behind whichever one `data-sr-code-lang` on `<html>`
+// currently names — see `.sr-code-lang-toggle`/`-thumb`/`-option` in `style.css`.
+const LANG_TOGGLE_MARKUP = `<div class="sr-code-lang-toggle" role="group" aria-label="Toggle TypeScript/JavaScript"><span class="sr-code-lang-thumb" aria-hidden="true"></span><button type="button" class="sr-code-lang-option sr-code-lang-option-ts" data-sr-code-lang-option="ts" aria-pressed="true">TS</button><button type="button" class="sr-code-lang-option sr-code-lang-option-js" data-sr-code-lang-option="js" aria-pressed="false">JS</button></div>`;
 
 // Copies the enclosing `<pre>`'s source to the clipboard when its copy button is
 // clicked, swapping the button's icon to a checkmark for 2s of feedback. The timeout
