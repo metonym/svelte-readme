@@ -1,45 +1,60 @@
-.token.keyword {
-  color: #d73a49;
-}
-.token.punctuation {
-  color: #24292e;
-}
-.token.operator {
-  color: #d73a49;
-}
-.token.comment {
-  color: #6a737d;
-}
-.token.function {
-  color: #6f42c1;
-}
-.token.string {
-  color: #032f62;
-}
-.token.number {
-  color: #005cc5;
-}
-.token.boolean {
-  color: #005cc5;
+/**
+ * Token colors as custom properties, overridden under `:root[data-sr-theme="dark"]`
+ * (same technique as `../styles/style.css`) so toggling the theme only recomputes
+ * inherited variable values instead of rematching a second, fully-duplicated set of
+ * dark-mode selectors — cheaper at both parse time and on every theme toggle.
+ *
+ * Shared across all grammar CSS files under `./`, so a color reused by more than one
+ * language (e.g. the same blue for numbers and object properties) stays a single
+ * source of truth here rather than being redefined per grammar.
+ */
+:root {
+  --sr-hl-red: #d73a49;
+  --sr-hl-gray: #24292e;
+  --sr-hl-gray-muted: #6a737d;
+  --sr-hl-purple: #6f42c1;
+  --sr-hl-blue-dark: #032f62;
+  --sr-hl-blue: #005cc5;
+  --sr-hl-blue-mid: #0550ae;
+  --sr-hl-blue-deep: #0a3069;
+  --sr-hl-gray-dark: #24292f;
+  --sr-hl-green: #22863a;
 }
 
-:root[data-sr-theme="dark"] .token.keyword,
-:root[data-sr-theme="dark"] .token.operator {
-  color: #ff7b72;
+:root[data-sr-theme="dark"] {
+  --sr-hl-red: #ff7b72;
+  --sr-hl-gray: #c9d1d9;
+  --sr-hl-gray-muted: #8b949e;
+  --sr-hl-purple: #d2a8ff;
+  --sr-hl-blue-dark: #a5d6ff;
+  --sr-hl-blue: #79c0ff;
+  --sr-hl-blue-mid: #79c0ff;
+  --sr-hl-blue-deep: #a5d6ff;
+  --sr-hl-gray-dark: #c9d1d9;
+  --sr-hl-green: #7ee787;
 }
-:root[data-sr-theme="dark"] .token.punctuation {
-  color: #c9d1d9;
+
+.token.keyword {
+  color: var(--sr-hl-red);
 }
-:root[data-sr-theme="dark"] .token.comment {
-  color: #8b949e;
+.token.punctuation {
+  color: var(--sr-hl-gray);
 }
-:root[data-sr-theme="dark"] .token.function {
-  color: #d2a8ff;
+.token.operator {
+  color: var(--sr-hl-red);
 }
-:root[data-sr-theme="dark"] .token.string {
-  color: #a5d6ff;
+.token.comment {
+  color: var(--sr-hl-gray-muted);
 }
-:root[data-sr-theme="dark"] .token.number,
-:root[data-sr-theme="dark"] .token.boolean {
-  color: #79c0ff;
+.token.function {
+  color: var(--sr-hl-purple);
+}
+.token.string {
+  color: var(--sr-hl-blue-dark);
+}
+.token.number {
+  color: var(--sr-hl-blue);
+}
+.token.boolean {
+  color: var(--sr-hl-blue);
 }

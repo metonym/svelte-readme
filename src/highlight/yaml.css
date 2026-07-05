@@ -1,7 +1,3 @@
 .language-yaml {
-  color: #0550ae;
-}
-
-:root[data-sr-theme="dark"] .language-yaml {
-  color: #79c0ff;
+  color: var(--sr-hl-blue-mid);
 }
