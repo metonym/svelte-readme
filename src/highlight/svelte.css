@@ -1,29 +1,15 @@
 .language-svelte .tag {
-  color: #22863a;
+  color: var(--sr-hl-green);
 }
 .language-svelte .attr-name {
-  color: #6f42c1;
+  color: var(--sr-hl-purple);
 }
 .language-svelte .attr-value {
-  color: #032f62;
+  color: var(--sr-hl-blue-dark);
 }
 .language-svelte .selector {
-  color: #22863a;
+  color: var(--sr-hl-green);
 }
 .language-svelte .property {
-  color: #005cc5;
-}
-
-:root[data-sr-theme="dark"] .language-svelte .tag,
-:root[data-sr-theme="dark"] .language-svelte .selector {
-  color: #7ee787;
-}
-:root[data-sr-theme="dark"] .language-svelte .attr-name {
-  color: #d2a8ff;
-}
-:root[data-sr-theme="dark"] .language-svelte .attr-value {
-  color: #a5d6ff;
-}
-:root[data-sr-theme="dark"] .language-svelte .property {
-  color: #79c0ff;
+  color: var(--sr-hl-blue);
 }

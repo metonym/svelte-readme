@@ -1,25 +1,12 @@
 .language-typescript,
 .language-javascript {
-  color: #0550ae;
+  color: var(--sr-hl-blue-mid);
 }
 .language-typescript .string,
 .language-javascript .string {
-  color: #0a3069;
+  color: var(--sr-hl-blue-deep);
 }
 .language-typescript .class-name,
 .language-javascript .class-name {
-  color: #24292f;
-}
-
-:root[data-sr-theme="dark"] .language-typescript,
-:root[data-sr-theme="dark"] .language-javascript {
-  color: #79c0ff;
-}
-:root[data-sr-theme="dark"] .language-typescript .string,
-:root[data-sr-theme="dark"] .language-javascript .string {
-  color: #a5d6ff;
-}
-:root[data-sr-theme="dark"] .language-typescript .class-name,
-:root[data-sr-theme="dark"] .language-javascript .class-name {
-  color: #c9d1d9;
+  color: var(--sr-hl-gray-dark);
 }
