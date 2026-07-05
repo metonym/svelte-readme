@@ -35,6 +35,7 @@ interface PreprocessReadmeOptions {
 const NO_EVAL_ATTR = /no-eval/;
 const NO_DISPLAY_ATTR = /no-display/;
 const NODE_MODULES_PATH = /node_modules/;
+const HAS_TABLE_TAG = /<table[\s>]/;
 
 // Appends a heading's TOC entry, opening/closing the nested `<ul>` when transitioning
 // between h2 and h3 siblings (h3s nest under the preceding h2; h2s close it back out).
@@ -228,6 +229,48 @@ const COPY_BUTTON_SCRIPT = `__svelteReadmeOnMount(() => {
   }
 });`;
 
+// Toggles `data-sr-overflow-left`/`-right` on each table's `sr-table-wrapper` (see the
+// wrapping pass above) to reveal a `pointer-events: none` fade gradient over whichever
+// edge still has more to scroll toward — both attributes clear on their own once a
+// table doesn't overflow at all, since neither `scrollLeft > 0` nor the right-edge
+// check below can be true for a table too narrow to scroll.
+const TABLE_SCROLL_SHADOW_SCRIPT = `__svelteReadmeOnMount(() => {
+  const __svelteReadmeTables = Array.from(
+    document.querySelectorAll(".sr-table-wrapper > table"),
+  );
+
+  const __svelteReadmeUpdateTable = (__svelteReadmeTable) => {
+    const __svelteReadmeWrapper = __svelteReadmeTable.parentElement;
+    if (!__svelteReadmeWrapper) return;
+
+    __svelteReadmeWrapper.toggleAttribute(
+      "data-sr-overflow-left",
+      __svelteReadmeTable.scrollLeft > 0,
+    );
+    __svelteReadmeWrapper.toggleAttribute(
+      "data-sr-overflow-right",
+      __svelteReadmeTable.scrollLeft + __svelteReadmeTable.clientWidth <
+        __svelteReadmeTable.scrollWidth,
+    );
+  };
+
+  const __svelteReadmeUpdateAllTables = () => {
+    for (const table of __svelteReadmeTables) __svelteReadmeUpdateTable(table);
+  };
+
+  for (const table of __svelteReadmeTables) {
+    table.addEventListener("scroll", () => __svelteReadmeUpdateTable(table), {
+      passive: true,
+    });
+  }
+
+  // Resizing (or rotating) can cross the mobile breakpoint, where the table's
+  // available width changes and a table that fit before may now overflow (or
+  // vice versa) — re-check all of them rather than just the one that was scrolled.
+  window.addEventListener("resize", __svelteReadmeUpdateAllTables);
+  __svelteReadmeUpdateAllTables();
+});`;
+
 export function preprocessReadme(
   opts: Pick<PreprocessReadmeOptions, "name" | "svelte"> &
     Partial<PreprocessReadmeOptions>,
@@ -237,6 +280,7 @@ export function preprocessReadme(
   let script_content: string[] = [];
   let pending_format: { placeholder: string; source: string }[] = [];
   let hasCodeBlock = false;
+  let hasTable = false;
   const declared_variables = new Map<string, string>();
   const reserved_names = new Set<string>();
   const name_regex = new RegExp(escapeRegExp(opts.name), "g");
@@ -374,6 +418,7 @@ export function preprocessReadme(
     script_content = [];
     pending_format = [];
     hasCodeBlock = false;
+    hasTable = false;
 
     if (opts.repoUrl) {
       content = content.replaceAll(
@@ -499,6 +544,39 @@ export function preprocessReadme(
       );
     }
 
+    // Wraps each `<table>` in a non-scrolling `<div class="sr-table-wrapper">` so the
+    // scroll-shadow gradients (`TABLE_SCROLL_SHADOW_SCRIPT` below) can be positioned
+    // against a stationary ancestor — `<table>` itself scrolls horizontally, so an
+    // overlay anchored to it would drift with that scroll instead of staying pinned
+    // to the visible edges (same reasoning as the copy button's `sr-code-block`
+    // wrapper above, and again run as its own pass for the same insertion-math
+    // reason: wrapping needs an edit both before and after the node).
+    hasTable = HAS_TABLE_TAG.test(result);
+
+    if (hasTable) {
+      const tableAst = parse(result) as unknown as Node;
+      let tableCursor = 0;
+
+      walk(
+        // biome-ignore lint/suspicious/noExplicitAny: estree-walker's real types don't match Svelte's AST (see `Node` above)
+        tableAst as any,
+        {
+          // biome-ignore lint/suspicious/noExplicitAny: estree-walker's real types don't match Svelte's AST (see `Node` above)
+          enter(node: any) {
+            if (node.type !== "Element" || node.name !== "table") return;
+
+            const tableSource = result.slice(
+              node.start + tableCursor,
+              node.end + tableCursor,
+            );
+            const wrapped = `<div class="sr-table-wrapper">${tableSource}</div>`;
+            result = result.replace(tableSource, wrapped);
+            tableCursor += wrapped.length - tableSource.length;
+          },
+        },
+      );
+    }
+
     const formattedBlocks = await Promise.all(
       pending_format.map(async ({ source }) => {
         if (!opts.format) return source;
@@ -544,10 +622,11 @@ export function preprocessReadme(
 
     return {
       code: `<script>${[...new Set(script_content)].join("\n")}
-               ${headings.length || hasCodeBlock ? SVELTE_README_ON_MOUNT_IMPORT : ""}
+               ${headings.length || hasCodeBlock || hasTable ? SVELTE_README_ON_MOUNT_IMPORT : ""}
                ${headings.length ? TOC_SCROLL_SPY_SCRIPT : ""}
                ${headings.length ? THEME_TOGGLE_SCRIPT : ""}
-               ${hasCodeBlock ? COPY_BUTTON_SCRIPT : ""}</script>
+               ${hasCodeBlock ? COPY_BUTTON_SCRIPT : ""}
+               ${hasTable ? TABLE_SCROLL_SHADOW_SCRIPT : ""}</script>
                ${style_content.trim() ? `<style>${style_content}</style>` : ""}
                <div class="sr-layout"><main class="markdown-body">${result}</main>${tocSidebar}</div>`,
     };

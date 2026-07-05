@@ -173,7 +173,7 @@ main.markdown-body blockquote p {
      room in the gutter outside the text column to bleed into. On mobile there's
      no gutter — the layout padding above is already tight — so bleeding here would
      just push these boxes past the viewport edge instead of aligning them. */
-  main.markdown-body table,
+  main.markdown-body .sr-table-wrapper,
   main.markdown-body pre,
   main.markdown-body .sr-code-block,
   main.markdown-body .code-fence,

@@ -189,9 +189,11 @@ export function svelteReadme(
     // hydration (e.g. state toggled in `onMount`), which purging can't see. `sr-toc-active` and
     // `sr-copy-copied` are our own such classes (toggled by the TOC scroll-spy and copy-button
     // scripts, respectively), `open` is the attribute a native `<details>` only gains once a
-    // user expands it, and `data-sr-theme` is set on `<html>` itself — outside the `ssr.body`/
-    // `ssr.head` this purge checks against — by `THEME_INIT_SCRIPT` below, so all four are
-    // explicitly allowlisted rather than silently stripped.
+    // user expands it, `data-sr-theme` is set on `<html>` itself — outside the `ssr.body`/
+    // `ssr.head` this purge checks against — by `THEME_INIT_SCRIPT` below, and
+    // `data-sr-overflow-left`/`-right` are toggled on each `.sr-table-wrapper` by
+    // `TABLE_SCROLL_SHADOW_SCRIPT` as its table is scrolled, so all six are explicitly
+    // allowlisted rather than silently stripped.
     const html = ssr ? `${ssr.head}${ssr.body}` : undefined;
     const purge = (input: string) =>
       html
@@ -200,6 +202,8 @@ export function svelteReadme(
             "sr-copy-copied",
             "open",
             "data-sr-theme",
+            "data-sr-overflow-left",
+            "data-sr-overflow-right",
           ])
         : input;
 
