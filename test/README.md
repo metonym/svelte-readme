@@ -190,11 +190,11 @@ Pair the component with a small action when its label needs to fit a fixed-width
 
 ### Options
 
-| Option    | Type                              | Default   | Description               |
-| :-------- | :--------------------------------- | :-------- | :-------------------------- |
-| `variant` | `"solid" \| "outline" \| "ghost"` | `"solid"` | Visual style                |
-| `size`    | `"sm" \| "md" \| "lg"`             | `"md"`    | Padding and font scale      |
-| `toggled` | `boolean`                          | `false`   | Bindable pressed state      |
+| Option    | Type                              | Default   | Required | Since   | Description               | CSS variable                                                |
+| :-------- | :--------------------------------- | :-------- | :------- | :------ | :--------------------------- | :----------------------------------------------------------- |
+| `variant` | `"solid" \| "outline" \| "ghost"` | `"solid"` | No       | `1.0.0` | Visual style                | `--my-svelte-component-button-variant-solid-background-color` |
+| `size`    | `"sm" \| "md" \| "lg"`             | `"md"`    | No       | `1.0.0` | Padding and font scale      | `--my-svelte-component-button-size-md-padding-inline`         |
+| `toggled` | `boolean`                          | `false`   | No       | `1.2.0` | Bindable pressed state      | `--my-svelte-component-button-toggled-outline-color`          |
 
 Pass a config object like `{ variant: "ghost", size: "sm" }` to override the defaults per instance.
 

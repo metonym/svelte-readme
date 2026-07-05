@@ -451,11 +451,58 @@ dl dd {
   margin-bottom: var(--sr-spacing);
 }
 
+/* Non-scrolling ancestor for `table`'s bleed (negative margin equal to `table`'s own
+   cell padding — same technique `.sr-code-block` uses for `pre`) so the scroll-shadow
+   gradients below can be positioned against a stationary box instead of `table`
+   itself, which scrolls horizontally and would carry an absolutely positioned
+   overlay along with it, out of view. */
+.sr-table-wrapper {
+  position: relative;
+  margin-right: -0.8125rem;
+  margin-left: -0.8125rem;
+}
+
+.sr-table-wrapper table {
+  margin-right: 0;
+  margin-left: 0;
+}
+
+/* `pointer-events: none` so the gradient never intercepts clicks/selection on the
+   table content beneath it — it's a visual affordance, not an interactive layer.
+   Visibility is driven by `data-sr-overflow-left`/`-right` on the wrapper, toggled
+   from JS (`TABLE_SCROLL_SHADOW_SCRIPT` in `preprocessReadme.ts`) as the table is
+   scrolled, so each gradient only shows while there's still more to reveal in that
+   direction. */
+.sr-table-wrapper::before,
+.sr-table-wrapper::after {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1.5rem;
+  content: "";
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.sr-table-wrapper::before {
+  left: 0;
+  background: linear-gradient(to right, var(--sr-color-canvas), transparent);
+}
+
+.sr-table-wrapper::after {
+  right: 0;
+  background: linear-gradient(to left, var(--sr-color-canvas), transparent);
+}
+
+.sr-table-wrapper[data-sr-overflow-left]::before,
+.sr-table-wrapper[data-sr-overflow-right]::after {
+  opacity: 1;
+}
+
 table {
   display: block;
   width: fit-content;
-  margin-right: -0.8125rem;
-  margin-left: -0.8125rem;
   overflow: auto;
   font-size: var(--sr-text-sm);
 }
