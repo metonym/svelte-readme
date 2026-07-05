@@ -177,7 +177,7 @@ describe("svelteReadme", () => {
       "utf-8",
     );
     expect(html).toContain('<link rel="icon" href="data:image/svg+xml,');
-    expect(html).toContain(encodeURIComponent('width="99" height="118"'));
+    expect(html).toContain(encodeURIComponent('viewBox="0 0 99 118"'));
   });
 
   test("respects a custom favicon override given as inline SVG markup", async () => {
