@@ -10,3 +10,16 @@
 .language-javascript .class-name {
   color: #24292f;
 }
+
+:root[data-sr-theme="dark"] .language-typescript,
+:root[data-sr-theme="dark"] .language-javascript {
+  color: #79c0ff;
+}
+:root[data-sr-theme="dark"] .language-typescript .string,
+:root[data-sr-theme="dark"] .language-javascript .string {
+  color: #a5d6ff;
+}
+:root[data-sr-theme="dark"] .language-typescript .class-name,
+:root[data-sr-theme="dark"] .language-javascript .class-name {
+  color: #c9d1d9;
+}
