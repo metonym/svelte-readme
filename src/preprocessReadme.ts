@@ -17,6 +17,7 @@ import {
   isRelativeUrl,
   type Node,
 } from "./utils/preprocessReadme.utils.js";
+import { hasTypeScriptLang, stripTypeScript } from "./utils/stripTypeScript.js";
 
 interface PreprocessReadmeOptions {
   name: string;
@@ -185,6 +186,40 @@ const THEME_TOGGLE_SCRIPT = `__svelteReadmeOnMount(() => {
   }
 });`;
 
+// Toggles `data-sr-code-lang` on `<html>` between "ts" and "js", persisting the choice to
+// `localStorage` under the same key the synchronous head script (`CODE_LANG_INIT_SCRIPT`
+// in `svelteReadme.ts`) reads on the next load. One button is rendered per TS-authored
+// `svelte` fence (see `LANG_TOGGLE_MARKUP`), all sharing this single page-wide preference —
+// same pattern as `THEME_TOGGLE_SCRIPT` above.
+const CODE_LANG_TOGGLE_SCRIPT = `__svelteReadmeOnMount(() => {
+  const __svelteReadmeCodeLangKey = "sr-code-lang";
+  const __svelteReadmeCodeLangButtons = document.querySelectorAll(".sr-code-lang-toggle");
+
+  const __svelteReadmeApplyCodeLang = (lang) => {
+    document.documentElement.setAttribute("data-sr-code-lang", lang);
+    for (const button of __svelteReadmeCodeLangButtons) {
+      button.setAttribute("aria-pressed", String(lang === "js"));
+    }
+  };
+
+  __svelteReadmeApplyCodeLang(
+    document.documentElement.getAttribute("data-sr-code-lang") === "js" ? "js" : "ts",
+  );
+
+  for (const button of __svelteReadmeCodeLangButtons) {
+    button.addEventListener("click", () => {
+      const __svelteReadmeNextCodeLang =
+        document.documentElement.getAttribute("data-sr-code-lang") === "js"
+          ? "ts"
+          : "js";
+      try {
+        localStorage.setItem(__svelteReadmeCodeLangKey, __svelteReadmeNextCodeLang);
+      } catch (_e) {}
+      __svelteReadmeApplyCodeLang(__svelteReadmeNextCodeLang);
+    });
+  }
+});`;
+
 // Rendered as the first child of each `.sr-toc` nav (see `tocSidebar`/`tocInline` below),
 // so it sits directly above the TOC content in both the sticky sidebar (desktop) and
 // inline (mobile) variants. Sun/moon icons are drawn with basic shapes rather than path
@@ -198,6 +233,13 @@ const THEME_TOGGLE_MARKUP = `<button type="button" class="sr-theme-toggle" aria-
 // without needing a wrapper element — which would break markdown-it's fence renderer (it
 // only skips its own `<pre><code>` wrapping when `highlight()`'s return starts with `<pre`).
 const COPY_BUTTON_MARKUP = `<button type="button" class="sr-copy-button" aria-label="Copy code" title="Copy code"><svg class="sr-copy-icon" aria-hidden="true" viewBox="0 0 16 16" width="12" height="12"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path></svg><svg class="sr-copy-check" aria-hidden="true" viewBox="0 0 16 16" width="12" height="12"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path></svg></button>`;
+
+// Rendered only for a `svelte` fence authored with `<script lang="ts">` that was
+// successfully type-stripped (see `hasCodeLangToggle` in `preprocessReadme`), as a
+// sibling of `COPY_BUTTON_MARKUP` inside the same `<pre>`. Visibility of the "TS"/"JS"
+// label follows `data-sr-code-lang` on `<html>` exactly like the theme toggle's sun/moon
+// icons follow `data-sr-theme` — see `.sr-code-lang-icon-ts`/`-js` in `style.css`.
+const LANG_TOGGLE_MARKUP = `<button type="button" class="sr-code-lang-toggle" aria-label="Toggle TypeScript/JavaScript" title="Toggle TypeScript/JavaScript" aria-pressed="false"><span class="sr-code-lang-icon-ts" aria-hidden="true">TS</span><span class="sr-code-lang-icon-js" aria-hidden="true">JS</span></button>`;
 
 // Copies the enclosing `<pre>`'s source to the clipboard when its copy button is
 // clicked, swapping the button's icon to a checkmark for 2s of feedback. The timeout
@@ -215,8 +257,22 @@ const COPY_BUTTON_SCRIPT = `__svelteReadmeOnMount(() => {
 
       if (!__svelteReadmeCodePre) return;
 
+      // A dual TS/JS fence renders both highlighted variants at once (see
+      // \`LANG_TOGGLE_MARKUP\`'s markup in the \`highlight()\` return below) and hides
+      // one via CSS, so \`<pre>\`'s own \`textContent\` would concatenate both — copy
+      // whichever variant \`data-sr-code-lang\` currently shows instead. Fences with
+      // only one variant have no \`.sr-code-variant-*\` children, so this falls back
+      // to the whole \`<pre>\`'s text exactly as before.
+      const __svelteReadmeActiveVariant = __svelteReadmeCodePre.querySelector(
+        document.documentElement.getAttribute("data-sr-code-lang") === "js"
+          ? ".sr-code-variant-js"
+          : ".sr-code-variant-ts",
+      );
+
       navigator.clipboard
-        .writeText(__svelteReadmeCodePre.textContent ?? "")
+        .writeText(
+          (__svelteReadmeActiveVariant ?? __svelteReadmeCodePre).textContent ?? "",
+        )
         .then(() => {
           __svelteReadmeCopyButton.classList.add("sr-copy-copied");
 
@@ -289,6 +345,7 @@ export function preprocessReadme(
   let script_content: string[] = [];
   let pending_format: { placeholder: string; source: string }[] = [];
   let hasCodeBlock = false;
+  let hasCodeLangToggle = false;
   let hasTable = false;
   const declared_variables = new Map<string, string>();
   const reserved_names = new Set<string>();
@@ -303,19 +360,47 @@ export function preprocessReadme(
       if (lang === "svelte") {
         const noEval = NO_EVAL_ATTR.test(attrs);
         const noDisplay = NO_DISPLAY_ATTR.test(attrs);
-        const { instance, html } = parse(source);
+        const parsedSource = parse(source);
+
+        // A `<script lang="ts">` fence displays as authored, but the shared `<script>`
+        // every fence's code is merged into below has no TS support of its own — so if
+        // stripping this fence down to plain JS succeeds (and the result still parses
+        // cleanly), that stripped source drives the eval/live-demo path instead of the
+        // original, and both variants are shown via `LANG_TOGGLE_MARKUP`'s reader
+        // toggle. A non-erasable TS construct (e.g. `enum`) makes the stripped result
+        // fail to parse, which silently falls back to today's single-(TS-as-authored)-
+        // variant behavior for just that fence.
+        let evalSource = source;
+        let jsDisplaySource: string | undefined;
+
+        if (
+          parsedSource.instance !== undefined &&
+          hasTypeScriptLang(source, parsedSource.instance)
+        ) {
+          try {
+            const stripped = stripTypeScript(source, parsedSource.instance);
+            parse(stripped);
+            evalSource = stripped;
+            jsDisplaySource = stripped;
+          } catch (_e) {
+            // fall through: `evalSource` stays `source`, no JS variant is offered
+          }
+        }
+
+        const { instance, html } =
+          evalSource === source ? parsedSource : parse(evalSource);
 
         // Different code fences share a single merged `<script>` once rendered, so a variable
         // declared identically in two fences (e.g. `let count = 0;`) is fine, but a name reused
         // for something different would collide. Detect that and rename the later occurrence
         // (in both its script and markup) before it's merged in.
-        let renamedSource = source;
+        let renamedSource = evalSource;
 
         if (instance !== undefined && !noEval) {
           const declarations = collectTopLevelDeclarations(instance.content);
           const renameMap = computeRenameMap(
             declarations,
-            source,
+            evalSource,
             declared_variables,
             reserved_names,
           );
@@ -325,12 +410,14 @@ export function preprocessReadme(
               ...collectIdentifierRanges(instance.content, renameMap),
               ...collectIdentifierRanges(html, renameMap),
             ];
-            renamedSource = applyRenames(source, ranges, renameMap);
+            renamedSource = applyRenames(evalSource, ranges, renameMap);
           }
         }
 
         const renamedInstance =
-          renamedSource === source ? instance : parse(renamedSource).instance;
+          renamedSource === evalSource
+            ? instance
+            : parse(renamedSource).instance;
 
         if (renamedInstance !== undefined && !noEval) {
           script_content = [
@@ -350,6 +437,26 @@ export function preprocessReadme(
         // `opts.format` may be async, but markdown-it's `highlight` must return synchronously,
         // so formatting is deferred: a placeholder is emitted here and swapped for the
         // formatted+highlighted code once `md.render()` returns (see `markup` below).
+        if (jsDisplaySource !== undefined) {
+          hasCodeLangToggle = true;
+
+          const tsPlaceholder = `__SVELTE_README_FORMAT_${pending_format.length}__`;
+          pending_format.push({ placeholder: tsPlaceholder, source });
+
+          const jsPlaceholder = `__SVELTE_README_FORMAT_${pending_format.length}__`;
+          pending_format.push({
+            placeholder: jsPlaceholder,
+            source: jsDisplaySource,
+          });
+
+          // Both variants are always rendered (one hidden via CSS keyed off
+          // `data-sr-code-lang`, see `.sr-code-variant-ts`/`-js` in `style.css`) rather
+          // than swapped client-side, so the right one is already present for SSR/no-JS.
+          return `<pre class="language-${lang}" ${
+            noEval || noDisplay ? "" : `data-svelte="${modifiedSource}"`
+          }><span class="sr-code-variant-ts">{@html \`${tsPlaceholder}\`}</span><span class="sr-code-variant-js">{@html \`${jsPlaceholder}\`}</span>${LANG_TOGGLE_MARKUP}${COPY_BUTTON_MARKUP}</pre>`;
+        }
+
         const placeholder = `__SVELTE_README_FORMAT_${pending_format.length}__`;
         pending_format.push({ placeholder, source });
 
@@ -427,6 +534,7 @@ export function preprocessReadme(
     script_content = [];
     pending_format = [];
     hasCodeBlock = false;
+    hasCodeLangToggle = false;
     hasTable = false;
 
     content = content.replace(HIDE_BLOCK, "");
@@ -637,6 +745,7 @@ export function preprocessReadme(
                ${headings.length ? TOC_SCROLL_SPY_SCRIPT : ""}
                ${headings.length ? THEME_TOGGLE_SCRIPT : ""}
                ${hasCodeBlock ? COPY_BUTTON_SCRIPT : ""}
+               ${hasCodeLangToggle ? CODE_LANG_TOGGLE_SCRIPT : ""}
                ${hasTable ? TABLE_SCROLL_SHADOW_SCRIPT : ""}</script>
                ${style_content.trim() ? `<style>${style_content}</style>` : ""}
                <div class="sr-layout"><main class="markdown-body">${result}</main>${tocSidebar}</div>`,

@@ -132,6 +132,22 @@ const THEME_INIT_SCRIPT = `<script>(function () {
         } catch (_e) {}
       })();</script>`;
 
+// Runs synchronously alongside `THEME_INIT_SCRIPT` above, for the same reason: so
+// `data-sr-code-lang` is set on `<html>` before anything paints, and a TS-authored
+// `svelte` fence's TS/JS toggle (wired up in `preprocessReadme.ts`) shows the reader's
+// remembered choice immediately instead of flashing the "ts" default first. Unlike the
+// theme, there's no OS-level signal to fall back to — TS is simply the default until a
+// reader has toggled at least once.
+const CODE_LANG_INIT_SCRIPT = `<script>(function () {
+        try {
+          var stored = localStorage.getItem("sr-code-lang");
+          document.documentElement.setAttribute(
+            "data-sr-code-lang",
+            stored === "js" ? "js" : "ts",
+          );
+        } catch (_e) {}
+      })();</script>`;
+
 const virtualEntriesPlugin: Plugin = {
   name: "svelte-readme-virtual-entries",
   resolveId(id) {
@@ -189,11 +205,12 @@ export function svelteReadme(
     // hydration (e.g. state toggled in `onMount`), which purging can't see. `sr-toc-active` and
     // `sr-copy-copied` are our own such classes (toggled by the TOC scroll-spy and copy-button
     // scripts, respectively), `open` is the attribute a native `<details>` only gains once a
-    // user expands it, `data-sr-theme` is set on `<html>` itself — outside the `ssr.body`/
-    // `ssr.head` this purge checks against — by `THEME_INIT_SCRIPT` below, and
-    // `data-sr-overflow-left`/`-right` are toggled on each `.sr-table-wrapper` by
-    // `TABLE_SCROLL_SHADOW_SCRIPT` as its table is scrolled, so all six are explicitly
-    // allowlisted rather than silently stripped.
+    // user expands it, `data-sr-theme` and `data-sr-code-lang` are set on `<html>` itself
+    // — outside the `ssr.body`/`ssr.head` this purge checks against — by
+    // `THEME_INIT_SCRIPT`/`CODE_LANG_INIT_SCRIPT` below, and `data-sr-overflow-left`/
+    // `-right` are toggled on each `.sr-table-wrapper` by `TABLE_SCROLL_SHADOW_SCRIPT`
+    // as its table is scrolled, so all seven are explicitly allowlisted rather than
+    // silently stripped.
     const html = ssr ? `${ssr.head}${ssr.body}` : undefined;
     const purge = (input: string) =>
       html
@@ -202,6 +219,7 @@ export function svelteReadme(
             "sr-copy-copied",
             "open",
             "data-sr-theme",
+            "data-sr-code-lang",
             "data-sr-overflow-left",
             "data-sr-overflow-right",
           ])
@@ -213,6 +231,7 @@ export function svelteReadme(
         <head>
           <meta charset="utf-8" />
           ${THEME_INIT_SCRIPT}
+          ${CODE_LANG_INIT_SCRIPT}
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
           <meta name="description" content="${pkg.description || `${pkg.name} demo`}" />
           <title>${pkg.name}</title>

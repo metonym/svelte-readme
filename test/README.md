@@ -108,6 +108,35 @@ Every `svelte` code fence on this page is merged into a single `<script>` block 
 <p>{count}</p>
 ```
 
+### TypeScript
+
+A demo authored with `<script lang="ts">` shows a TS/JS toggle next to the copy button, letting a reader switch the displayed source between the original TypeScript and the type-stripped JavaScript that's actually evaluated below:
+
+```svelte
+<script lang="ts">
+  import Button from "my-svelte-component";
+
+  interface Greeting {
+    label: string;
+  }
+
+  let toggled: boolean = false;
+  let greeting: Greeting = { label: "Hello" };
+
+  function announce(message: string): void {
+    console.log(`${message}: ${toggled}`);
+  }
+</script>
+
+<Button
+  bind:toggled
+  attribute="value"
+  on:click={() => announce(greeting.label)}
+>
+  {greeting.label}, {toggled ? "on" : "off"}
+</Button>
+```
+
 ### Lifecycle hooks
 
 Evaluated on mount, alongside every other live demo on this page:
