@@ -37,6 +37,15 @@ const NO_DISPLAY_ATTR = /no-display/;
 const NODE_MODULES_PATH = /node_modules/;
 const HAS_TABLE_TAG = /<table[\s>]/;
 
+// Strips everything between a `<!-- HIDE_START -->`/`<!-- HIDE_END -->` pair (including the
+// markers themselves) before markdown parsing, so README authors can wrap content that should
+// stay in the raw README (e.g. npm/GitHub badges) but never reach the live app. Operates on the
+// raw markdown text — rather than the parsed AST — so a hidden block can span arbitrary
+// structure (headings, code fences, images) without needing to be balanced HTML/markdown itself.
+// Non-greedy so adjacent pairs don't merge into one hidden span; unterminated/nested markers
+// aren't supported.
+const HIDE_BLOCK = /<!--\s*HIDE_START\s*-->[\s\S]*?<!--\s*HIDE_END\s*-->/g;
+
 // Appends a heading's TOC entry, opening/closing the nested `<ul>` when transitioning
 // between h2 and h3 siblings (h3s nest under the preceding h2; h2s close it back out).
 function pushHeadingToToc(
@@ -419,6 +428,8 @@ export function preprocessReadme(
     pending_format = [];
     hasCodeBlock = false;
     hasTable = false;
+
+    content = content.replace(HIDE_BLOCK, "");
 
     if (opts.repoUrl) {
       content = content.replaceAll(
