@@ -137,6 +137,23 @@ A demo authored with `<script lang="ts">` shows a TS/JS toggle next to the copy 
 </Button>
 ```
 
+### Inline handlers with generic types
+
+A `<script lang="ts">` fence's TS-aware parsing extends into markup mustache expressions too, so an inline handler's parameter can carry its own generic type reference (like a typed `CustomEvent`) without needing to be pulled out into a named function first:
+
+```svelte
+<script lang="ts">
+  import Button from "my-svelte-component";
+</script>
+
+<Button
+  attribute="value"
+  on:click={(e: CustomEvent<string>) => console.log(e.type)}
+>
+  Inline handler with a generic type
+</Button>
+```
+
 ### Lifecycle hooks
 
 Evaluated on mount, alongside every other live demo on this page:

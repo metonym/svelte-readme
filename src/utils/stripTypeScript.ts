@@ -268,7 +268,17 @@ export function hasTypeScriptLang(source: string, instance: Node): boolean {
 // else — including formatting — untouched. Only covers TypeScript's *erasable* subset;
 // constructs with real runtime semantics of their own (`enum`, non-`declare` `namespace`,
 // decorators) are left as-is, which the caller detects by re-parsing the result.
-export function stripTypeScript(source: string, instance: Node): string {
+//
+// `html` is walked too, not just the script: a `lang="ts"` script makes Svelte parse
+// markup mustache expressions (e.g. an inline event handler's arrow-function params) with
+// the same TS-aware grammar, so a generic type argument or annotation can appear there —
+// and would otherwise survive into a document whose merged `<script>` no longer declares
+// `lang="ts"`, which fails to parse.
+export function stripTypeScript(
+  source: string,
+  instance: Node,
+  html: Node,
+): string {
   const edits: Edit[] = [];
 
   const tagText = source.slice(instance.start, instance.content.start);
@@ -282,6 +292,7 @@ export function stripTypeScript(source: string, instance: Node): string {
   }
 
   collectTypeEdits(instance.content, edits, source);
+  collectTypeEdits(html, edits, source);
 
   return applyEdits(source, edits).replace(EXTRA_BLANK_LINES, "\n\n");
 }
