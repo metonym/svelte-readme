@@ -366,9 +366,54 @@ Yes. Import the component the same way you would in any Svelte 5 project; Svelte
 </details>
 
 <details>
-<summary>Can I disable the default styles?</summary>
+<summary>Can I disable the default styles with <code>disableDefaultCSS</code>?</summary>
 
 Yes, pass `disableDefaultCSS: true` to `svelteReadme`.
+
+</details>
+
+<details>
+<summary><code>IntersectionObserverEntry</code></summary>
+
+```ts
+interface IntersectionObserverEntry {
+  target: HTMLElement;
+  time: number;
+  isIntersecting: boolean;
+  isVisible: boolean;
+  intersectionRatio: number;
+  intersectionRect: {
+    bottom: number;
+    height: number;
+    left: number;
+    right: number;
+    top: number;
+    width: number;
+    x: number;
+    y: number;
+  };
+  rootBounds: {
+    bottom: number;
+    height: number;
+    left: number;
+    right: number;
+    top: number;
+    width: number;
+    x: number;
+    y: number;
+  };
+  boundingClientRect: {
+    bottom: number;
+    height: number;
+    left: number;
+    right: number;
+    top: number;
+    width: number;
+    x: number;
+    y: number;
+  };
+}
+```
 
 </details>
 

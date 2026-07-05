@@ -954,10 +954,14 @@ details[open] {
 }
 
 summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   padding: 0.75rem var(--sr-box-padding);
   margin: 0 calc(var(--sr-box-padding) * -1);
   font-weight: 500;
   color: var(--sr-color-fg);
+  list-style: none;
   background: linear-gradient(
     180deg,
     var(--sr-color-kbd-bg),
@@ -971,17 +975,42 @@ summary {
     box-shadow 0.15s;
 }
 
+/* Chrome/Safari render a default disclosure triangle even with `list-style: none`
+   on `summary` (Firefox honors it); this hides that leftover marker so the
+   `::before` chevron below is the only one drawn. */
+summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Custom chevron, drawn with `mask` rather than a plain `background-image` so it
+   inherits `currentColor`-style theming through `background-color` instead of
+   needing separate light/dark SVG assets. Rotates in place from closed (▸) to
+   open (▾) instead of swapping icons. */
+summary::before {
+  content: "";
+  flex-shrink: 0;
+  width: 0.625rem;
+  height: 0.625rem;
+  background-color: var(--sr-color-fg-muted);
+  mask:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='5 3 11 8 5 13'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  -webkit-mask:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='5 3 11 8 5 13'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  transition: transform 0.15s;
+}
+
+details[open] > summary::before {
+  transform: rotate(90deg);
+}
+
 summary:hover {
   background: linear-gradient(
     180deg,
     var(--sr-color-canvas-subtle),
     var(--sr-color-border)
   );
-}
-
-summary:active {
-  background: var(--sr-color-canvas-subtle);
-  box-shadow: inset 0 1px 2px rgba(24, 24, 27, 0.08);
 }
 
 details[open] > summary {
@@ -1001,4 +1030,15 @@ details + details {
 
 details:has(+ details) {
   margin-bottom: 0;
+}
+
+/* A `<summary>` label (or the revealed body) commonly wraps a term in inline
+   code, e.g. `<summary><code>PropName</code></summary>` — skip the pill
+   treatment there since `details`/`summary` already supply their own
+   box/background; stacking both reads as a badge nested inside a badge. */
+details code {
+  padding: 0;
+  background: none;
+  border-radius: 0;
+  box-shadow: none;
 }
