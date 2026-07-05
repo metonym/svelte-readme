@@ -256,6 +256,8 @@ details summary {
 }
 
 kbd {
+  position: relative;
+  top: -0.09375rem;
   display: inline-block;
   padding: 0.1875rem 0.3125rem;
   font: var(--sr-text-2xs) var(--sr-font-mono);
@@ -451,6 +453,16 @@ li {
 
 li > p {
   margin-top: var(--sr-spacing);
+}
+
+/* A loose list item's own paragraph keeps its bottom margin for spacing against a
+   following sibling `li` (see `li + li` below), but that margin would otherwise
+   collapse against a nested list's zeroed top margin (`ul ul`/`ol ol`/etc. above),
+   making the gap before the *first* nested item read bigger than the tight rhythm
+   between the nested items themselves. */
+li > p:has(+ ol),
+li > p:has(+ ul) {
+  margin-bottom: 0;
 }
 
 li + li {
