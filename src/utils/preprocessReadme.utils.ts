@@ -164,6 +164,21 @@ export const collectTopLevelDeclarations = (program: Node): Declaration[] => {
   return declarations;
 };
 
+// Splits a parsed script block's top-level statements into their exact source text, so the
+// cross-block merge in `preprocessReadme` can dedupe identical statements (e.g. the same
+// `import` repeated across demos) as whole units instead of comparing individual lines. A
+// line-based comparison has no concept of "this line is the interior of a multi-line
+// statement" — two unrelated statements that happen to share one line of text (e.g. an
+// identical object-literal property in two different `Array.from(...)` calls) would
+// otherwise have that line silently dropped from one of them, truncating it.
+export const collectTopLevelStatementTexts = (
+  program: Node,
+  source: string,
+): string[] =>
+  program.body.map((statement: Node) =>
+    source.slice(statement.start, statement.end).trim(),
+  );
+
 // Determines which top-level names collide with a same-named (but differently defined) binding
 // from an earlier code fence, and assigns each a unique replacement name (e.g. `count` -> `count2`).
 export const computeRenameMap = (
