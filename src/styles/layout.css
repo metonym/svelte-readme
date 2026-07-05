@@ -106,6 +106,14 @@ main.markdown-body {
   display: none;
 }
 
+/* The moon's crescent is carved out by painting this second circle in the button's own
+   background color over the first (see `THEME_TOGGLE_MARKUP` in `preprocessReadme.ts`);
+   overridden here since the inline fill is plain canvas but the background above is now
+   a gradient — a CSS rule beats the inline presentation attribute either way. */
+:root[data-sr-theme="dark"] .sr-theme-icon-moon circle:last-child {
+  fill: var(--sr-color-border-muted);
+}
+
 :root[data-sr-theme="dark"] .sr-theme-icon-sun {
   display: none;
 }
