@@ -114,11 +114,31 @@ main.markdown-body {
 }
 
 main.markdown-body p {
-  max-width: 52ch;
+  max-width: 65ch;
 }
 
+/* Quotes read as set-apart material rather than the main body copy, so they get
+   more breathing room than a paragraph's measure — wider, but still a bounded
+   line length rather than stretching to the full column. */
 main.markdown-body blockquote p {
-  max-width: none;
+  max-width: 75ch;
+}
+
+main.markdown-body ol,
+main.markdown-body ul {
+  max-width: 65ch;
+}
+
+/* A list introduced by the paragraph directly above it (e.g. "as follows:") reads
+   as a continuation of that sentence, not a new block — tighten the gap between
+   them below the uniform inter-block spacing every other pair of siblings gets
+   (`blockquote, details, dl, ol, p, pre, table, ul` in `style.css`). Negative
+   rather than a smaller positive value: adjacent margins collapse to
+   `positive max + negative min`, so this nets out to half of `--sr-spacing`
+   without having to know the preceding `p`'s own margin-bottom here. */
+main.markdown-body p + ol,
+main.markdown-body p + ul {
+  margin-top: calc(var(--sr-spacing) * -0.5);
 }
 
 /* Between the mobile breakpoint and the full desktop width, the fixed-width empty
