@@ -127,6 +127,12 @@ interface SvelteReadmeOptions {
    * @default undefined
    */
   head?: string;
+
+  /**
+   * SVG markup for the favicon
+   * @default the svelte-readme logo
+   */
+  favicon?: string;
 }
 ```
 
