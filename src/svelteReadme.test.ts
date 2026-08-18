@@ -209,25 +209,28 @@ describe("svelteReadme", () => {
     "./favicon.png",
     "https://example.com/favicon.svg",
     "data:image/png;base64,aGVsbG8=",
-  ])("passes a favicon href through unchanged instead of re-encoding it: %s", async (favicon) => {
-    const htmlPlugin = getHtmlPlugin(svelteReadme({ favicon }));
+  ])(
+    "passes a favicon href through unchanged instead of re-encoding it: %s",
+    async (favicon) => {
+      const htmlPlugin = getHtmlPlugin(svelteReadme({ favicon }));
 
-    // biome-ignore lint/suspicious/noExplicitAny: see above
-    (htmlPlugin.config as any)({}, buildEnv);
+      // biome-ignore lint/suspicious/noExplicitAny: see above
+      (htmlPlugin.config as any)({}, buildEnv);
 
-    await htmlPlugin.writeBundle(
-      undefined as never,
-      {
-        "s-abc123.js": { isEntry: true, fileName: "s-abc123.js" },
-      } as never,
-    );
+      await htmlPlugin.writeBundle(
+        undefined as never,
+        {
+          "s-abc123.js": { isEntry: true, fileName: "s-abc123.js" },
+        } as never,
+      );
 
-    const html = fs.readFileSync(
-      path.join(fixtureDir, "dist", "index.html"),
-      "utf-8",
-    );
-    expect(html).toContain(`<link rel="icon" href="${favicon}" />`);
-  });
+      const html = fs.readFileSync(
+        path.join(fixtureDir, "dist", "index.html"),
+        "utf-8",
+      );
+      expect(html).toContain(`<link rel="icon" href="${favicon}" />`);
+    },
+  );
 
   test("disableDefaultCSS omits the bundled GitHub styles, custom style is still appended", async () => {
     const htmlPlugin = getHtmlPlugin(
